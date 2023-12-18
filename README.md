@@ -79,10 +79,11 @@ Inside the archive are the 32- and 64-bit SDL library files. Choose the one that
   ```sh
   git clone https://github.com/Dozer35/retro-fps.git
   ```
-2. Add the `include/SDL2` and `lib` directories of the SDL library files you downloaded earlier to `src`.
+2. Add the `include/SDL2` and `lib` directories of the SDL library files you downloaded earlier to `src`. Also put `bin/SDL2.dll` inside of `src`
   The project tree should then contain :
   - `src/include/SDL2/*.h.`
   - `src/lib/*.a`
+  - `src/SDL2.dll`
 3. Compile the project with `gcc -I src/include -L src/lib -o src/main src/main.c -lmingw32 -lSDL2main -lSDL2`.
   You will then find the compiled file inside of `src`.
 
