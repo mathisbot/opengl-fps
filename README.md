@@ -84,7 +84,7 @@ Inside the archive are the 32- and 64-bit SDL library files. Choose the one that
   - `src/include/SDL2/*.h.`
   - `src/lib/*.a`
   - `src/SDL2.dll`
-3. Compile the project with `gcc -I src/include -L src/lib -o src/main src/main.c -lmingw32 -lSDL2main -lSDL2`.
+3. Compile the project with `gcc -Wall -I src/include -L src/lib -o src/main src/main.c -lmingw32 -lSDL2main -lSDL2 -lopengl32`.
   You will then find the compiled file inside of `src`.
 
 

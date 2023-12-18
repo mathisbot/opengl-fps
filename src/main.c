@@ -1,9 +1,10 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include <SDL2/SDL.h>
+#include <SDL2/SDL_opengl.h>
 
 
-#define DEBUG 0
+#define DEBUG 1
 
 #if DEBUG
     #define WINDOW_WIDTH 1280
@@ -36,7 +37,7 @@ int main(int argc, char *argv[])
 
     // Window creation
     SDL_Window* window = SDL_CreateWindow("Retro FPS", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
-                                          WINDOW_WIDTH, WINDOW_HEIGHT, 0);
+                                          WINDOW_WIDTH, WINDOW_HEIGHT, SDL_WINDOW_OPENGL);
     if (window == NULL)
     {
         fprintf(stderr, "Error when creating window : %s\n", SDL_GetError());
@@ -49,11 +50,11 @@ int main(int argc, char *argv[])
     else
         SDL_SetWindowFullscreen(window, 0);
 
-    // Renderer creation
-    SDL_Renderer *renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
-    if (renderer == NULL)
+    // OpenGL context creation
+    SDL_GLContext glContext = SDL_GL_CreateContext(window);
+    if (glContext == NULL)
     {
-        fprintf(stderr, "Error when creating renderer : %s\n", SDL_GetError());
+        fprintf(stderr, "Error when creating OpenGL context : %s\n", SDL_GetError());
         SDL_DestroyWindow(window);
         SDL_Quit();
         return EXIT_FAILURE;
@@ -76,18 +77,17 @@ int main(int argc, char *argv[])
         }
 
         // Clear screen
-        SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
-        SDL_RenderClear(renderer);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         // Draw here
         // ...
 
         // Update screen
-        SDL_RenderPresent(renderer);
+        SDL_GL_SwapWindow(window);
     }
 
     // Free memory and quit SDL
-    SDL_DestroyRenderer(renderer);
+    SDL_GL_DeleteContext(glContext);
     SDL_DestroyWindow(window);
     SDL_Quit();
     
