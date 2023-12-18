@@ -110,7 +110,7 @@ MVP must be a standard retro FPS:
 
 <p align="right">(<a href="#readme-top">Up</a>)</p>
 
-## Roadmap
+### Roadmap
 <a name="roadmap"></a>
 
 - [X] Opening a window
@@ -120,5 +120,5 @@ MVP must be a standard retro FPS:
 <p align="right">(<a href="#readme-top">Up</a>)</p>
 
 
-[c-url]: "https://fr.wikipedia.org/wiki/C_(langage)"
-[sdl-url]: "https://www.libsdl.org/"
+[c-url]: https://fr.wikipedia.org/wiki/C_(langage)
+[sdl-url]: https://www.libsdl.org/
