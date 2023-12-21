@@ -129,7 +129,6 @@ MVP must be a standard retro FPS:
 - [ ] Collisions
 - [ ] Guns and enemies
 - [ ] MVP
-- [ ] More guns
 - [ ] Better lights
 - [ ] Many other things ?
 
