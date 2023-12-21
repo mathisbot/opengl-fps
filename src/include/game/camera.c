@@ -3,14 +3,7 @@
 
 #ifndef PI
     #define PI 3.14159265358979323846f
-    #define TAU (2.0f * PI)
-    #define PI_2 (PI / 2.0f)
-    #define PI_4 (PI / 4.0f)
-#endif
-
-#ifndef DEG2RAD
     #define DEG2RAD(_d) ((_d) * (PI / 180.0f))
-    #define RAD2DEG(_d) ((_d) * (180.0f / PI))
 #endif
 
 #define GRAVITY 20.0f
@@ -76,13 +69,10 @@ void handleCameraMovement(Camera* camera, const Uint8* keyboardState, double dt)
     }
 
     // y axis movement
-    if (keyboardState[camera->bindings.jump])  // Jump
+    if (keyboardState[camera->bindings.jump] && camera->onGround)  // Jump
     {
-        if (camera->onGround)
-        {
-            camera->yVelocity += JUMPSPEED;
-            camera->onGround = 0;
-        }
+        camera->yVelocity += JUMPSPEED;
+        camera->onGround = 0;
     }
     if (!camera->onGround)
     {
@@ -101,7 +91,8 @@ void handleCameraMovement(Camera* camera, const Uint8* keyboardState, double dt)
 
 void handleCameraRotation(Camera* camera, float motionX, float motionY, double dt)
 {
-    camera->yaw += motionX * camera->rotationSpeed * dt;
+    // fmod is used to prevent yaw from getting too large
+    camera->yaw += fmod(motionX * camera->rotationSpeed * dt, 360.0f);
     camera->pitch -= motionY * camera->rotationSpeed * dt;
 
     if (camera->pitch > 90)

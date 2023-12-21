@@ -1,7 +1,7 @@
 #include "level.h"
 
 
-Level* loadLevel(char* path)
+Level* loadLevel(uint16_t levelNumber)
 {
     Level* level = malloc(sizeof(Level));
     if (!level)
@@ -10,6 +10,8 @@ Level* loadLevel(char* path)
         exit(1);
     }
 
+    char path[256];
+    sprintf(path, "%slevel%d", LEVELPATH, levelNumber);
     FILE* file = fopen(path, "r");
     if (!file)
     {

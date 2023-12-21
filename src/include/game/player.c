@@ -1,6 +1,7 @@
 #include "player.h"
 
-Player* createPlayer(int speed, int sensitivity, float hp)
+
+Player* createPlayer()
 {
     Player* player = malloc(sizeof(Player));
     if (!player)
@@ -9,9 +10,10 @@ Player* createPlayer(int speed, int sensitivity, float hp)
         exit(1);
     }
 
-    player->speed = speed;
-    player->sensitivity = sensitivity;
-    player->hp = hp;
+    player->speed = SPEED;
+    player->sensitivity = SENSITIVITY;
+    player->hp = HP;
+    player->currentLevel = 1;
 
     return player;
 }

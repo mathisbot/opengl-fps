@@ -1,25 +1,21 @@
 #include <stdbool.h>
 #include <stdio.h>
+#include <stdint.h>
 #include <stdlib.h>
 
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_opengl.h>
 #include <GL/glu.h>
 
-#include "include/view/camera.h"
-#include "include/utils/level.h"
-#include "include/utils/player.h"
+#include "include/game/camera.h"
+#include "include/game/level.h"
+#include "include/game/player.h"
+#include "include/game/enemy.h"
 
-
-#define ASSERT(_e, ...) if (!(_e)) { fprintf(stderr, __VA_ARGS__); exit(1); }
 
 #define PI 3.14159265358979323846f
-#define TAU (2.0f * PI)
-#define PI_2 (PI / 2.0f)
-#define PI_4 (PI / 4.0f)
 
 #define DEG2RAD(_d) ((_d) * (PI / 180.0f))
-#define RAD2DEG(_d) ((_d) * (180.0f / PI))
 
 #define EYE_Y 1.8f
 #define VFOV 70.0f
@@ -29,13 +25,9 @@
 
 #define DEBUG 1
 
-#define HP 100.0f
-#define SPEED 10.0f
-#define SENSITIVITY 17.5f
-
 
 // Dummy function to draw a cube
-// Will be replaced by a function to draw a map
+// Will be deleted later
 float cubeRotationAngle = 0.0f;
 void drawCube() {
     glBegin(GL_QUADS);
@@ -105,19 +97,27 @@ void updateCamera(Camera* camera)
               0.0f, 1.0f, 0.0f);
 }   
 
+void drawLevel(Level* level, Camera* camera)
+{
+    return;
+}
+
 // Render
-void render(Camera* camera, Level* level, Player* player)
+void render(SDL_Window* window, Camera* camera, Level* level, Player* player)
 {
     // Clear screen
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    glLoadIdentity();
 
+    // Update camera
     updateCamera(camera);
 
-    // Drawing level
-    // ...
+    // Draw level
+    glPushMatrix();
+    drawLevel(level, camera);
+    glPopMatrix();
 
     // Dummy cubes
+    // Will be deleted later
     // Rotating cube
     glPushMatrix();
     glTranslatef(0.0f, 0.5f, -3.0f);
@@ -132,22 +132,31 @@ void render(Camera* camera, Level* level, Player* player)
     glPopMatrix();
 
     // Update screen
-    SDL_GL_SwapWindow(SDL_GL_GetCurrentWindow());
+    SDL_GL_SwapWindow(window);
 }
 
 
 int main(int argc, char *argv[])
 {
     // Initialising SDL
-    ASSERT(!SDL_Init(SDL_INIT_VIDEO), "Error initialising SDL : %s\n", SDL_GetError());
+    if (SDL_Init(SDL_INIT_VIDEO))
+    {
+        fprintf(stderr, "Error initialising SDL : %s\n", SDL_GetError());
+        return EXIT_FAILURE;
+    }
 
     // Getting display information
-    int WINDOW_WIDTH;
-    int WINDOW_HEIGHT;
+    uint16_t WINDOW_WIDTH;
+    uint16_t WINDOW_HEIGHT;
     if (!DEBUG)
     {
         SDL_DisplayMode displayMode;
-        ASSERT(!SDL_GetCurrentDisplayMode(0, &displayMode), "Error getting display information : %s\n", SDL_GetError())
+        if (!SDL_GetCurrentDisplayMode(0, &displayMode))
+        {
+            fprintf(stderr, "Error getting display information : %s\n", SDL_GetError());
+            SDL_Quit();
+            return EXIT_FAILURE;
+        }
         WINDOW_WIDTH = displayMode.w;
         WINDOW_HEIGHT = displayMode.h;
     }
@@ -190,11 +199,11 @@ int main(int argc, char *argv[])
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LESS);
 
-    // Loading level
-    Level* level = loadLevel("assets/levels/level1");
-
     // Loading player
-    Player* player = createPlayer(SPEED, SENSITIVITY, HP);
+    Player* player = createPlayer();
+
+    // Loading level
+    Level* level = loadLevel(player->currentLevel);
 
     // Loading camera
     Bindings bindings = {
@@ -248,7 +257,7 @@ int main(int argc, char *argv[])
                     break;
                 // Rotate camera
                 case SDL_MOUSEMOTION:
-                    //Power saving
+                    // Power saving
                     if (e.motion.xrel == 0 && e.motion.yrel == 0)
                         break;
                     handleCameraRotation(camera, e.motion.xrel, e.motion.yrel, dt);
@@ -270,7 +279,7 @@ int main(int argc, char *argv[])
         update(camera, level, player, dt);
 
         // Render
-        render(camera, level, player);
+        render(window, camera, level, player);
     }
 
     // Free memory and quit SDL
