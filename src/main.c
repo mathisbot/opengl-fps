@@ -151,7 +151,7 @@ int main(int argc, char *argv[])
     if (!DEBUG)
     {
         SDL_DisplayMode displayMode;
-        if (!SDL_GetCurrentDisplayMode(0, &displayMode))
+        if (SDL_GetCurrentDisplayMode(0, &displayMode))
         {
             fprintf(stderr, "Error getting display information : %s\n", SDL_GetError());
             SDL_Quit();
