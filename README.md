@@ -7,7 +7,7 @@
   <h3 align="center">Retro FPS</h3>
 
   <p align="center">
-    This project aims to recreate a retro FPS shooter in C using only low-level libraries like SDL.
+    This project aims to recreate a retro FPS in C using only one low-level library.
   </p>
 </div>
 
@@ -42,9 +42,9 @@
 ## About
 <a name="about"></a>
 
-This project aims to recreate a retro FPS shooter, like the first Doom, using the C langage using only low-level libraries like SDL.
+This project aims to recreate a retro/doomlike FPS, using the C langage and only one, low-level, library : SDL2.
 
-This project is motivated by the knowledge it can provide about the low-level operation of a computer.
+This project is motivated by the knowledge it can provide about the low-level operation of a computer, and because I want to have fun (of course).
 
 <p align="right">(<a href="#readme-top">Up</a>)</p>
 
@@ -62,15 +62,16 @@ This project is motivated by the knowledge it can provide about the low-level op
 <a name="getting-started"></a>
 
 If you just want to try out the game, simply download the `release.zip` file.
+However, there's currently no way to change the key bindings, and I'm left-handed.
 
 Otherwise, follow these steps:
 
 ### Prerequisites
 <a name="prerequisites"></a>
 
-* C : Any compiler will do. I personally used GCC 13.2.0
-* SDL : Download the development (`devel`) version of SDL2. I used the `mingw` version.
-Inside the archive are the 32- and 64-bit SDL library files. Choose the one that suits your system.
+* C : Any compiler will do. I personally used GCC 13.2.0 through [WinLibs][winlibs-url].
+* SDL : Download the development (`devel`) version of SDL2. I chose the `mingw` one.
+Inside the zip file are the 32- and 64-bit SDL library files. Choose the one that suits your system.
 
 ### Installation
 <a name="installation"></a>
@@ -81,11 +82,18 @@ Inside the archive are the 32- and 64-bit SDL library files. Choose the one that
   ```
 2. Add the `include/SDL2` and `lib` directories of the SDL library files you downloaded earlier to `src`. Also put `bin/SDL2.dll` inside of `src`
   The project tree should then contain :
-  - `src/include/SDL2/*.h.`
+  - `src/include/SDL2/*.h`
   - `src/lib/*.a`
   - `src/SDL2.dll`
-3. Compile the project with `gcc -Wall -I src/include -L src/lib -o src/main src/main.c -lmingw32 -lSDL2main -lSDL2 -lopengl32`.
-  You will then find the compiled file inside of `src`.
+3. WINDOWS - Compile the project with :
+  ```sh
+    gcc -Wall -I src/include -L src/lib -o src/retro_fps src/main.c $(Get-ChildItem -Recurse -Path src/include -Filter \"*.c\").FullName -lmingw32 -lSDL2main -lSDL2 -lopengl32 -lglu32
+  ```
+  UNIX - A Makefile is available. Alternatively, compile the project with :
+  ```
+    gcc -Wall -I src/include -L src/lib -o src/retro_fps src/main.c $(find src/include -name "*.c") -lmingw32 -lSDL2main -lSDL2 -lopengl32 -lglu32
+  ```
+  A compiled file will then be generated as `src/retro_fps`.
 
 
 <p align="right">(<a href="#readme-top">Up</a>)</p>
@@ -93,7 +101,8 @@ Inside the archive are the 32- and 64-bit SDL library files. Choose the one that
 ## Usage
 <a name="usage"></a>
 
-In its current state, the game can only display a blank window.
+Currenlty, the game features a fully functional first person camera.
+It can also poorly render colorful cubes, as faces are often drawn in a bad order.
 
 <p align="right">(<a href="#readme-top">Up</a>)</p>
 
@@ -115,11 +124,18 @@ MVP must be a standard retro FPS:
 <a name="roadmap"></a>
 
 - [X] Opening a window
-- [ ] Having an MVP
-- [ ] 
+- [X] Working First Person Camera
+- [ ] Level rendering
+- [ ] Collisions
+- [ ] Guns and enemies
+- [ ] MVP
+- [ ] More guns
+- [ ] Better lights
+- [ ] Many other things ?
 
 <p align="right">(<a href="#readme-top">Up</a>)</p>
 
 
 [c-url]: https://fr.wikipedia.org/wiki/C_(langage)
 [sdl-url]: https://www.libsdl.org/
+[winlibs-url]: https://winlibs.com/#download-release
