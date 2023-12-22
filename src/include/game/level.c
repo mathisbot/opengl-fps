@@ -124,7 +124,7 @@ Level* loadLevel(uint16_t levelNumber)
         char tpath[256];
         fscanf(file, "%s\n", texturePath);
         sprintf(tpath, "level%d/%s", levelNumber, texturePath);
-        textures[i] = loadTexture(tpath);
+        textures[i] = loadTexture(tpath, 0);
     }
     level->textures = textures;
     level->textureCount = textureCount;

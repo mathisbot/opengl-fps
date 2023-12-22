@@ -2,7 +2,7 @@
 
 
 // Load textures
-Texture* loadTexture(const char* path)
+Texture* loadTexture(const char* path, bool repeat)
 {
     // Allocating memory for texture
     Texture* texture = malloc(sizeof(Texture));
@@ -32,15 +32,18 @@ Texture* loadTexture(const char* path)
         GL_BGR, GL_UNSIGNED_BYTE, surface->pixels
     );
 
+    // Freeing SDL surface
+    SDL_FreeSurface(surface);
+
     // Setting texture parameters
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     // Repeat texture
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-
-    // Freeing SDL surface
-    SDL_FreeSurface(surface);
+    if (repeat)
+    {
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    }
 
     // Setting texture properties
     texture->id = textureID;

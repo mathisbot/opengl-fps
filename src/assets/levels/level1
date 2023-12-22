@@ -4,7 +4,7 @@ health: 0
 ammo: 0
 textures: 1
 brickwall.bmp
-walls: 3
+walls: 4
 texture: 0
 pointcount: 4
 0.0 0.0 -1.0 -1.0 0.0
@@ -23,3 +23,8 @@ pointcount: 4
 1.0 2.0 1.0 1.0 0.0
 1.0 3.0 1.0 3.0 0.0
 0.0 3.0 -1.0 3.0 0.0
+texture: 0
+pointcount: 3
+4.0 4.0 1.0 1.0 0.0
+5.0 4.0 3.0 1.0 0.0
+4.0 5.0 1.0 3.0 0.0

@@ -27,9 +27,8 @@
 #define DEBUG 0
 
 
-// Dummy function to draw a textured wall
-// Will be deleted later
-void drawTexturedSquare(Texture* texture, Wall* wall) {
+// Allows to draw a wall (polygon) with a texture
+void drawWall(Texture* texture, Wall* wall) {
     glBindTexture(GL_TEXTURE_2D, wall->textureID);
 
     if (wall->pointCount == 4)
@@ -55,6 +54,17 @@ void drawTexturedSquare(Texture* texture, Wall* wall) {
     glEnd();
 }
 
+// Draw level on screen
+void drawLevel(Level* level, Camera* camera)
+{
+    // Draw textured square
+    glPushMatrix();
+    for (int i = 0; i < level->wallCount; i++)
+    {
+        drawWall(level->textures[0], level->walls[i]);
+    }
+    glPopMatrix();
+}
 
 // Game logic
 void update(Camera* camera, Level* level, Player* player, double dt)
@@ -72,17 +82,6 @@ void updateCamera(Camera* camera)
               camera->y + EYE_Y + sin(DEG2RAD(camera->pitch)),
               camera->z - cos(DEG2RAD(camera->yaw)) * cos(DEG2RAD(camera->pitch)),
               0.0f, 1.0f, 0.0f);
-}   
-
-void drawLevel(Level* level, Camera* camera)
-{
-    // Draw textured square
-    for (int i = 0; i < level->wallCount; i++)
-    {
-        glPushMatrix();
-        drawTexturedSquare(level->textures[0], level->walls[i]);
-        glPopMatrix();
-    }
 }
 
 // Render
@@ -99,6 +98,9 @@ void render(SDL_Window* window, Camera* camera, Level* level, Player* player)
     glPushMatrix();
     drawLevel(level, camera);
     glPopMatrix();
+
+    // Draw pointer
+    // ...
 
     // Update screen
     SDL_GL_SwapWindow(window);
