@@ -11,6 +11,7 @@
 #include "include/game/level.h"
 #include "include/game/player.h"
 #include "include/game/enemy.h"
+#include "include/game/textures.h"
 
 
 #define PI 3.14159265358979323846f
@@ -25,55 +26,16 @@
 
 #define DEBUG 1
 
-
-// Dummy function to draw a cube
+// Dummy function to draw a textured wall
 // Will be deleted later
-float cubeRotationAngle = 0.0f;
-void drawCube() {
+void drawTexturedSquare(Texture* texture) {
+    glBindTexture(GL_TEXTURE_2D, texture->id);
+
     glBegin(GL_QUADS);
-
-    // Red side - FRONT
-    glColor3f(1.0f, 0.0f, 0.0f);
-    glVertex3f(-1.0f, -1.0f, 1.0f);
-    glVertex3f(1.0f, -1.0f, 1.0f);
-    glVertex3f(1.0f, 1.0f, 1.0f);
-    glVertex3f(-1.0f, 1.0f, 1.0f);
-
-    // Green side - RIGHT
-    glColor3f(0.0f, 1.0f, 0.0f);
-    glVertex3f(1.0f, -1.0f, 1.0f);
-    glVertex3f(1.0f, -1.0f, -1.0f);
-    glVertex3f(1.0f, 1.0f, -1.0f);
-    glVertex3f(1.0f, 1.0f, 1.0f);
-
-    // Blue face - BACK
-    glColor3f(0.0f, 0.0f, 1.0f);
-    glVertex3f(-1.0f, -1.0f, -1.0f);
-    glVertex3f(1.0f, -1.0f, -1.0f);
-    glVertex3f(1.0f, 1.0f, -1.0f);
-    glVertex3f(-1.0f, 1.0f, -1.0f);
-
-    // Yellow face - LEFT
-    glColor3f(1.0f, 1.0f, 0.0f);
-    glVertex3f(-1.0f, -1.0f, -1.0f);
-    glVertex3f(-1.0f, 1.0f, -1.0f);
-    glVertex3f(-1.0f, 1.0f, 1.0f);
-    glVertex3f(-1.0f, -1.0f, 1.0f);
-
-    // Cyan face - TOP
-    glColor3f(0.0f, 1.0f, 1.0f);
-    glVertex3f(-1.0f, 1.0f, -1.0f);
-    glVertex3f(1.0f, 1.0f, -1.0f);
-    glVertex3f(1.0f, 1.0f, 1.0f);
-    glVertex3f(-1.0f, 1.0f, 1.0f);
-
-    // Magenta face - BOTTOM
-    glColor3f(1.0f, 0.0f, 1.0f);
-    glVertex3f(-1.0f, -1.0f, -1.0f);
-    glVertex3f(1.0f, -1.0f, -1.0f);
-    glVertex3f(1.0f, -1.0f, 1.0f);
-    glVertex3f(-1.0f, -1.0f, 1.0f);
-
+    glTexCoord2f(0.0f, 0.0f); glVertex3f(-1.0f, -1.0f, 0.0f);
+    glTexCoord2f(1.0f, 0.0f); glVertex3f(1.0f, -1.0f, 0.0f);
+    glTexCoord2f(1.0f, 1.0f); glVertex3f(1.0f, 1.0f, 0.0f);
+    glTexCoord2f(0.0f, 1.0f); glVertex3f(-1.0f, 1.0f, 0.0f);
     glEnd();
 }
 
@@ -83,7 +45,6 @@ void update(Camera* camera, Level* level, Player* player, double dt)
 {
     return;
 }
-
 
 // Update camera
 void updateCamera(Camera* camera)
@@ -97,38 +58,28 @@ void updateCamera(Camera* camera)
               0.0f, 1.0f, 0.0f);
 }   
 
-void drawLevel(Level* level, Camera* camera)
+void drawLevel(Level* level, Camera* camera, Texture* texture)
 {
-    return;
+    // Draw textured square
+    glPushMatrix();
+    glTranslatef(0.0f, -0.5f, 0.0f);
+    drawTexturedSquare(texture);
+    glPopMatrix();
 }
 
 // Render
-void render(SDL_Window* window, Camera* camera, Level* level, Player* player)
+void render(SDL_Window* window, Camera* camera, Level* level, Player* player, Texture* texture)
 {
     // Clear screen
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glLoadIdentity();
 
     // Update camera
     updateCamera(camera);
 
     // Draw level
     glPushMatrix();
-    drawLevel(level, camera);
-    glPopMatrix();
-
-    // Dummy cubes
-    // Will be deleted later
-    // Rotating cube
-    glPushMatrix();
-    glTranslatef(0.0f, 0.5f, -3.0f);
-    cubeRotationAngle += 0.5f;
-    glRotatef(cubeRotationAngle, 0.0f, 1.0f, 0.0f);
-    drawCube();
-    glPopMatrix();
-    // Static cube
-    glPushMatrix();
-    glTranslatef(0.0f, 0.5f, -7.0f);
-    drawCube();
+    drawLevel(level, camera, texture);
     glPopMatrix();
 
     // Update screen
@@ -221,7 +172,7 @@ int main(int argc, char *argv[])
     Camera* camera = initCamera(level->startX, level->startY, level->startZ, level->startYaw, level->startPitch, player->speed, player->sensitivity, bindings);
 
     // Loading objects
-    // ...
+    Texture* texture = loadTexture("assets/textures/brickwall.bmp");
 
     
     // Main loop
@@ -279,10 +230,12 @@ int main(int argc, char *argv[])
         update(camera, level, player, dt);
 
         // Render
-        render(window, camera, level, player);
+        render(window, camera, level, player, texture);
     }
 
     // Free memory and quit SDL
+    freeTexture(texture);
+    texture = NULL;
     freeCamera(camera);
     camera = NULL;
     freePlayer(player);

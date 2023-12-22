@@ -95,8 +95,10 @@ void handleCameraRotation(Camera* camera, float motionX, float motionY, double d
     camera->yaw += fmod(motionX * camera->rotationSpeed * dt, 360.0f);
     camera->pitch -= motionY * camera->rotationSpeed * dt;
 
-    if (camera->pitch > 90)
-        camera->pitch = 90;
-    else if (camera->pitch < -90)
-        camera->pitch = -90;
+    // 89 degrees is the limit for pitch
+    // This prevents the camera from flipping over
+    if (camera->pitch > 89)
+        camera->pitch = 89;
+    else if (camera->pitch < -89)
+        camera->pitch = -89;
 }
