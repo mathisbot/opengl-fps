@@ -24,18 +24,34 @@
 #define ZNEAR 0.0001f
 #define ZFAR  2048.0f
 
-#define DEBUG 1
+#define DEBUG 0
+
 
 // Dummy function to draw a textured wall
 // Will be deleted later
-void drawTexturedSquare(Texture* texture) {
-    glBindTexture(GL_TEXTURE_2D, texture->id);
+void drawTexturedSquare(Texture* texture, Wall* wall) {
+    glBindTexture(GL_TEXTURE_2D, wall->textureID);
 
-    glBegin(GL_QUADS);
-    glTexCoord2f(0.0f, 0.0f); glVertex3f(-1.0f, -1.0f, 0.0f);
-    glTexCoord2f(1.0f, 0.0f); glVertex3f(1.0f, -1.0f, 0.0f);
-    glTexCoord2f(1.0f, 1.0f); glVertex3f(1.0f, 1.0f, 0.0f);
-    glTexCoord2f(0.0f, 1.0f); glVertex3f(-1.0f, 1.0f, 0.0f);
+    if (wall->pointCount == 4)
+    {
+        glBegin(GL_QUADS);
+    }
+    else if (wall->pointCount == 3)
+    {
+        glBegin(GL_TRIANGLES);
+    }
+    else
+    {
+        fprintf(stderr, "Error: wall.pointCount unknown : %d\n", wall->pointCount);
+        return;
+    }
+
+    for (int i = 0; i < wall->pointCount; i++)
+    {
+        glTexCoord2f(wall->points[i]->tex_x, wall->points[i]->tex_y);
+        glVertex3f(wall->points[i]->x, wall->points[i]->y, wall->points[i]->z);
+    }
+
     glEnd();
 }
 
@@ -58,17 +74,19 @@ void updateCamera(Camera* camera)
               0.0f, 1.0f, 0.0f);
 }   
 
-void drawLevel(Level* level, Camera* camera, Texture* texture)
+void drawLevel(Level* level, Camera* camera)
 {
     // Draw textured square
-    glPushMatrix();
-    glTranslatef(0.0f, -0.5f, 0.0f);
-    drawTexturedSquare(texture);
-    glPopMatrix();
+    for (int i = 0; i < level->wallCount; i++)
+    {
+        glPushMatrix();
+        drawTexturedSquare(level->textures[0], level->walls[i]);
+        glPopMatrix();
+    }
 }
 
 // Render
-void render(SDL_Window* window, Camera* camera, Level* level, Player* player, Texture* texture)
+void render(SDL_Window* window, Camera* camera, Level* level, Player* player)
 {
     // Clear screen
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -79,7 +97,7 @@ void render(SDL_Window* window, Camera* camera, Level* level, Player* player, Te
 
     // Draw level
     glPushMatrix();
-    drawLevel(level, camera, texture);
+    drawLevel(level, camera);
     glPopMatrix();
 
     // Update screen
@@ -171,10 +189,6 @@ int main(int argc, char *argv[])
     };
     Camera* camera = initCamera(level->startX, level->startY, level->startZ, level->startYaw, level->startPitch, player->speed, player->sensitivity, bindings);
 
-    // Loading objects
-    Texture* texture = loadTexture("assets/textures/brickwall.bmp");
-
-    
     // Main loop
     Uint64 last_frame = SDL_GetTicks64();
     Uint64 now;
@@ -230,12 +244,10 @@ int main(int argc, char *argv[])
         update(camera, level, player, dt);
 
         // Render
-        render(window, camera, level, player, texture);
+        render(window, camera, level, player);
     }
 
     // Free memory and quit SDL
-    freeTexture(texture);
-    texture = NULL;
     freeCamera(camera);
     camera = NULL;
     freePlayer(player);

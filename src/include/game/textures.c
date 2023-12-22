@@ -13,7 +13,9 @@ Texture* loadTexture(const char* path)
     }
 
     // Loading SDL surface
-    SDL_Surface* surface = SDL_LoadBMP(path);
+    char new_path[512];
+    sprintf(new_path, "%s%s", TEXTUREPATH, path);
+    SDL_Surface* surface = SDL_LoadBMP(new_path);
     if (!surface)
     {
         fprintf(stderr, "Error loading texture %s : %s\n", path, SDL_GetError());

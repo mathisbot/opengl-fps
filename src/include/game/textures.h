@@ -11,6 +11,9 @@
 #include <GL/glu.h>
 
 
+#define TEXTUREPATH "assets/textures/"
+
+
 typedef struct {
     char path[256];
     GLuint id;

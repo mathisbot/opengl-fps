@@ -1,7 +1,7 @@
 #include "enemy.h"
 
 
-Enemy* create_enemy()
+Enemy* createEnemy(float x, float y, float z, float yaw, float pitch, int type)
 {
     Enemy* enemy = malloc(sizeof(Enemy));
     if (!enemy)
@@ -11,14 +11,17 @@ Enemy* create_enemy()
     }
 
     enemy->hp = 100.0f;
-    enemy->x = 0.0f;
-    enemy->y = 0.0f;
-    enemy->z = 0.0f;
+    enemy->x = x;
+    enemy->y = y;
+    enemy->z = z;
+    enemy->yaw = yaw;
+    enemy->pitch = pitch;
+    enemy->type = type;
 
     return enemy;
 }
 
-void destroy_enemy(Enemy* enemy)
+void freeEnemy(Enemy* enemy)
 {
     free(enemy);
 }

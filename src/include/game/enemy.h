@@ -12,9 +12,12 @@ typedef struct Enemy {
     float x;
     float y;
     float z;
+    float yaw;
+    float pitch;
+    int type;
 } Enemy;
 
-Enemy* create_enemy();
-void destroy_enemy(Enemy* enemy);
+Enemy* createEnemy(float x, float y, float z, float yaw, float pitch, int type);
+void freeEnemy(Enemy* enemy);
 
 #endif
