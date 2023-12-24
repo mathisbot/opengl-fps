@@ -92,7 +92,7 @@ Inside the zip file are the 32- and 64-bit SDL library files. Choose the one tha
   ```
     gcc -Wall -I src/include -L src/lib -o src/retro_fps src/main.c $(find src/include -name "*.c") -lmingw32 -lSDL2main -lSDL2 -lopengl32 -lglu32
   ```
-  A compiled file will then be generated as `src/retro_fps`.
+  A compiled file will then be generated as `src/retro_fps` or `src/retro_fps.exe`.
 
 
 <p align="right">(<a href="#readme-top">Up</a>)</p>
@@ -101,7 +101,8 @@ Inside the zip file are the 32- and 64-bit SDL library files. Choose the one tha
 <a name="usage"></a>
 
 Currenlty, the game features a fully functional first person camera.
-It can also poorly render colorful cubes, as faces are often drawn in a bad order.
+It can also read files to import and render a level.
+Move with HVBN (will be changed) and jump with Space.
 
 <p align="right">(<a href="#readme-top">Up</a>)</p>
 
@@ -113,9 +114,9 @@ It can also poorly render colorful cubes, as faces are often drawn in a bad orde
 
 MVP must be a standard retro FPS:
 - First-person camera
-- Guns to shoot
-- Enemies
 - Retro 3D rendering
+- Guns
+- Enemies
 
 <p align="right">(<a href="#readme-top">Up</a>)</p>
 
@@ -127,9 +128,11 @@ MVP must be a standard retro FPS:
 - [ ] Level rendering
 - [ ] Collisions
 - [ ] Guns and enemies
+- [ ] Polishing (Level finish, bug fixes, ...)
 - [ ] MVP
 - [ ] Better lights
-- [ ] Many other things ?
+- [ ] Level editor
+- [ ] New functionalities
 
 <p align="right">(<a href="#readme-top">Up</a>)</p>
 
