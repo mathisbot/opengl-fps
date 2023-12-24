@@ -1,6 +1,7 @@
 #ifndef LEVEL_H
 #define LEVEL_H
 
+
 #include <stdio.h>
 #include <stdbool.h>
 #include <stdlib.h>
@@ -65,14 +66,57 @@ typedef struct {
 // ...
 
 
+/**
+ * @brief Create a point
+ * 
+ * @param x X position of the point
+ * @param y Y position of the point
+ * @param z Z position of the point
+ * @param tex_x X position of the texture
+ * @param tex_y Y position of the texture
+ * @return Point* Pointer to the point
+ */
 Point* createPoint(float x, float y, float z, float tex_x, float tex_y);
+
+/**
+ * @brief Free a point
+ * 
+ * @param point Pointer to the point
+ */
 void freePoint(Point* point);
 
+
+/**
+ * @brief Create a wall
+ * 
+ * @param points Array of points (vertices) of the wall
+ * @param pointCount Number of points (vertices) of the wall
+ * @param textureID ID of the texture of the wall
+ * @return Wall* Pointer to the wall
+ */
 Wall* createWall(Point** points, int pointCount, GLuint textureID);
+
+/**
+ * @brief Free a wall
+ * 
+ * @param wall Pointer to the wall
+ */
 void freeWall(Wall* wall);
 
 
+/**
+ * @brief Create a level by reading a file
+ * 
+ * @param levelNumber Number of the level
+ * @return Level* Pointer to the level
+ */
 Level* loadLevel(uint16_t levelNumber);
+
+/**
+ * @brief Free a level
+ * 
+ * @param level Pointer to the level
+ */
 void freeLevel(Level* level);
 
 #endif

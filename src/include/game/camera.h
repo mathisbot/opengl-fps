@@ -9,9 +9,6 @@
 #include <SDL2/SDL.h>
 
 
-#include <SDL2/SDL.h>
-
-
 typedef struct {
     SDL_Scancode forward;
     SDL_Scancode backward;
@@ -41,9 +38,47 @@ typedef struct {
     bool onGround;
 } Camera;
 
+
+/**
+ * @brief Initialize a camera
+ * 
+ * @param x X position of the camera
+ * @param y Y position of the camera
+ * @param z Z position of the camera
+ * @param yaw Yaw of the camera
+ * @param pitch Pitch of the camera
+ * @param movingSpeed Speed at which the camera moves
+ * @param rotationSpeed Speed at which the camera rotates
+ * @param bindings Bindings of the camera
+ * @return Camera* Pointer to the camera
+*/
 Camera* initCamera(float x, float y, float z, float yaw, float pitch, float movingSpeed, float rotationSpeed, Bindings bindings);
+
+/**
+ * @brief Free a camera
+ * 
+ * @param camera Pointer to the camera
+*/
 void freeCamera(Camera* camera);
+
+
+/**
+ * @brief Update the camera position
+ * 
+ * @param camera Pointer to the camera
+ * @param keyboardState Pointer to keyboard state
+ * @param dt Time since last frame in seconds
+*/
 void handleCameraMovement(Camera* camera, const Uint8* keyboardState, double dt);
+
+/**
+ * @brief Update the camera rotation
+ * 
+ * @param camera Pointer to the camera
+ * @param motionX Mouse motion on the X axis
+ * @param motionY Mouse motion on the Y axis
+ * @param dt Time since last frame
+*/
 void handleCameraRotation(Camera* camera, float motionX, float motionY, double dt);
 
 #endif

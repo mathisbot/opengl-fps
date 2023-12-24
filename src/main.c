@@ -27,7 +27,12 @@
 #define DEBUG 0
 
 
-// Allows to draw a wall (polygon) with a texture
+/**
+ * @brief Draw a wall
+ * 
+ * @param texture Texture of the wall
+ * @param wall Wall to draw
+ */
 void drawWall(Texture* texture, Wall* wall) {
     glBindTexture(GL_TEXTURE_2D, wall->textureID);
 
@@ -54,7 +59,12 @@ void drawWall(Texture* texture, Wall* wall) {
     glEnd();
 }
 
-// Draw level on screen
+/**
+ * @brief Draw a level on the screen
+ * 
+ * @param level Level to draw
+ * @param camera Camera to draw from
+ */
 void drawLevel(Level* level, Camera* camera)
 {
     // Draw textured square
@@ -66,13 +76,24 @@ void drawLevel(Level* level, Camera* camera)
     glPopMatrix();
 }
 
-// Game logic
+/**
+ * @brief Update game logic
+ * 
+ * @param camera Camera of the game
+ * @param level Level of the game
+ * @param player Player of the game
+ * @param dt Time since last frame
+ */
 void update(Camera* camera, Level* level, Player* player, double dt)
 {
     return;
 }
 
-// Update camera
+/**
+ * @brief Update the camera on the screen
+ * 
+ * @param camera Pointer to the camera
+ */
 void updateCamera(Camera* camera)
 {
     glMatrixMode(GL_MODELVIEW);
@@ -84,7 +105,14 @@ void updateCamera(Camera* camera)
               0.0f, 1.0f, 0.0f);
 }
 
-// Render
+/**
+ * @brief Render the game
+ * 
+ * @param window Window of the game
+ * @param camera Camera of the game
+ * @param level Level of the game
+ * @param player Player of the game
+ */
 void render(SDL_Window* window, Camera* camera, Level* level, Player* player)
 {
     // Clear screen
@@ -99,14 +127,21 @@ void render(SDL_Window* window, Camera* camera, Level* level, Player* player)
     drawLevel(level, camera);
     glPopMatrix();
 
-    // Draw pointer
+    // Draw User Interface
     // ...
 
-    // Update screen
+    // Flip screen
     SDL_GL_SwapWindow(window);
 }
 
 
+/**
+ * @brief Main function
+ * 
+ * @param argc Number of arguments
+ * @param argv Arguments
+ * @return int Exit code
+ */
 int main(int argc, char *argv[])
 {
     // Initialising SDL
@@ -119,6 +154,7 @@ int main(int argc, char *argv[])
     // Getting display information
     uint16_t WINDOW_WIDTH;
     uint16_t WINDOW_HEIGHT;
+    // Handling custom resolution
     if (!DEBUG)
     {
         SDL_DisplayMode displayMode;
@@ -171,7 +207,7 @@ int main(int argc, char *argv[])
     glDepthFunc(GL_LESS);
 
     // Loading player
-    Player* player = createPlayer();
+    Player* player = createPlayer(HP, 1);
 
     // Loading level
     Level* level = loadLevel(player->currentLevel);
@@ -189,7 +225,8 @@ int main(int argc, char *argv[])
         SDL_SCANCODE_E,  // Inventory
         SDL_SCANCODE_ESCAPE  // Pause
     };
-    Camera* camera = initCamera(level->startX, level->startY, level->startZ, level->startYaw, level->startPitch, player->speed, player->sensitivity, bindings);
+    Camera* camera = initCamera(level->startX, level->startY, level->startZ,
+                                level->startYaw, level->startPitch, SPEED, SENSITIVITY, bindings);
 
     // Main loop
     Uint64 last_frame = SDL_GetTicks64();
@@ -228,11 +265,13 @@ int main(int argc, char *argv[])
                     if (e.motion.xrel == 0 && e.motion.yrel == 0)
                         break;
                     handleCameraRotation(camera, e.motion.xrel, e.motion.yrel, dt);
+                    // Ensure mouse stays in the middle of the screen
                     SDL_WarpMouseInWindow(window, WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2);
                     break;
                 // Shoot
                 case SDL_MOUSEBUTTONDOWN:
                     if (e.button.button == SDL_BUTTON_LEFT)
+                        // Not implemented yet
                         printf("Shoot !\n");
                     break;
                 default:

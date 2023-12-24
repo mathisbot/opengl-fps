@@ -1,7 +1,6 @@
 #include "textures.h"
 
 
-// Load textures
 Texture* loadTexture(const char* path, bool repeat)
 {
     // Allocating memory for texture
@@ -55,7 +54,6 @@ Texture* loadTexture(const char* path, bool repeat)
     return texture;
 }
 
-// Free texture
 void freeTexture(Texture* texture)
 {
     glDeleteTextures(1, &texture->id);

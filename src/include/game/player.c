@@ -1,7 +1,7 @@
 #include "player.h"
 
 
-Player* createPlayer()
+Player* createPlayer(uint16_t hp, uint16_t currentLevel)
 {
     Player* player = malloc(sizeof(Player));
     if (!player)
@@ -10,10 +10,8 @@ Player* createPlayer()
         exit(1);
     }
 
-    player->speed = SPEED;
-    player->sensitivity = SENSITIVITY;
-    player->hp = HP;
-    player->currentLevel = 1;
+    player->hp = hp;
+    player->currentLevel = currentLevel;
 
     return player;
 }

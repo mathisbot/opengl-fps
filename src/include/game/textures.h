@@ -23,7 +23,20 @@ typedef struct {
 } Texture;
 
 
+/**
+ * @brief Load a texture
+ *   
+ * @param path Path to the texture, must be relative to the TEXTUREPATH
+ * @param repeat Repeat the texture
+ * @return Texture* Pointer to the texture 
+*/
 Texture* loadTexture(const char* path, bool repeat);
+
+/**
+ * @brief Free a texture
+ * 
+ * @param texture Pointer to the texture
+*/
 void freeTexture(Texture* texture);
 
 

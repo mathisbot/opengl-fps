@@ -43,8 +43,7 @@
 <a name="about"></a>
 
 This project aims to recreate a retro/doomlike FPS, using the C langage and only one, low-level, library : SDL2.
-
-This project is motivated by the knowledge it can provide about the low-level operation of a computer, and because I want to have fun (of course).
+It should evolve over time, once the main project is finished.
 
 <p align="right">(<a href="#readme-top">Up</a>)</p>
 

@@ -40,6 +40,7 @@ void freeCamera(Camera* camera)
     free(camera);
 }
 
+
 void handleCameraMovement(Camera* camera, const Uint8* keyboardState, double dt)
 {
     // (x,z) plane movement
@@ -74,7 +75,7 @@ void handleCameraMovement(Camera* camera, const Uint8* keyboardState, double dt)
         camera->yVelocity += JUMPSPEED;
         camera->onGround = 0;
     }
-    if (!camera->onGround)
+    if (!camera->onGround)  // Fall
     {
         camera->yVelocity -= GRAVITY * dt;
         camera->y += camera->yVelocity * dt;
@@ -92,6 +93,7 @@ void handleCameraMovement(Camera* camera, const Uint8* keyboardState, double dt)
 void handleCameraRotation(Camera* camera, float motionX, float motionY, double dt)
 {
     // fmod is used to prevent yaw from getting too large
+    // thus keeping precision in the float
     camera->yaw += fmod(motionX * camera->rotationSpeed * dt, 360.0f);
     camera->pitch -= motionY * camera->rotationSpeed * dt;
 
