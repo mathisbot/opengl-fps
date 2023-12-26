@@ -142,7 +142,7 @@ void render(SDL_Window* window, Camera* camera, Level* level, Player* player)
  * @param argv Arguments
  * @return int Exit code
  */
-int main(int argc, char *argv[])
+int main(int argc, char* argv[])
 {
     // Initialising SDL
     if (SDL_Init(SDL_INIT_VIDEO))
@@ -233,6 +233,7 @@ int main(int argc, char *argv[])
     Uint64 now;
     Uint32 dt_ms;
     double dt;
+    const Uint8* keyboardState = SDL_GetKeyboardState(NULL);
     bool quit = 0;
     SDL_Event e;
     while (!quit)
@@ -250,7 +251,6 @@ int main(int argc, char *argv[])
         last_frame = now;
 
         // Event loop
-        const Uint8* keyboardState = SDL_GetKeyboardState(NULL);
         while (SDL_PollEvent(&e))
         {
             switch (e.type)
@@ -279,6 +279,7 @@ int main(int argc, char *argv[])
             }
         }
         // Move camera
+        SDL_PumpEvents();
         handleCameraMovement(camera, keyboardState, dt);
 
         // Game logic
