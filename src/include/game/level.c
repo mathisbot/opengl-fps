@@ -72,6 +72,10 @@ Level* loadLevel(uint16_t levelNumber)
         fclose(file);
         return NULL;
     }
+
+    // Beyond this point, we assume that the file is correctly formatted
+    // as checking for errors would be too time consuming
+    // and useless most of the times (as level files are unlikely to change)
     
     // Reading start position
     // Start position is stored in the following format:
@@ -116,6 +120,7 @@ Level* loadLevel(uint16_t levelNumber)
     for (int i = 0; i < healthCount; i++)
     {
         fscanf(file, "%f %f %f\n", &hx, &hy, &hz);
+        // TODO: add health packs
     }
 
     // Reading ammo
@@ -130,6 +135,7 @@ Level* loadLevel(uint16_t levelNumber)
     for (int i = 0; i < ammoCount; i++)
     {
         fscanf(file, "%f %f %f\n", &ax, &ay, &az);
+        // TODO: add ammo packs
     }
 
     // Reading textures to load in memory
@@ -144,10 +150,13 @@ Level* loadLevel(uint16_t levelNumber)
     char texturePath[128];
     for (int i = 0; i < textureCount; i++)
     {
-        char tpath[256];
         fscanf(file, "%s\n", texturePath);
-        sprintf(tpath, "level%d/%s", levelNumber, texturePath);
-        textures[i] = loadTexture(tpath, 0);
+        textures[i] = loadTexture(texturePath, 0);
+        if (!textures[i])
+        {
+            printf("Error loading texture %s\n", texturePath);
+            return NULL;
+        }
     }
 
     level->textures = textures;

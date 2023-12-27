@@ -8,7 +8,7 @@ Texture* loadTexture(const char* path, bool repeat)
     if (!texture)
     {
         fprintf(stderr, "Error allocating memory for texture.\n");
-        exit(1);
+        return NULL;
     }
 
     // Loading SDL surface
@@ -18,7 +18,7 @@ Texture* loadTexture(const char* path, bool repeat)
     if (!surface)
     {
         fprintf(stderr, "Error loading texture %s : %s\n", path, SDL_GetError());
-        exit(1);
+        return NULL;
     }
 
     // Creating OpenGL texture

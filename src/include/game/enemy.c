@@ -7,7 +7,7 @@ Enemy* createEnemy(float x, float y, float z, float yaw, float pitch, int type)
     if (!enemy)
     {
         printf("Error allocating memory for enemy\n");
-        exit(1);
+        return NULL;
     }
 
     enemy->hp = 100.0f;

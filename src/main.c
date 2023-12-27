@@ -14,10 +14,6 @@
 #include "include/game/textures.h"
 
 
-#define PI 3.14159265358979323846f
-
-#define DEG2RAD(_d) ((_d) * (PI / 180.0f))
-
 #define EYE_Y 1.8f
 #define VFOV 70.0f
 
@@ -27,29 +23,43 @@
 #define DEBUG 0
 
 
+/*
+TODO :
+- Clean up Level structure (abusive use of pointers?)
+    - Don't forget to modify level.h, level.c, main.c
+- Level rendering needs to be optimized
+    - https://en.wikibooks.org/wiki/OpenGL_Programming/Basics/2DObjects#Drawing_a_Series_of_Connected_Shapes_Efficiently
+    - Apparently, vertices need to be defined counter-clockwise
+*/
+
 /**
  * @brief Draw a wall
  * 
- * @param texture Texture of the wall
  * @param wall Wall to draw
  */
-void drawWall(Texture* texture, Wall* wall) {
+void drawWall(Wall* wall) {
     glBindTexture(GL_TEXTURE_2D, wall->textureID);
 
-    if (wall->pointCount == 4)
+    if (wall->pointCount == 4 || wall->pointCount == 3)
     {
-        glBegin(GL_QUADS);
+        // GL_TRIANGLE_STRIP allows to render 2 triangles with 4 points (one connected side)
+        // Rendering 2 triangles is way more efficient than rendering quads :
+        // GPUs only render triangles, CPUs have to break quads into triangles
+        glBegin(GL_TRIANGLE_STRIP);
     }
-    else if (wall->pointCount == 3)
+    else if (wall->pointCount > 4)
     {
-        glBegin(GL_TRIANGLES);
+        // Very inefficient, should not be used
+        glBegin(GL_POLYGON);
     }
     else
     {
-        fprintf(stderr, "Error: wall.pointCount unknown : %d\n", wall->pointCount);
+        // Unknown, skipping
+        printf("Unknown pointCount : %d", wall->pointCount);
         return;
     }
 
+    // Defining vertices
     for (int i = 0; i < wall->pointCount; i++)
     {
         glTexCoord2f(wall->points[i]->tex_x, wall->points[i]->tex_y);
@@ -71,7 +81,7 @@ void drawLevel(Level* level, Camera* camera)
     glPushMatrix();
     for (int i = 0; i < level->wallCount; i++)
     {
-        drawWall(level->textures[0], level->walls[i]);
+        drawWall(level->walls[i]);
     }
     glPopMatrix();
 }
@@ -99,9 +109,9 @@ void updateCamera(Camera* camera)
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
     gluLookAt(camera->x, camera->y + EYE_Y, camera->z,
-              camera->x + sin(DEG2RAD(camera->yaw)) * cos(DEG2RAD(camera->pitch)),
-              camera->y + EYE_Y + sin(DEG2RAD(camera->pitch)),
-              camera->z - cos(DEG2RAD(camera->yaw)) * cos(DEG2RAD(camera->pitch)),
+              camera->x + camera->yawSin * camera->pitchCos,
+              camera->y + EYE_Y + camera->pitchSin,
+              camera->z - camera->yawCos * camera->pitchCos,
               0.0f, 1.0f, 0.0f);
 }
 
@@ -208,9 +218,27 @@ int main(int argc, char* argv[])
 
     // Loading player
     Player* player = createPlayer(HP, 1);
+    if (!player)
+    {
+        fprintf(stderr, "Error creating player\n");
+        SDL_GL_DeleteContext(glContext);
+        SDL_DestroyWindow(window);
+        SDL_Quit();
+        return EXIT_FAILURE;
+    }
 
     // Loading level
     Level* level = loadLevel(player->currentLevel);
+    if (!level)
+    {
+        fprintf(stderr, "Error loading level\n");
+        freePlayer(player);
+        player = NULL;
+        SDL_GL_DeleteContext(glContext);
+        SDL_DestroyWindow(window);
+        SDL_Quit();
+        return EXIT_FAILURE;
+    }
 
     // Loading camera
     Bindings bindings = {
@@ -227,6 +255,18 @@ int main(int argc, char* argv[])
     };
     Camera* camera = initCamera(level->startX, level->startY, level->startZ,
                                 level->startYaw, level->startPitch, SPEED, SENSITIVITY, bindings);
+    if (!camera)
+    {
+        fprintf(stderr, "Error creating camera\n");
+        freeLevel(level);
+        level = NULL;
+        freePlayer(player);
+        player = NULL;
+        SDL_GL_DeleteContext(glContext);
+        SDL_DestroyWindow(window);
+        SDL_Quit();
+        return EXIT_FAILURE;
+    }
 
     // Main loop
     Uint64 last_frame = SDL_GetTicks64();
@@ -235,6 +275,7 @@ int main(int argc, char* argv[])
     double dt;
     const Uint8* keyboardState = SDL_GetKeyboardState(NULL);
     bool quit = 0;
+    bool pause = 0;
     SDL_Event e;
     while (!quit)
     {
@@ -259,6 +300,11 @@ int main(int argc, char* argv[])
                 case SDL_QUIT:
                     quit = 1;
                     break;
+                // Pause
+                case SDL_KEYDOWN:
+                    if (e.key.keysym.scancode == SDL_SCANCODE_ESCAPE)
+                        pause = !pause;
+                    break;
                 // Rotate camera
                 case SDL_MOUSEMOTION:
                     // Power saving
@@ -277,15 +323,22 @@ int main(int argc, char* argv[])
                 default:
                     break;
             }
+            // Don't bother with the rest of the loop if quitting
+            if (quit)
+                break;
         }
+        // Don't bother with the rest of the loop if quitting
+        if (quit)
+            break;
         // Move camera
         SDL_PumpEvents();
         handleCameraMovement(camera, keyboardState, dt);
 
         // Game logic
-        update(camera, level, player, dt);
+        if (!pause)
+            update(camera, level, player, dt);
 
-        // Render
+        // Render screen
         render(window, camera, level, player);
     }
 

@@ -1,29 +1,24 @@
 #include "camera.h"
 
 
-#ifndef PI
-    #define PI 3.14159265358979323846f
-    #define DEG2RAD(_d) ((_d) * (PI / 180.0f))
-#endif
-
-#define GRAVITY 20.0f
-#define JUMPSPEED 10.0f
-
-
 Camera* initCamera(float x, float y, float z, float yaw, float pitch, float movingSpeed, float rotationSpeed, Bindings bindings)
 {
     Camera* camera = malloc(sizeof(Camera));
     if (!camera)
     {
         printf("Error allocating memory for camera\n");
-        exit(1);
+        return NULL;
     }
 
     camera->x = x;
     camera->y = y;
     camera->z = z;
     camera->yaw = yaw;
+    camera->yawCos = cos(DEG2RAD(yaw));
+    camera->yawSin = sin(DEG2RAD(yaw));
     camera->pitch = pitch;
+    camera->pitchCos = cos(DEG2RAD(pitch));
+    camera->pitchSin = sin(DEG2RAD(pitch));
     camera->movingSpeed = movingSpeed;
     camera->rotationSpeed = rotationSpeed;
     camera->xVelocity = 0.0f;
@@ -50,23 +45,23 @@ void handleCameraMovement(Camera* camera, const Uint8* keyboardState, double dt)
         // Check if sprinting
         if (keyboardState[camera->bindings.sprint])
             coeff = 1.5f;
-        camera->x += camera->movingSpeed * sin(DEG2RAD(camera->yaw)) * dt * coeff;
-        camera->z -= camera->movingSpeed * cos(DEG2RAD(camera->yaw)) * dt * coeff;
+        camera->x += camera->movingSpeed * camera->yawSin * dt * coeff;
+        camera->z -= camera->movingSpeed * camera->yawCos * dt * coeff;
     }
     if (keyboardState[camera->bindings.backward])  // Backward
     {
-        camera->x -= camera->movingSpeed * sin(DEG2RAD(camera->yaw)) * dt;
-        camera->z += camera->movingSpeed * cos(DEG2RAD(camera->yaw)) * dt;
+        camera->x -= camera->movingSpeed * camera->yawSin * dt;
+        camera->z += camera->movingSpeed * camera->yawCos * dt;
     }
     if (keyboardState[camera->bindings.left])  // Left
     {
-        camera->x -= camera->movingSpeed * cos(DEG2RAD(camera->yaw)) * dt;
-        camera->z -= camera->movingSpeed * sin(DEG2RAD(camera->yaw)) * dt;
+        camera->x -= camera->movingSpeed * camera->yawCos * dt;
+        camera->z -= camera->movingSpeed * camera->yawSin * dt;
     }
     if (keyboardState[camera->bindings.right])  // Right
     {
-        camera->x += camera->movingSpeed * cos(DEG2RAD(camera->yaw)) * dt;
-        camera->z += camera->movingSpeed * sin(DEG2RAD(camera->yaw)) * dt;
+        camera->x += camera->movingSpeed * camera->yawCos * dt;
+        camera->z += camera->movingSpeed * camera->yawSin * dt;
     }
 
     // y axis movement
@@ -95,12 +90,16 @@ void handleCameraRotation(Camera* camera, float motionX, float motionY, double d
     // fmod is used to prevent yaw from getting too large
     // thus keeping precision in the float
     camera->yaw += fmod(motionX * camera->rotationSpeed * dt, 360.0f);
-    camera->pitch -= motionY * camera->rotationSpeed * dt;
+    camera->yawCos = cos(DEG2RAD(camera->yaw));
+    camera->yawSin = sin(DEG2RAD(camera->yaw));
 
+    camera->pitch -= motionY * camera->rotationSpeed * dt;  
     // 89 degrees is the limit for pitch
     // This prevents the camera from flipping over
     if (camera->pitch > 89)
         camera->pitch = 89;
     else if (camera->pitch < -89)
         camera->pitch = -89;
+    camera->pitchCos = cos(DEG2RAD(camera->pitch));
+    camera->pitchSin = sin(DEG2RAD(camera->pitch));
 }

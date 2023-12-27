@@ -7,7 +7,7 @@ Player* createPlayer(uint16_t hp, uint16_t currentLevel)
     if (!player)
     {
         printf("Error allocating memory for player\n");
-        exit(1);
+        return NULL;
     }
 
     player->hp = hp;

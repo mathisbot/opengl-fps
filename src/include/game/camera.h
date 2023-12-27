@@ -9,6 +9,13 @@
 #include <SDL2/SDL.h>
 
 
+#define PI 3.14159265358979323846f
+#define DEG2RAD(_d) ((_d) * (PI / 180.0f))
+
+#define GRAVITY 20.0f
+#define JUMPSPEED 10.0f
+
+
 typedef struct {
     SDL_Scancode forward;
     SDL_Scancode backward;
@@ -36,6 +43,12 @@ typedef struct {
     float zVelocity;
     Bindings bindings;
     bool onGround;
+
+    // Used for optimization
+    float yawCos;  // Cosine of yaw
+    float yawSin;  // Sine of yaw
+    float pitchCos;  // Cosine of pitch
+    float pitchSin;  // Sine of pitch    
 } Camera;
 
 
