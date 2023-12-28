@@ -131,11 +131,11 @@ void handleCameraRotation(Camera* camera, float motionX, float motionY, double d
 {
     // fmod is used to prevent yaw from getting too large
     // thus keeping precision in the float
-    camera->yaw += fmod(motionX * camera->rotationSpeed * dt, 360.0f);
+    camera->yaw += fmod(motionX * camera->rotationSpeed, 360.0f);
     camera->yawCos = cos(DEG2RAD(camera->yaw));
     camera->yawSin = sin(DEG2RAD(camera->yaw));
 
-    camera->pitch -= motionY * camera->rotationSpeed * dt;  
+    camera->pitch -= motionY * camera->rotationSpeed;  
     // 89 degrees is the limit for pitch
     // This prevents the camera from flipping over
     if (camera->pitch > 89)

@@ -16,7 +16,7 @@
 #include "include/testing/cube.h"
 
 
-#define DEBUG 1
+#define DEBUG 0
 
 #define VSYNC 1
 

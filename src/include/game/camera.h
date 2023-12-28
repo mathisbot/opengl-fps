@@ -17,7 +17,7 @@
 #define JUMPSPEED 10.0f
 #define SPEED 10.0f
 #define SPRINTINGBOOST 1.5f
-#define SENSITIVITY 17.5f
+#define SENSITIVITY 0.13f
 #define DOUBLEJUMP 0
 
 
