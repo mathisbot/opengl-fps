@@ -133,7 +133,7 @@ void updateCamera(Camera* camera)
 void render(SDL_Window* window, Camera* camera, Level* level, Player* player)
 {
     // Clear screen
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
     glLoadIdentity();
 
     // Update camera
@@ -234,16 +234,23 @@ int main(int argc, char* argv[])
             SDL_GL_SetSwapInterval(1);
         }
     }
+
+    // View settings
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
     gluPerspective(VFOV, (GLfloat)WINDOW_WIDTH / (GLfloat)WINDOW_HEIGHT, ZNEAR, ZFAR);
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
+
     // Optimizations
+    // Depth test
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LESS);
+    // Backface culling
     glEnable(GL_CULL_FACE);
     glCullFace(GL_BACK);  // This is the default value
+    // Stencil test
+    glEnable(GL_STENCIL_TEST);
 
     // Loading player
     Player* player = createPlayer(HP, 1);
