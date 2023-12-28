@@ -62,7 +62,7 @@ Level* loadLevel(uint16_t levelNumber)
     }
 
     // Opening file
-    char path[256];
+    static char path[256];
     sprintf(path, "%slevel%d", LEVELPATH, levelNumber);
     FILE* file = fopen(path, "r");
     if (!file)
@@ -80,7 +80,7 @@ Level* loadLevel(uint16_t levelNumber)
     // Reading start position
     // Start position is stored in the following format:
     // start: <x> <y> <z> <yaw> <pitch>
-    float x, y, z, yaw, pitch;
+    static float x, y, z, yaw, pitch;
     fscanf(file, "start: %f %f %f %f %f\n", &x, &y, &z, &yaw, &pitch);
     level->startX = x;
     level->startY = y;
@@ -93,12 +93,12 @@ Level* loadLevel(uint16_t levelNumber)
     // enemies: <enemyCount>
     // <ex> <ey> <ez> <eyaw> <epitch> <etype>
     // ...
-    int enemyCount;
+    static int enemyCount;
     fscanf(file, "enemies: %d\n", &enemyCount);
 
     Enemy** enemies = (Enemy**)malloc(sizeof(Enemy*)*enemyCount);
-    float ex, ey, ez, eyaw, epitch;
-    int etype;
+    static float ex, ey, ez, eyaw, epitch;
+    static int etype;
     for (int i = 0; i < enemyCount; i++)
     {
         fscanf(file, "%f %f %f %f %f %d\n", &ex, &ey, &ez, &eyaw, &epitch, &etype);
@@ -122,10 +122,10 @@ Level* loadLevel(uint16_t levelNumber)
     // health: <healthCount>
     // <hx> <hy> <hz>
     // ...
-    int healthCount;
+    static int healthCount;
     fscanf(file, "health: %d\n", &healthCount);
 
-    float hx, hy, hz;
+    static float hx, hy, hz;
     for (int i = 0; i < healthCount; i++)
     {
         fscanf(file, "%f %f %f\n", &hx, &hy, &hz);
@@ -147,10 +147,10 @@ Level* loadLevel(uint16_t levelNumber)
     // ammo: <ammoCount>
     // <ax> <ay> <az>
     // ...
-    int ammoCount;
+    static int ammoCount;
     fscanf(file, "ammo: %d\n", &ammoCount);
 
-    float ax, ay, az;
+    static float ax, ay, az;
     for (int i = 0; i < ammoCount; i++)
     {
         fscanf(file, "%f %f %f\n", &ax, &ay, &az);
@@ -173,11 +173,11 @@ Level* loadLevel(uint16_t levelNumber)
     // textures: <textureCount>
     // <texturePath>
     // ...
-    int textureCount;
+    static int textureCount;
     fscanf(file, "textures: %d\n", &textureCount);
 
     Texture** textures = (Texture**)malloc(sizeof(Texture*)*textureCount);
-    char texturePath[128];
+    static char texturePath[128];
     for (int i = 0; i < textureCount; i++)
     {
         fscanf(file, "%s\n", texturePath);
@@ -209,24 +209,24 @@ Level* loadLevel(uint16_t levelNumber)
     // <tex_x> <tex_y> <wx> <wy> <wz>
     // ...
     // ...
-    int wallCount;
+    static int wallCount;
     fscanf(file, "walls: %d\n", &wallCount);
 
     Wall** walls = (Wall**)malloc(sizeof(Wall*)*wallCount);
-    int textureIndex;
+    static int textureIndex;
+    static int pointCount;
     for (int i = 0; i < wallCount; i++)
     {
         // Reading wall texture
         fscanf(file, "texture: %d\n", &textureIndex);
 
         // Reading points (vertices)
-        int pointCount;
         fscanf(file, "pointcount: %d\n", &pointCount);
 
         Point** points = (Point**)malloc(sizeof(Point*)*pointCount);
         for (int j = 0; j < pointCount; j++)
         {
-            float tex_x, tex_y, wx, wy, wz;
+            static float tex_x, tex_y, wx, wy, wz;
             fscanf(file, "%f %f %f %f %f\n", &tex_x, &tex_y, &wx, &wy, &wz);
             points[j] = createPoint(wx, wy, wz, tex_x, tex_y);
             if (!points[j])
