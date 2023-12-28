@@ -109,7 +109,7 @@ Inside the zip file are the 32- and 64-bit SDL library files. Choose the one tha
 ## Usage
 <a name="usage"></a>
 
-In its current state, the game contains only a black background with white squares representing the level. The player can move around properly, with a functioning first-person camera.
+In its current state, the game contains only a black background with colorful cubes and a brick wall as a placeholder for the level. The player can move around freely, with a fully functioning first-person camera.
 
 By default, the bindings are :
 - H - Forward
@@ -117,6 +117,7 @@ By default, the bindings are :
 - V - Left
 - N - Right
 - Space - Jump
+- Left click - Shoot
 
 Other bindings are set in the game files, but they are not used yet.
 
@@ -153,9 +154,7 @@ This roadmap helps organizing development and may be subject to change.
 - [ ] Collisions
 - [ ] Guns and enemies
 - [ ] Health packs and ammo
-- [ ] Polishing (Level finish, bug fixes, ...)
 - [ ] MVP
-- [ ] Optimisation
 - [ ] Level editor
 - [ ] Better lights
 - [ ] New functionalities
