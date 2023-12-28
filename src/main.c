@@ -16,7 +16,7 @@
 #include "include/testing/cube.h"
 
 
-#define DEBUG 0
+#define DEBUG 1
 
 #define VSYNC 1
 
@@ -87,6 +87,55 @@ void drawLevel(Level* level, Camera* camera)
 }
 
 /**
+ * @brief Draw the User Interface
+ * 
+ * @param w Window width
+ * @param h Window height
+ * @param pointerType Type of pointer to draw (0 : None, 1 : Crosshair)
+ */
+void drawUI(int w, int h, int pointerType)
+{
+    // Draw crosshair
+    if (pointerType == 1)
+    {
+        static float lineThickness = 2.0f;
+        static float length = 7.0f;
+
+        glMatrixMode(GL_PROJECTION);
+        glPushMatrix();
+        glLoadIdentity();
+        glOrtho(0, w, h, 0, -1, 1);
+        glMatrixMode(GL_MODELVIEW);
+        glPushMatrix();
+        glLoadIdentity();
+
+        // Crosshair
+        glLineWidth(lineThickness);
+        glBegin(GL_LINES);
+        glColor3f(1.0f, 1.0f, 1.0f);
+        glVertex2f(w/2, h/2 - length);
+        glVertex2f(w/2, h/2 + length);
+        glVertex2f(w/2 - length, h/2);
+        glVertex2f(w/2 + length, h/2);
+        glEnd();
+        // Outline
+        glLineWidth(lineThickness+2);
+        glBegin(GL_LINES);
+        glColor3f(0.0f, 0.0f, 0.0f);
+        glVertex2f(w/2, h/2 - length-1);
+        glVertex2f(w/2, h/2 + length+1);
+        glVertex2f(w/2 - length-1, h/2);
+        glVertex2f(w/2 + length+1, h/2);
+        glEnd();
+        
+        glMatrixMode(GL_PROJECTION);
+        glPopMatrix();
+        glMatrixMode(GL_MODELVIEW);
+        glPopMatrix();
+    }
+}
+
+/**
  * @brief Update game logic
  * 
  * @param camera Camera of the game
@@ -124,6 +173,12 @@ void updateCamera(Camera* camera)
  */
 void render(SDL_Window* window, Camera* camera, Level* level, Player* player)
 {
+    // Get window size
+    static int w=0, h=0;
+
+    if (w == 0 && h == 0)
+        SDL_GetWindowSize(SDL_GL_GetCurrentWindow(), &w, &h);
+
     // Clear screen
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
     glMatrixMode(GL_MODELVIEW);
@@ -149,7 +204,9 @@ void render(SDL_Window* window, Camera* camera, Level* level, Player* player)
     glPopMatrix();
 
     // Draw User Interface
-    // ...
+    glPushMatrix();
+    drawUI(w, h, 1);
+    glPopMatrix();
 
     // Flip screen
     SDL_GL_SwapWindow(window);
@@ -333,8 +390,8 @@ int main(int argc, char* argv[])
         }
         dt = dt_ms / 1000.0;
         last_frame = now;
-        // if (DEBUG)
-        //     printf("FPS : %f\n", 1.0 / dt);
+        if (DEBUG)
+            printf("FPS : %f\n", 1.0 / dt);
 
         // Event loop
         while (SDL_PollEvent(&e))
