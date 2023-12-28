@@ -14,13 +14,14 @@
 #include "include/game/textures.h"
 
 
+#define DEBUG 1
+
+#define VSYNC 1
+
 #define EYE_Y 1.8f
 #define VFOV 70.0f
-
 #define ZNEAR 0.0001f
 #define ZFAR  2048.0f
-
-#define DEBUG 0
 
 
 /*
@@ -208,6 +209,15 @@ int main(int argc, char* argv[])
         SDL_Quit();
         return EXIT_FAILURE;
     }
+    if (VSYNC)
+    {
+        // Try to enable Adaptative VSync
+        if (SDL_GL_SetSwapInterval(-1) == -1)
+        {
+            // If it fails, enable normal VSync
+            SDL_GL_SetSwapInterval(1);
+        }
+    }
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
     gluPerspective(VFOV, (float)WINDOW_WIDTH / (float)WINDOW_HEIGHT, ZNEAR, ZFAR);
@@ -292,6 +302,8 @@ int main(int argc, char* argv[])
         }
         dt = dt_ms / 1000.0;
         last_frame = now;
+        if (DEBUG)
+            printf("FPS : %f\n", 1.0 / dt);
 
         // Event loop
         while (SDL_PollEvent(&e))

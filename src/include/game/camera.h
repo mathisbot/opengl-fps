@@ -78,7 +78,6 @@ typedef struct {
  * @param map Key to open the map
  * @param pause Key to pause the game
  * @return Bindings* Pointer to bindings
- */
 */
 Bindings* createBindings(SDL_Scancode forward, SDL_Scancode backward, SDL_Scancode left, SDL_Scancode right, SDL_Scancode sprint, SDL_Scancode jump,
                         SDL_Scancode use, SDL_Scancode reload, SDL_Scancode inventory, SDL_Scancode map, SDL_Scancode pause);
@@ -87,7 +86,7 @@ Bindings* createBindings(SDL_Scancode forward, SDL_Scancode backward, SDL_Scanco
  * @brief Free bindings
  * 
  * @param bindings Pointer to bindings
- */
+*/
 void freeBindings(Bindings* bindings);
 
 
