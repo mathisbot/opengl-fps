@@ -151,7 +151,7 @@ This roadmap helps organizing development and may be subject to change.
 
 - [X] Opening a window
 - [X] First Person Camera
-- [ ] Level rendering
+- [X] Level rendering
 - [ ] Collisions
 - [ ] Guns and enemies
 - [ ] Health packs and ammo

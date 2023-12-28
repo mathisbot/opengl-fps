@@ -15,4 +15,4 @@
 */
 void drawCube(float x, float y, float z, float c);
 
-#endif // CUBE_H
+#endif

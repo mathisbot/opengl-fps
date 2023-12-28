@@ -31,6 +31,8 @@ TODO :
 - Rework level loading
     - Encoding?
         - Walls that share a side should be defined with only 2 points
+    - Collisions
+        - To ensure collisions are fast, sector should be defined
 */
 
 
