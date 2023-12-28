@@ -27,6 +27,8 @@
 /*
 TODO :
 - Rework level encoding (define sectors?)
+    - Error handling during loading
+        - Free memory
 - Level rendering needs to be optimized
     - https://en.wikibooks.org/wiki/OpenGL_Programming/Basics/2DObjects#Drawing_a_Series_of_Connected_Shapes_Efficiently
     - Apparently, vertices need to be defined counter-clockwise
@@ -214,7 +216,7 @@ int main(int argc, char* argv[])
         // Try to enable Adaptative VSync
         if (SDL_GL_SetSwapInterval(-1) == -1)
         {
-            // If it fails, enable normal VSync
+            // If it fails, try to enable VSync
             SDL_GL_SetSwapInterval(1);
         }
     }
