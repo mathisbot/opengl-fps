@@ -1,9 +1,11 @@
 #include "cube.h"
 
 
-void drawCube(float x, float y, float z) {
+void drawCube(float x, float y, float z, float c)
+{
     glPushMatrix();
     glTranslatef(x, y, z);
+    glScalef(c, c, c);
 
     glBegin(GL_QUADS);
 

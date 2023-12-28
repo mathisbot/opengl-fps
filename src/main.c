@@ -22,8 +22,8 @@
 
 #define EYE_Y 1.8f
 #define VFOV 70.0f
-#define ZNEAR 0.0001f
-#define ZFAR  2048.0f
+#define ZNEAR 0.05f
+#define ZFAR  32.0f
 
 
 /*
@@ -145,13 +145,13 @@ void render(SDL_Window* window, Camera* camera, Level* level, Player* player)
     glPopMatrix();
 
     glPushMatrix();
-    drawCube(3.0f, 0.0f, 3.0f);
+    drawCube(3.0f, 1.0f, 3.0f, 2.0f);
     glPopMatrix();
     glPushMatrix();
-    drawCube(-3.0f, 0.0f, 3.0f);
+    drawCube(-3.0f, 0.5f, 3.0f, 1.0f);
     glPopMatrix();
     glPushMatrix();
-    drawCube(3.0f, 0.0f, -3.0f);
+    drawCube(3.0f, 0.5f, -3.0f, 1.0f);
     glPopMatrix();
 
     // Draw User Interface
