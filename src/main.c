@@ -3,8 +3,9 @@
 #include <stdint.h>
 #include <stdlib.h>
 
-#include <SDL2/SDL.h>
-#include <SDL2/SDL_opengl.h>
+#include <SDL3/SDL.h>
+#include <SDL3/SDL_main.h>
+#include <SDL3/SDL_opengl.h>
 #include <GL/glu.h>
 
 #include "include/game/camera.h"
@@ -32,6 +33,8 @@ TODO :
 - Level rendering needs to be optimized
     - https://en.wikibooks.org/wiki/OpenGL_Programming/Basics/2DObjects#Drawing_a_Series_of_Connected_Shapes_Efficiently
     - Apparently, vertices need to be defined counter-clockwise
+- For audio support, add compile flag
+    - Windows : -lSDL2_mixer or -msse3 ?
 */
 
 
@@ -195,7 +198,7 @@ int main(int argc, char* argv[])
         SDL_Quit();
         return EXIT_FAILURE;
     }
-    SDL_ShowCursor(SDL_DISABLE);
+    SDL_HideCursor();
     // Handling fullscreen
     if (!DEBUG)
         SDL_SetWindowFullscreen(window, SDL_WINDOW_FULLSCREEN);
@@ -283,10 +286,10 @@ int main(int argc, char* argv[])
     }
 
     // Main loop
-    Uint64 last_frame = SDL_GetTicks64();
+    Uint64 last_frame = SDL_GetTicksNS();
     Uint64 now;
-    Uint32 dt_ms;
-    double dt;
+    Uint64 dt_ns;
+    long double dt;
     const Uint8* keyboardState = SDL_GetKeyboardState(NULL);
     bool quit = 0;
     bool pause = 0;
@@ -294,15 +297,9 @@ int main(int argc, char* argv[])
     while (!quit)
     {
         // Timing
-        now = SDL_GetTicks64();
-        dt_ms = now - last_frame;
-        // Don't run the game faster than 500 FPS
-        if (dt_ms < 3)
-        {
-            SDL_Delay(3 - dt_ms);
-            continue;
-        }
-        dt = dt_ms / 1000.0;
+        now = SDL_GetTicksNS();
+        dt_ns = now - last_frame;
+        dt = dt_ns / 1000000000.0;
         last_frame = now;
         if (DEBUG)
             printf("FPS : %f\n", 1.0 / dt);
@@ -322,9 +319,9 @@ int main(int argc, char* argv[])
                     {
                         pause = !pause;
                         if (pause)
-                            SDL_ShowCursor(SDL_ENABLE);
+                            SDL_ShowCursor();
                         else
-                            SDL_ShowCursor(SDL_DISABLE);
+                            SDL_HideCursor();
                     }
                     else if (e.key.keysym.scancode == camera->bindings->jump && !pause)
                         cameraJump(camera);

@@ -7,9 +7,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <SDL2/SDL.h>
-#include <SDL2/SDL_opengl.h>
-#include <GL/glu.h>
+#include <SDL3/SDL.h>
+#include <SDL3/SDL_opengl.h>
 
 
 #define TEXTUREPATH "assets/textures/"
