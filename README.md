@@ -166,7 +166,7 @@ This roadmap helps organizing development and may be subject to change.
 <a name="known-bugs"></a>
 
 Some bugs appear during development, but no direct solution is found. Here is a list of known bugs for which no solution has yet been found. By the way, if you manage to find a bug during a game, don't hesitate to share it in Issues.
-- For some graphics drivers, presumably for recent graphics cards, launching the game in full screen mode takes longer than expected, during which the screen remains dark (while the game runs correctly in the background).
+- For some graphics drivers, presumably for recent graphics cards, launching the game in full screen mode takes longer than expected: the screen remains dark (while the game runs correctly in the background).
 
 <p align="right">(<a href="#readme-top">Up</a>)</p>
 
