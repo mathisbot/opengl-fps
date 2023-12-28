@@ -16,7 +16,7 @@
 #include "include/testing/cube.h"
 
 
-#define DEBUG 1
+#define DEBUG 0
 
 #define VSYNC 1
 
@@ -31,9 +31,6 @@ TODO :
 - Rework level loading
     - Encoding?
         - Walls that share a side should be defined with only 2 points
-    - Error handling during loading?
-        - Is it good enough?
-        - Is it too much?
 */
 
 
@@ -43,8 +40,6 @@ TODO :
  * @param wall Wall to draw
  */
 void drawWall(Wall* wall) {
-    // glActiveTexture(GL_TEXTURE0);
-    // glEnable(GL_TEXTURE_2D);
     glBindTexture(GL_TEXTURE_2D, wall->textureID);
 
     if (wall->pointCount == 4 || wall->pointCount == 3)
@@ -62,7 +57,6 @@ void drawWall(Wall* wall) {
     // Defining vertices
     for (int i = 0; i < wall->pointCount; i++)
     {
-        glColor3f(1.0f, 1.0f, 1.0f);
         glTexCoord2f(wall->points[i]->tex_x, wall->points[i]->tex_y);
         glVertex3f(wall->points[i]->x, wall->points[i]->y, wall->points[i]->z);
     }
@@ -82,7 +76,9 @@ void drawLevel(Level* level, Camera* camera)
     glPushMatrix();
     for (int i = 0; i < level->wallCount; i++)
     {
+        glPushMatrix();
         drawWall(level->walls[i]);
+        glPopMatrix();
     }
     glPopMatrix();
 }
@@ -107,7 +103,6 @@ void update(Camera* camera, Level* level, Player* player, double dt)
  */
 void updateCamera(Camera* camera)
 {
-    glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
     gluLookAt(camera->x, camera->y + EYE_Y, camera->z,
               camera->x + camera->yawSin * camera->pitchCos,
@@ -128,6 +123,7 @@ void render(SDL_Window* window, Camera* camera, Level* level, Player* player)
 {
     // Clear screen
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+    glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
 
     // Update camera
@@ -220,6 +216,17 @@ int main(int argc, char* argv[])
         SDL_Quit();
         return EXIT_FAILURE;
     }
+    if (DEBUG)
+    {
+        printf("OpenGL version : %s\n", glGetString(GL_VERSION));
+        printf("OpenGL vendor : %s\n", glGetString(GL_VENDOR));
+        printf("OpenGL renderer : %s\n", glGetString(GL_RENDERER));
+        printf("OpenGL shading language version : %s\n", glGetString(GL_SHADING_LANGUAGE_VERSION));
+        printf("Vertex shader version : %s\n", glGetString(GL_VERTEX_SHADER));
+        printf("Vertex shader max attribribute count : %d\n", GL_MAX_VERTEX_ATTRIBS);
+        glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
+    }
+    glEnable(GL_TEXTURE_2D);
     if (VSYNC)
     {
         // Try to enable Adaptative VSync
@@ -323,8 +330,8 @@ int main(int argc, char* argv[])
         }
         dt = dt_ms / 1000.0;
         last_frame = now;
-        if (DEBUG)
-            printf("FPS : %f\n", 1.0 / dt);
+        // if (DEBUG)
+        //     printf("FPS : %f\n", 1.0 / dt);
 
         // Event loop
         while (SDL_PollEvent(&e))
@@ -347,6 +354,8 @@ int main(int argc, char* argv[])
                     }
                     else if (e.key.keysym.scancode == camera->bindings->jump && !pause)
                         cameraJump(camera);
+                    else if (e.key.keysym.scancode == SDL_SCANCODE_F1)
+                        quit = 1;
                     break;
                 // Rotate camera
                 case SDL_MOUSEMOTION:

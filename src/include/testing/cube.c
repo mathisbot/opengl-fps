@@ -3,48 +3,47 @@
 
 void drawCube(float x, float y, float z, float c)
 {
-    glPushMatrix();
     glTranslatef(x, y, z);
     glScalef(c, c, c);
 
     glBegin(GL_QUADS);
 
-    // Face avant (rouge)
+    // Red face
     glColor3f(1.0f, 0.0f, 0.0f);
     glVertex3f(1.0f, -1.0f, -1.0f);
     glVertex3f(-1.0f, -1.0f, -1.0f);
     glVertex3f(-1.0f, 1.0f, -1.0f);
     glVertex3f(1.0f, 1.0f, -1.0f);
 
-    // Face arrière (vert)
+    // Green face
     glColor3f(0.0f, 1.0f, 0.0f);
     glVertex3f(1.0f, -1.0f, 1.0f);
     glVertex3f(1.0f, 1.0f, 1.0f);
     glVertex3f(-1.0f, 1.0f, 1.0f);
     glVertex3f(-1.0f, -1.0f, 1.0f);
 
-    // Face gauche (bleu)
+    // Blue face
     glColor3f(0.0f, 0.0f, 1.0f);
     glVertex3f(-1.0f, -1.0f, -1.0f);
     glVertex3f(-1.0f, -1.0f, 1.0f);
     glVertex3f(-1.0f, 1.0f, 1.0f);
     glVertex3f(-1.0f, 1.0f, -1.0f);
 
-    // Face droite (jaune)
+    // Yellow face
     glColor3f(1.0f, 1.0f, 0.0f);
     glVertex3f(1.0f, -1.0f, 1.0f);
     glVertex3f(1.0f, -1.0f, -1.0f);
     glVertex3f(1.0f, 1.0f, -1.0f);
     glVertex3f(1.0f, 1.0f, 1.0f);
 
-    // Face haut (cyan)
+    // Cyan face
     glColor3f(0.0f, 1.0f, 1.0f);
     glVertex3f(1.0f, 1.0f, -1.0f);
     glVertex3f(-1.0f, 1.0f, -1.0f);
     glVertex3f(-1.0f, 1.0f, 1.0f);
     glVertex3f(1.0f, 1.0f, 1.0f);
 
-    // Face bas (violet)
+    // Purple face
     glColor3f(1.0f, 0.0f, 1.0f);
     glVertex3f(1.0f, -1.0f, 1.0f);
     glVertex3f(-1.0f, -1.0f, 1.0f);
@@ -52,5 +51,4 @@ void drawCube(float x, float y, float z, float c)
     glVertex3f(1.0f, -1.0f, -1.0f);
 
     glEnd();
-    glPopMatrix();
 }
