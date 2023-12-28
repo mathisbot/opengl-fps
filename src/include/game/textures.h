@@ -12,6 +12,7 @@
 
 
 #define TEXTUREPATH "assets/textures/"
+#define TEXTURE_REPEAT 1
 
 
 typedef struct {

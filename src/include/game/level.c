@@ -181,7 +181,7 @@ Level* loadLevel(uint16_t levelNumber)
     for (int i = 0; i < textureCount; i++)
     {
         fscanf(file, "%s\n", texturePath);
-        textures[i] = loadTexture(texturePath, 0);
+        textures[i] = loadTexture(texturePath, TEXTURE_REPEAT);
         if (!textures[i])
         {
             printf("Error creating texture %d\n", i);

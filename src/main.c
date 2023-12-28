@@ -16,7 +16,7 @@
 #include "include/testing/cube.h"
 
 
-#define DEBUG 0
+#define DEBUG 1
 
 #define VSYNC 1
 
@@ -41,6 +41,7 @@ TODO :
  */
 void drawWall(Wall* wall) {
     glBindTexture(GL_TEXTURE_2D, wall->textureID);
+    glColor4f(1.0, 1.0, 1.0, 1.0);
 
     if (wall->pointCount == 4 || wall->pointCount == 3)
         glBegin(GL_TRIANGLE_STRIP);
@@ -62,6 +63,8 @@ void drawWall(Wall* wall) {
     }
 
     glEnd();
+
+    glBindTexture(GL_TEXTURE_2D, 0);
 }
 
 /**

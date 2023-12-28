@@ -40,13 +40,13 @@ Texture* loadTexture(const char* path, bool repeat)
         // Clamp texture
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
-        static float borderColor[] = { 1.0f, 1.0f, 0.0f, 1.0f };
+        static float borderColor[] = { 0.0f, 0.0f, 0.0f, 1.0f };
         glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
     }
     glTexImage2D(
         GL_TEXTURE_2D, 0, GL_RGB,
         surface->w, surface->h, 0,
-        GL_RGB, GL_UNSIGNED_BYTE, surface->pixels
+        GL_BGR, GL_UNSIGNED_BYTE, surface->pixels
     );
 
     // Freeing SDL surface
