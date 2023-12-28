@@ -28,14 +28,14 @@ Texture* loadTexture(const char* path, bool repeat)
     glTexImage2D(
         GL_TEXTURE_2D, 0, GL_RGB,
         surface->w, surface->h, 0,
-        GL_BGR, GL_UNSIGNED_BYTE, surface->pixels
+        GL_RGB, GL_UNSIGNED_BYTE, surface->pixels
     );
 
     // Freeing SDL surface
     SDL_FreeSurface(surface);
 
     // Setting texture parameters
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     // Repeat texture
     if (repeat)

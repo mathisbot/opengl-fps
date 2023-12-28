@@ -103,6 +103,15 @@ Level* loadLevel(uint16_t levelNumber)
     {
         fscanf(file, "%f %f %f %f %f %d\n", &ex, &ey, &ez, &eyaw, &epitch, &etype);
         enemies[i] = createEnemy(ex, ey, ez, eyaw, epitch, etype);
+        if (!enemies[i])
+        {
+            printf("Error creating enemy %d\n", i);
+            free(level);
+            for (int j = 0; j < i; j++)
+                freeEnemy(enemies[j]);
+            free(enemies);
+            return NULL;
+        }
     }
 
     level->enemies = enemies;
@@ -121,6 +130,16 @@ Level* loadLevel(uint16_t levelNumber)
     {
         fscanf(file, "%f %f %f\n", &hx, &hy, &hz);
         // TODO: add health packs
+        if (0)
+        {
+            printf("Error creating healthpack %d\n", i);
+            free(level);
+            for (int j = 0; j < enemyCount; j++)
+                freeEnemy(enemies[j]);
+            free(enemies);
+            // TODO: free health packs
+            return NULL;
+        }
     }
 
     // Reading ammo
@@ -136,6 +155,17 @@ Level* loadLevel(uint16_t levelNumber)
     {
         fscanf(file, "%f %f %f\n", &ax, &ay, &az);
         // TODO: add ammo packs
+        if (0)
+        {
+            printf("Error creating healthpack %d\n", i);
+            free(level);
+            for (int j = 0; j < enemyCount; j++)
+                freeEnemy(enemies[j]);
+            free(enemies);
+            // TODO: free health packs
+            // TODO: free ammo
+            return NULL;
+        }
     }
 
     // Reading textures to load in memory
@@ -154,7 +184,16 @@ Level* loadLevel(uint16_t levelNumber)
         textures[i] = loadTexture(texturePath, 0);
         if (!textures[i])
         {
-            printf("Error loading texture %s\n", texturePath);
+            printf("Error creating texture %d\n", i);
+            free(level);
+            for (int j = 0; j < enemyCount; j++)
+                freeEnemy(enemies[j]);
+            free(enemies);
+            // TODO: free health packs
+            // TODO: free ammo
+            for (int j = 0; j < i; j++)
+                freeTexture(textures[j]);
+            free(textures);
             return NULL;
         }
     }
@@ -190,6 +229,26 @@ Level* loadLevel(uint16_t levelNumber)
             float tex_x, tex_y, wx, wy, wz;
             fscanf(file, "%f %f %f %f %f\n", &tex_x, &tex_y, &wx, &wy, &wz);
             points[j] = createPoint(wx, wy, wz, tex_x, tex_y);
+            if (!points[j])
+            {
+                printf("Error creating point %d of wall %d\n", j, i);
+                free(level);
+                for (int k = 0; k < enemyCount; k++)
+                    freeEnemy(enemies[k]);
+                free(enemies);
+                // TODO: free health packs
+                // TODO: free ammo
+                for (int k = 0; k < textureCount; k++)
+                    freeTexture(textures[k]);
+                free(textures);
+                for (int k = 0; k < j; k++)
+                    freePoint(points[i]);
+                free(points);
+                for (int k = 0; k < i; k++)
+                    freeWall(walls[i]);
+                free(walls);
+                return NULL;
+            }
         }
 
         if (textureIndex >= textureCount)
@@ -199,6 +258,23 @@ Level* loadLevel(uint16_t levelNumber)
         }
 
         walls[i] = createWall(points, pointCount, textures[textureIndex]->id);
+        if (!walls[i])
+        {
+            printf("Error creating texture %d\n", i);
+            free(level);
+            for (int j = 0; j < enemyCount; j++)
+                freeEnemy(enemies[j]);
+            free(enemies);
+            // TODO: free health packs
+            // TODO: free ammo
+            for (int j = 0; j < textureCount; j++)
+                freeTexture(textures[i]);
+            free(textures);
+            for (int j = 0; j < i; j++)
+                freeWall(walls[i]);
+            free(walls);
+            return NULL;
+        }
     }
 
     level->walls = walls;
@@ -211,23 +287,17 @@ void freeLevel(Level* level)
 {
     // Freeing enemies
     for (int i = 0; i < level->enemyCount; i++)
-    {
         freeEnemy(level->enemies[i]);
-    }
     free(level->enemies);
 
     // Freeing textures
     for (int i = 0; i < level->textureCount; i++)
-    {
         freeTexture(level->textures[i]);
-    }
     free(level->textures);
 
     // Freeing walls
     for (int i = 0; i < level->wallCount; i++)
-    {
         freeWall(level->walls[i]);
-    }
     free(level->walls);
 
     // Freeing level

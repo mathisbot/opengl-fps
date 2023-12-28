@@ -28,12 +28,12 @@
 
 /*
 TODO :
-- Rework level encoding (define sectors?)
-    - Error handling during loading
-        - Free memory
-- Level rendering needs to be optimized
-    - https://en.wikibooks.org/wiki/OpenGL_Programming/Basics/2DObjects#Drawing_a_Series_of_Connected_Shapes_Efficiently
-    - Vertices need to be defined counter-clockwise
+- Rework level loading
+    - Encoding?
+        - Walls that share a side should be defined with only 2 points
+    - Error handling during loading?
+        - Is it good enough?
+        - Is it too much?
 */
 
 
@@ -48,20 +48,13 @@ void drawWall(Wall* wall) {
     glBindTexture(GL_TEXTURE_2D, wall->textureID);
 
     if (wall->pointCount == 4 || wall->pointCount == 3)
-    {
-        // GL_TRIANGLE_STRIP allows to render 2 triangles with 4 points (one connected side)
-        // Rendering 2 triangles is way more efficient than rendering quads :
-        // GPUs only render triangles, CPUs have to break quads into triangles
         glBegin(GL_TRIANGLE_STRIP);
-    }
+    // Very inefficient, should not be used
     else if (wall->pointCount > 4)
-    {
-        // Very inefficient, should not be used
         glBegin(GL_POLYGON);
-    }
+    // Unknown, skipping
     else
     {
-        // Unknown, skipping
         printf("Unknown pointCount : %d", wall->pointCount);
         return;
     }
@@ -69,6 +62,7 @@ void drawWall(Wall* wall) {
     // Defining vertices
     for (int i = 0; i < wall->pointCount; i++)
     {
+        glColor3f(1.0f, 1.0f, 1.0f);
         glTexCoord2f(wall->points[i]->tex_x, wall->points[i]->tex_y);
         glVertex3f(wall->points[i]->x, wall->points[i]->y, wall->points[i]->z);
     }
@@ -144,6 +138,7 @@ void render(SDL_Window* window, Camera* camera, Level* level, Player* player)
     drawLevel(level, camera);
     glPopMatrix();
 
+    // Testing cubes
     glPushMatrix();
     drawCube(3.0f, 1.0f, 3.0f, 2.0f);
     glPopMatrix();

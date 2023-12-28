@@ -45,24 +45,25 @@ typedef struct {
     int textureCount;
 } Level;
 
-// Level file structure:
-//
-// start: startX startY startZ startYaw startPitch
-// enemies: x y z yaw pitch type
-// health: healthcount
-// x y z
-// ammo: ammocount
-// x y z
-// textures: texturecount
-// path
-// wall: wallcount
-// texture: textureID
-// pointcount: pointcount
-// tex_x tex_y x y z
-// tex_x tex_y x y z
-// tex_x tex_y x y z
-// tex_x tex_y x y z
-// ...
+/* Level file structure:
+
+start: startX startY startZ startYaw startPitch
+enemies: x y z yaw pitch type
+health: healthcount
+x y z
+ammo: ammocount
+x y z
+textures: texturecount
+relativePathToTexture
+wall: wallcount
+texture: textureID
+pointcount: pointcount
+tex_x tex_y x y z  // top left
+tex_x tex_y x y z  // bottom left
+tex_x tex_y x y z  // top right
+tex_x tex_y x y z  // bottom right
+...
+*/
 
 
 /**
