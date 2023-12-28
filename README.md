@@ -128,6 +128,7 @@ MVP must be a standard retro FPS:
 - [ ] Level rendering
 - [ ] Collisions
 - [ ] Guns and enemies
+- [ ] Health packs and ammo
 - [ ] Polishing (Level finish, bug fixes, ...)
 - [ ] MVP
 - [ ] Better lights

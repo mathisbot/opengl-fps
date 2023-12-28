@@ -8,8 +8,6 @@
 
 
 #define HP 100.0f
-#define SPEED 10.0f
-#define SENSITIVITY 17.5f
 
 
 typedef struct {

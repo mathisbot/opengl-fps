@@ -254,7 +254,8 @@ int main(int argc, char* argv[])
         SDL_SCANCODE_ESCAPE  // Pause
     };
     Camera* camera = initCamera(level->startX, level->startY, level->startZ,
-                                level->startYaw, level->startPitch, SPEED, SENSITIVITY, bindings);
+                                level->startYaw, level->startPitch, SPEED, SPRINTINGBOOST,
+                                SENSITIVITY, bindings, DOUBLEJUMP);
     if (!camera)
     {
         fprintf(stderr, "Error creating camera\n");
@@ -303,12 +304,20 @@ int main(int argc, char* argv[])
                 // Pause
                 case SDL_KEYDOWN:
                     if (e.key.keysym.scancode == SDL_SCANCODE_ESCAPE)
+                    {
                         pause = !pause;
+                        if (pause)
+                            SDL_ShowCursor(SDL_ENABLE);
+                        else
+                            SDL_ShowCursor(SDL_DISABLE);
+                    }
+                    else if (e.key.keysym.scancode == SDL_SCANCODE_SPACE && !pause)
+                        cameraJump(camera);
                     break;
                 // Rotate camera
                 case SDL_MOUSEMOTION:
                     // Power saving
-                    if (e.motion.xrel == 0 && e.motion.yrel == 0)
+                    if ((e.motion.xrel == 0 && e.motion.yrel == 0) || (pause))
                         break;
                     handleCameraRotation(camera, e.motion.xrel, e.motion.yrel, dt);
                     // Ensure mouse stays in the middle of the screen
@@ -316,7 +325,7 @@ int main(int argc, char* argv[])
                     break;
                 // Shoot
                 case SDL_MOUSEBUTTONDOWN:
-                    if (e.button.button == SDL_BUTTON_LEFT)
+                    if (e.button.button == SDL_BUTTON_LEFT && !pause)
                         // Not implemented yet
                         printf("Shoot !\n");
                     break;
@@ -332,7 +341,13 @@ int main(int argc, char* argv[])
             break;
         // Move camera
         SDL_PumpEvents();
-        handleCameraMovement(camera, keyboardState, dt);
+        if (!pause)
+        {
+            if (keyboardState[camera->bindings.sprint])
+                handleCameraMovement(camera, keyboardState, dt, camera->sprintingBoost);
+            else
+                handleCameraMovement(camera, keyboardState, dt, 1.0f);
+        }
 
         // Game logic
         if (!pause)

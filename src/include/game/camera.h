@@ -9,11 +9,16 @@
 #include <SDL2/SDL.h>
 
 
+// This will be rounded depending on float precision
 #define PI 3.14159265358979323846f
 #define DEG2RAD(_d) ((_d) * (PI / 180.0f))
 
 #define GRAVITY 20.0f
 #define JUMPSPEED 10.0f
+#define SPEED 10.0f
+#define SPRINTINGBOOST 1.5f
+#define SENSITIVITY 17.5f
+#define DOUBLEJUMP 0
 
 
 typedef struct {
@@ -37,18 +42,24 @@ typedef struct {
     float yaw;  // Degrees
     float pitch;  // Degrees
     float movingSpeed;
+    float sprintingBoost;
     float rotationSpeed;
     float xVelocity;
     float yVelocity;
     float zVelocity;
     Bindings bindings;
     bool onGround;
+    bool canDoubleJump;
+    bool hasDoubleJump;
 
     // Used for optimization
+    // These quantities are used multiple times each frames
     float yawCos;  // Cosine of yaw
     float yawSin;  // Sine of yaw
     float pitchCos;  // Cosine of pitch
-    float pitchSin;  // Sine of pitch    
+    float pitchSin;  // Sine of pitch  
+    float movCos;; // camera->movingSpeed * camera->yawCos * dt
+    float movSin;; // camera->movingSpeed * camera->yawSin * dt
 } Camera;
 
 
@@ -65,7 +76,7 @@ typedef struct {
  * @param bindings Bindings of the camera
  * @return Camera* Pointer to the camera
 */
-Camera* initCamera(float x, float y, float z, float yaw, float pitch, float movingSpeed, float rotationSpeed, Bindings bindings);
+Camera* initCamera(float x, float y, float z, float yaw, float pitch, float movingSpeed, float sprintingBoost, float rotationSpeed, Bindings bindings, bool canDoubleJump);
 
 /**
  * @brief Free a camera
@@ -81,8 +92,16 @@ void freeCamera(Camera* camera);
  * @param camera Pointer to the camera
  * @param keyboardState Pointer to keyboard state
  * @param dt Time since last frame in seconds
+ * @param speedMultiplier Coefficient multiplying forward movement (e.g. sprinting)
 */
-void handleCameraMovement(Camera* camera, const Uint8* keyboardState, double dt);
+void handleCameraMovement(Camera* camera, const Uint8* keyboadState, double dt, float speedMultiplier);
+
+/**
+ * @brief Make the camera jump
+ * 
+ * @param camera Pointer to the camera
+*/
+void cameraJump(Camera* camera);
 
 /**
  * @brief Update the camera rotation
