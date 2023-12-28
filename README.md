@@ -61,9 +61,12 @@ This means that rendering techniques are close to what was done before, such as 
 <a name="getting-started"></a>
 
 If you just want to try out the game, simply download the `release.zip` file.
+
 Currently, the game files contained in this directory are only compatible with 64-bit Windows systems. In the future, I plan to compile the project for other widespread systems (Linux and 32-bit).
+
 For the moment, no menu has been implemented: there's no way to change your keys from within the game.
-Bindings are detailed in <a href="#usage">Usage</a>.
+Furthermore, it is likely that default bindings won't be modifiable in the final version of the game.
+Current bindings are detailed in <a href="#usage">Usage</a>.
 
 Otherwise, follow these steps:
 
@@ -114,6 +117,8 @@ By default, the bindings are :
 - V - Left
 - N - Right
 - Space - Jump
+
+Other bindings are set in the game files, but they are not used yet.
 
 <p align="right">(<a href="#readme-top">Up</a>)</p>
 
