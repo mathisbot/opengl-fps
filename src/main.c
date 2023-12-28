@@ -13,6 +13,8 @@
 #include "include/game/enemy.h"
 #include "include/game/textures.h"
 
+#include "include/testing/cube.h"
+
 
 #define DEBUG 1
 
@@ -31,7 +33,7 @@ TODO :
         - Free memory
 - Level rendering needs to be optimized
     - https://en.wikibooks.org/wiki/OpenGL_Programming/Basics/2DObjects#Drawing_a_Series_of_Connected_Shapes_Efficiently
-    - Apparently, vertices need to be defined counter-clockwise
+    - Vertices need to be defined counter-clockwise
 */
 
 
@@ -41,6 +43,8 @@ TODO :
  * @param wall Wall to draw
  */
 void drawWall(Wall* wall) {
+    // glActiveTexture(GL_TEXTURE0);
+    // glEnable(GL_TEXTURE_2D);
     glBindTexture(GL_TEXTURE_2D, wall->textureID);
 
     if (wall->pointCount == 4 || wall->pointCount == 3)
@@ -140,6 +144,16 @@ void render(SDL_Window* window, Camera* camera, Level* level, Player* player)
     drawLevel(level, camera);
     glPopMatrix();
 
+    glPushMatrix();
+    drawCube(3.0f, 0.0f, 3.0f);
+    glPopMatrix();
+    glPushMatrix();
+    drawCube(-3.0f, 0.0f, 3.0f);
+    glPopMatrix();
+    glPushMatrix();
+    drawCube(3.0f, 0.0f, -3.0f);
+    glPopMatrix();
+
     // Draw User Interface
     // ...
 
@@ -222,11 +236,14 @@ int main(int argc, char* argv[])
     }
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    gluPerspective(VFOV, (float)WINDOW_WIDTH / (float)WINDOW_HEIGHT, ZNEAR, ZFAR);
+    gluPerspective(VFOV, (GLfloat)WINDOW_WIDTH / (GLfloat)WINDOW_HEIGHT, ZNEAR, ZFAR);
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
+    // Optimizations
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LESS);
+    glEnable(GL_CULL_FACE);
+    glCullFace(GL_BACK);  // This is the default value
 
     // Loading player
     Player* player = createPlayer(HP, 1);
