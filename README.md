@@ -2,12 +2,12 @@
 
 <br />
 <div align="center">
-    <img src="https://github.com/othneildrew/Best-README-Template/raw/master/images/logo.png" alt="Logo" width="80" height="80">
+    <img src="src/assets/images/icon.webp" alt="Logo" width="128" height="128">
 
   <h3 align="center">Retro FPS</h3>
 
   <p align="center">
-    This project aims to recreate a retro FPS in C using only one low-level library.
+    This project aims to recreate a simple FPS in C using only one low-level library.
   </p>
 </div>
 
@@ -42,8 +42,8 @@
 ## About
 <a name="about"></a>
 
-This project aims to recreate a retro/doomlike FPS, using the C langage and only one, low-level, library : SDL2.
-It should evolve over time, once the main project is finished.
+The aim of this project is to recreate a simple FPS game, using techniques from the 1990's that allows for advanced optimization. In this case, I chose the C language along with only one very low-level library: SDL2. This library talks to the operating system API to display what is requested on the screen. Its greatest advantage is its compatibility with a very large number of systems, as well as its lightness.
+This means that rendering techniques are close to what was done before, such as in the first Doom game. However, the game should feature modern improvements such as movements in all 3 axis.
 
 <p align="right">(<a href="#readme-top">Up</a>)</p>
 
@@ -52,7 +52,7 @@ It should evolve over time, once the main project is finished.
 <a name="built-with"></a>
 
 * [C][c-url]
-* [SDL][sdl-url]
+* [SDL2][sdl-url]
 
 <p align="right">(<a href="#readme-top">Up</a>)</p>
 
@@ -61,7 +61,9 @@ It should evolve over time, once the main project is finished.
 <a name="getting-started"></a>
 
 If you just want to try out the game, simply download the `release.zip` file.
-However, there's currently no way to change the key bindings, and I'm left-handed.
+Currently, the game files contained in this directory are only compatible with 64-bit Windows systems. In the future, I plan to compile the project for other widespread systems (Linux and 32-bit).
+For the moment, no menu has been implemented: there's no way to change your keys from within the game.
+Bindings are detailed in <a href="#usage">Usage</a>.
 
 Otherwise, follow these steps:
 
@@ -79,20 +81,24 @@ Inside the zip file are the 32- and 64-bit SDL library files. Choose the one tha
   ```sh
   git clone https://github.com/Dozer35/retro-fps.git
   ```
-2. Add the `include/SDL2` and `lib` directories of the SDL library files you downloaded earlier to `src`. Also put `bin/SDL2.dll` inside of `src`
+2. Add the `include` and `lib` directories of the SDL library files you downloaded earlier to `src`. Also put `bin/SDL2.dll` inside of `src`
   The project tree should then contain :
   - `src/include/SDL2/*.h`
   - `src/lib/*.a`
   - `src/SDL2.dll`
+
+    I didn't include these files in the repository because I didn't write them myself. Besides, the repository would be unnecessarily heavier.
 3. WINDOWS - Compile the project with :
   ```sh
     gcc -Wall -I src/include -L src/lib -o src/retro_fps src/main.c $(Get-ChildItem -Recurse -Path src/include -Filter \"*.c\").FullName -lmingw32 -lSDL2main -lSDL2 -lopengl32 -lglu32
   ```
+
   UNIX - A Makefile is available. Alternatively, compile the project with :
+
   ```
     gcc -Wall -I src/include -L src/lib -o src/retro_fps src/main.c $(find src/include -name "*.c") -lmingw32 -lSDL2main -lSDL2 -lopengl32 -lglu32
   ```
-  A compiled file will then be generated as `src/retro_fps` or `src/retro_fps.exe`.
+  A compiled file will then be generated as `src/retro_fps` or `src/retro_fps.exe`, depending on your OS.
 
 
 <p align="right">(<a href="#readme-top">Up</a>)</p>
@@ -100,39 +106,53 @@ Inside the zip file are the 32- and 64-bit SDL library files. Choose the one tha
 ## Usage
 <a name="usage"></a>
 
-Currenlty, the game features a fully functional first person camera.
-It can also read files to import and render a level.
-Move with HVBN (will be changed) and jump with Space.
+In its current state, the game contains only a black background with white squares representing the level. The player can move around properly, with a functioning first-person camera.
+
+By default, the bindings are :
+- H - Forward
+- B - Reverse
+- V - Left
+- N - Right
+- Space - Jump
 
 <p align="right">(<a href="#readme-top">Up</a>)</p>
 
 ## Product
 <a name="product"></a>
 
+This section organizes the development process, defining a minimum product and a roadmap for additions.
+
 ### MVP
 <a name="mvp"></a>
 
-MVP must be a standard retro FPS:
-- First-person camera
+Achieving the Minimum Viable Product would already be a success. Further development is not guaranteed and may depend on factors such as development time, will or other external factors (free time, ...).
+
+MVP should be a classic, straightforward FPS with a retro feel:
+- Full first-person camera
 - Retro 3D rendering
 - Guns
 - Enemies
+
+Overall, the game MUST be playable and enjoyable.
 
 <p align="right">(<a href="#readme-top">Up</a>)</p>
 
 ### Roadmap
 <a name="roadmap"></a>
 
+This roadmap helps organizing development and may be subject to change.
+
 - [X] Opening a window
-- [X] Working First Person Camera
+- [X] First Person Camera
 - [ ] Level rendering
 - [ ] Collisions
 - [ ] Guns and enemies
 - [ ] Health packs and ammo
 - [ ] Polishing (Level finish, bug fixes, ...)
 - [ ] MVP
-- [ ] Better lights
+- [ ] Optimisation
 - [ ] Level editor
+- [ ] Better lights
 - [ ] New functionalities
 
 <p align="right">(<a href="#readme-top">Up</a>)</p>

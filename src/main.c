@@ -25,12 +25,12 @@
 
 /*
 TODO :
-- Clean up Level structure (abusive use of pointers?)
-    - Don't forget to modify level.h, level.c, main.c
+- Rework level encoding (define sectors?)
 - Level rendering needs to be optimized
     - https://en.wikibooks.org/wiki/OpenGL_Programming/Basics/2DObjects#Drawing_a_Series_of_Connected_Shapes_Efficiently
     - Apparently, vertices need to be defined counter-clockwise
 */
+
 
 /**
  * @brief Draw a wall
@@ -303,7 +303,7 @@ int main(int argc, char* argv[])
                     break;
                 // Pause
                 case SDL_KEYDOWN:
-                    if (e.key.keysym.scancode == SDL_SCANCODE_ESCAPE)
+                    if (e.key.keysym.scancode == camera->bindings.pause)
                     {
                         pause = !pause;
                         if (pause)
@@ -311,7 +311,7 @@ int main(int argc, char* argv[])
                         else
                             SDL_ShowCursor(SDL_DISABLE);
                     }
-                    else if (e.key.keysym.scancode == SDL_SCANCODE_SPACE && !pause)
+                    else if (e.key.keysym.scancode == camera->bindings.jump && !pause)
                         cameraJump(camera);
                     break;
                 // Rotate camera
