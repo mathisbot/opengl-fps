@@ -47,7 +47,7 @@ typedef struct {
     float xVelocity;
     float yVelocity;
     float zVelocity;
-    Bindings bindings;
+    Bindings* bindings;
     bool onGround;
     bool canDoubleJump;
     bool hasDoubleJump;
@@ -64,6 +64,35 @@ typedef struct {
 
 
 /**
+ * @brief Create a Bindings object
+ * 
+ * @param forward Key to move forward
+ * @param backward Key to move backward
+ * @param left Key to move forward
+ * @param right Key to move right
+ * @param sprint Key to move left
+ * @param jump Key to jump
+ * @param use Key to jump
+ * @param reload Key to reload
+ * @param inventory Key to open inventory
+ * @param map Key to open the map
+ * @param pause Key to pause the game
+ * @return Bindings* Pointer to bindings
+ */
+*/
+Bindings* createBindings(SDL_Scancode forward, SDL_Scancode backward, SDL_Scancode left, SDL_Scancode right, SDL_Scancode sprint, SDL_Scancode jump,
+                        SDL_Scancode use, SDL_Scancode reload, SDL_Scancode inventory, SDL_Scancode map, SDL_Scancode pause);
+
+/**
+ * @brief Free bindings
+ * 
+ * @param bindings Pointer to bindings
+ */
+void freeBindings(Bindings* bindings);
+
+
+
+/**
  * @brief Initialize a camera
  * 
  * @param x X position of the camera
@@ -76,7 +105,7 @@ typedef struct {
  * @param bindings Bindings of the camera
  * @return Camera* Pointer to the camera
 */
-Camera* initCamera(float x, float y, float z, float yaw, float pitch, float movingSpeed, float sprintingBoost, float rotationSpeed, Bindings bindings, bool canDoubleJump);
+Camera* initCamera(float x, float y, float z, float yaw, float pitch, float movingSpeed, float sprintingBoost, float rotationSpeed, Bindings* bindings, bool canDoubleJump);
 
 /**
  * @brief Free a camera

@@ -241,7 +241,7 @@ int main(int argc, char* argv[])
     }
 
     // Loading camera
-    Bindings bindings = {
+    Bindings* bindings = createBindings(
         SDL_SCANCODE_H,  // Forward
         SDL_SCANCODE_B,  // Backward
         SDL_SCANCODE_V,  // Left
@@ -251,8 +251,9 @@ int main(int argc, char* argv[])
         SDL_SCANCODE_U,  // Use
         SDL_SCANCODE_I,  // Reload
         SDL_SCANCODE_E,  // Inventory
+        SDL_SCANCODE_K,  // Map
         SDL_SCANCODE_ESCAPE  // Pause
-    };
+    );
     Camera* camera = initCamera(level->startX, level->startY, level->startZ,
                                 level->startYaw, level->startPitch, SPEED, SPRINTINGBOOST,
                                 SENSITIVITY, bindings, DOUBLEJUMP);
@@ -303,7 +304,7 @@ int main(int argc, char* argv[])
                     break;
                 // Pause
                 case SDL_KEYDOWN:
-                    if (e.key.keysym.scancode == camera->bindings.pause)
+                    if (e.key.keysym.scancode == camera->bindings->pause)
                     {
                         pause = !pause;
                         if (pause)
@@ -311,7 +312,7 @@ int main(int argc, char* argv[])
                         else
                             SDL_ShowCursor(SDL_DISABLE);
                     }
-                    else if (e.key.keysym.scancode == camera->bindings.jump && !pause)
+                    else if (e.key.keysym.scancode == camera->bindings->jump && !pause)
                         cameraJump(camera);
                     break;
                 // Rotate camera
@@ -343,7 +344,7 @@ int main(int argc, char* argv[])
         SDL_PumpEvents();
         if (!pause)
         {
-            if (keyboardState[camera->bindings.sprint])
+            if (keyboardState[camera->bindings->sprint])
                 handleCameraMovement(camera, keyboardState, dt, camera->sprintingBoost);
             else
                 handleCameraMovement(camera, keyboardState, dt, 1.0f);
