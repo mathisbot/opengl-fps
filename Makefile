@@ -1,7 +1,7 @@
 CC = gcc
 CFLAGS = -Wall -I src/include
 LDFLAGS = -L src/lib
-LIBS = -lmingw32 -lSDL2main -lSDL2 -lopengl32 -lglu32
+LIBS = -lmingw32 -lSDL2main -lSDL2 -lSDL2_mixer -lopengl32 -lglu32
 
 SRC_DIR = src
 INCLUDE_DIR = $(SRC_DIR)/include

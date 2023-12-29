@@ -50,15 +50,24 @@
 ## About
 <a name="about"></a>
 
-The aim of this project is to recreate a simple FPS game, using techniques from the 1990's that allows for advanced optimization.
-In this case, I chose the C language along with only one very low-level library: SDL2.
+The aim of this project is to create a simple FPS game, using no game engine. This allows for a low-level approach to game design, and therefore very thorough optimization.
 
-This means that rendering techniques are close to what was done before, such as in the first Doom game. However, the game should feature modern improvements such as movements in all 3 axis.
+In this case, I chose the C language along with only one very low-level library: SDL2.
+This means that rendering methods are close to nil, and that I had to start from scratch (although SDL can take some of the work out of the equation).
+
+Although the context of the project resembles that of the 1990s, the game's content should resemble a modern FPS with simplified graphics. The game should therefore include familiar mechanics.
 
 <p align="right">(<a href="#readme-top">Up</a>)</p>
 
 ### About SDL2
 <a name="about-sdl2"></a>
+
+#### Context
+Generally speaking, when you want to display something on a screen, you have to go through a large number of steps.
+Fortunately, over the years, this long process has been divided over the different component of computers.
+From a development point of view, it is needed to discuss with the OS and graphic card drivers. This is done using standardized languages. The best-known is DirectX, but OpenGL is open-source and, above all, easier to learn/use.
+
+#### SDL
 
 > Simple DirectMedia Layer is a cross-platform development library designed to provide low level access to audio, keyboard, mouse, joystick, and graphics hardware via OpenGL and Direct3D.
 
@@ -81,7 +90,14 @@ Among the many choices available (GLFW, GLUT, SFML, ...), one stood out for its 
 <a name="built-with"></a>
 
 * [C][c-url]
-* [SDL2][sdl-url]
+* [SDL2][sdl-url] (2.28.5)
+* [SDL_mixer][sdl_mixer-url] (2.6.3)
+
+#### Quick note
+
+SDL_mixer is not part of the default SDL library. However, it is an official SDL extension promoted on the SDL website.
+
+It is also practically indispensable when developing a game, as it allows several sounds to be played at the same time, which is impossible with SDL alone.
 
 <p align="right">(<a href="#readme-top">Up</a>)</p>
 
@@ -89,21 +105,29 @@ Among the many choices available (GLFW, GLUT, SFML, ...), one stood out for its 
 ## Getting started
 <a name="getting-started"></a>
 
+#### Try the game
 If you just want to try out the game, simply download the `release.zip` file.
 
-Currently, the game files contained in this directory are only compatible with 64-bit Windows systems. In the future, I plan to compile the project for other widespread systems (Linux and 32-bit).
+Please note that the game files given in this zip-file are only compatible with 64-bit Windows systems. In the future, I plan to compile the project for other widespread systems (Linux and 32-bit).
 
-For the moment, no menu has been implemented: there's no way to change your keys from within the game.
-Furthermore, it is likely that default bindings won't be modifiable in the final version of the game.
+For the moment, no interface or menu has been implemented, so that there's no way to change  key bindings from within the game.
+Furthermore, it is likely that default bindings won't be modifiable in the final version of the game (you will only be able to modify bindings for the game session).
+
 Current bindings are detailed in <a href="#usage">Usage</a>.
 
+#### Edit code
+
 Otherwise, follow these steps:
+
+<p align="right">(<a href="#readme-top">Up</a>)</p>
 
 ### Prerequisites
 <a name="prerequisites"></a>
 
 * C : Any compiler will do. I personally used GCC 13.2.0 through [WinLibs][winlibs-url].
-* SDL : Download the development (`devel`) version of SDL2. I chose the `mingw` one.
+* SDL2 : Download the development (`devel`) version of SDL2. I chose the `mingw` one.
+Inside the zip file are the 32- and 64-bit SDL library files. Choose the one that suits your system.
+* SDL_mixer : As with SDL, download the development (`devel`) version of SDL_mixer. I chose the `mingw` one.
 Inside the zip file are the 32- and 64-bit SDL library files. Choose the one that suits your system.
 
 ### Installation
@@ -113,22 +137,24 @@ Inside the zip file are the 32- and 64-bit SDL library files. Choose the one tha
   ```sh
   git clone https://github.com/Dozer35/retro-fps.git
   ```
-2. Add the `include` and `lib` directories of the SDL library files you downloaded earlier to `src`. Also put `bin/SDL2.dll` inside of `src`
+2. Add the `include` and `lib` directories of the SDL library files you downloaded earlier to `src`. Also put the content of the `bin` folder (`bin/SDL2.dll` for Windows) inside of `src`
   The project tree should then contain :
   - `src/include/SDL2/*.h`
   - `src/lib/*.a`
   - `src/SDL2.dll`
 
+    Follow the same procedure for SDL_mixer.
+
     I didn't include these files in the repository because I didn't write them myself. Besides, the repository would be unnecessarily heavier.
 3. WINDOWS - Compile the project with :
   ```sh
-    gcc -Wall -I src/include -L src/lib -o src/retro_fps src/main.c $(Get-ChildItem -Recurse -Path src/include -Filter \"*.c\").FullName -lmingw32 -lSDL2main -lSDL2 -lopengl32 -lglu32
+    gcc -Wall -I src/include -L src/lib -o src/retro_fps src/main.c $(Get-ChildItem -Recurse -Path src/include -Filter \"*.c\").FullName -lmingw32 -lSDL2main -lSDL2 -lSDL2_mixer -lopengl32 -lglu32
   ```
 
   UNIX - A Makefile is available. Alternatively, compile the project with :
 
   ```
-    gcc -Wall -I src/include -L src/lib -o src/retro_fps src/main.c $(find src/include -name "*.c") -lmingw32 -lSDL2main -lSDL2 -lopengl32 -lglu32
+    gcc -Wall -I src/include -L src/lib -o src/retro_fps src/main.c $(find src/include -name "*.c") -lmingw32 -lSDL2main -lSDL2 -lSDL2_mixer -lopengl32 -lglu32
   ```
   A compiled file will then be generated as `src/retro_fps` or `src/retro_fps.exe`, depending on your OS.
 
@@ -141,14 +167,18 @@ Inside the zip file are the 32- and 64-bit SDL library files. Choose the one tha
 ### Gameplay
 <a name="gameplay"></a>
 
-In its current state, the game contains only a black background with colorful cubes and a brick wall as a placeholder for the level. The player can move around freely, with a fully functioning first-person camera.
+In its current state, the game only allows you to move freely in a black space. The player can jump, run and look around.
+The stage also contains 3 cubes and a brick wall.
+
+This is a placeholder for the level: the 3 cubes are static and the wall is dynamically generated accordingly to what is written in assets/levels/level1.
 
 <p align="right">(<a href="#readme-top">Up</a>)</p>
 
 ### Bindings
 <a name="bindings"></a>
 
-It is currently not possible to change default bindings.
+It is currently not possible to change default bindings without modifying `src/main.c` and recompiling the whole code.
+In the future, the player should be able to modify its bindings in-game.
 
 By default, the bindings are :
 - H - Forward
@@ -165,7 +195,7 @@ Other bindings are set in the game files, but they are not used yet.
 ## Product
 <a name="product"></a>
 
-This section organizes the development process, defining a minimum product and a roadmap for additions.
+This section organizes the development process, defining a minimal viable product and a roadmap for development.
 
 ### MVP
 <a name="mvp"></a>
@@ -215,4 +245,5 @@ Some bugs appear during development, but no direct solution is found. Here is a 
 
 [c-url]: https://fr.wikipedia.org/wiki/C_(langage)
 [sdl-url]: https://www.libsdl.org/
+[sdl_mixer-url]: https://github.com/libsdl-org/SDL_mixer
 [winlibs-url]: https://winlibs.com/#download-release

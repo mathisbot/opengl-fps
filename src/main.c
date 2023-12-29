@@ -5,6 +5,7 @@
 
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_opengl.h>
+#include <SDL2/SDL_mixer.h>
 #include <GL/glu.h>
 
 #include "include/game/camera.h"
@@ -289,7 +290,6 @@ int main(int argc, char* argv[])
         printf("OpenGL vendor : %s\n", glGetString(GL_VENDOR));
         printf("OpenGL renderer : %s\n", glGetString(GL_RENDERER));
         printf("OpenGL shading language version : %s\n", glGetString(GL_SHADING_LANGUAGE_VERSION));
-        printf("Vertex shader version : %s\n", glGetString(GL_VERTEX_SHADER));
         printf("Vertex shader max attribribute count : %d\n", GL_MAX_VERTEX_ATTRIBS);
         SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_DEBUG_FLAG);
         glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
@@ -322,6 +322,10 @@ int main(int argc, char* argv[])
     glCullFace(GL_BACK);  // This is the default value
     // Stencil test
     glEnable(GL_STENCIL_TEST);
+
+    // Load audio
+    // TODO
+
 
     // Loading player
     Player* player = createPlayer(HP, 1);
