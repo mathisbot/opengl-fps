@@ -17,6 +17,7 @@
     <li>
       <a href="#about">About</a>
       <ul>
+        <li><a href="#about-sdl2">About SDL2</a></li>
         <li><a href="#built-with">Built with</a></li>
       </ul>
     </li>
@@ -27,7 +28,13 @@
         <li><a href="#installation">Installing</a></li>
       </ul>
     </li>
-    <li><a href="#usage">Usage</a></li>
+    <li>
+      <a href="#usage">Usage</a>
+      <ul>
+        <li><a href="#gameplay">Gameplay</a></li>
+        <li><a href="#bindings">Bindings</a></li>
+      </ul>
+    </li>
     <li>
       <a href="#product">Product</a>
       <ul>
@@ -43,11 +50,32 @@
 ## About
 <a name="about"></a>
 
-The aim of this project is to recreate a simple FPS game, using techniques from the 1990's that allows for advanced optimization. In this case, I chose the C language along with only one very low-level library: SDL2. This library talks to the operating system API to display what is requested on the screen. Its greatest advantage is its compatibility with a very large number of systems, as well as its lightness.
+The aim of this project is to recreate a simple FPS game, using techniques from the 1990's that allows for advanced optimization.
+In this case, I chose the C language along with only one very low-level library: SDL2.
+
 This means that rendering techniques are close to what was done before, such as in the first Doom game. However, the game should feature modern improvements such as movements in all 3 axis.
 
 <p align="right">(<a href="#readme-top">Up</a>)</p>
 
+### About SDL2
+<a name="about-sdl2"></a>
+
+> Simple DirectMedia Layer is a cross-platform development library designed to provide low level access to audio, keyboard, mouse, joystick, and graphics hardware via OpenGL and Direct3D.
+
+on *libsdl.org*
+
+As OpenGL is a set of specifications and not a library, I had to choose a library that would allow me to use it.
+Among the many choices available (GLFW, GLUT, SFML, ...), one stood out for its characteristics:
+
+- SDL2 is renowned for its lightweight design, which ensures efficient resource utilization without compromising performance.
+
+- One of the key advantages of SDL2 is its provision of low-level access to graphics, but also audio drivers, and input devices.
+
+- SDL2's cross-platform compatibility makes it easy to eamlessly operate on various operating systems, including Windows, macOS, and Linux.
+
+- SDL2's built-in vertex and fragment shaders. Creating a vertex/fragment shader requires a very advanced level of skill. Perhaps, once the project is advanced, I'll try to implement a rudimentary one, in particular to deal with light.
+
+<p align="right">(<a href="#readme-top">Up</a>)</p>
 
 ### Built with
 <a name="built-with"></a>
@@ -110,7 +138,17 @@ Inside the zip file are the 32- and 64-bit SDL library files. Choose the one tha
 ## Usage
 <a name="usage"></a>
 
+### Gameplay
+<a name="gameplay"></a>
+
 In its current state, the game contains only a black background with colorful cubes and a brick wall as a placeholder for the level. The player can move around freely, with a fully functioning first-person camera.
+
+<p align="right">(<a href="#readme-top">Up</a>)</p>
+
+### Bindings
+<a name="bindings"></a>
+
+It is currently not possible to change default bindings.
 
 By default, the bindings are :
 - H - Forward
