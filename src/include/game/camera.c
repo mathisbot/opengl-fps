@@ -78,9 +78,9 @@ void freeCamera(Camera* camera)
 
 void handleCameraMovement(Camera* camera, const Uint8* keyboardState, double dt, float speedMultiplier)
 {
-    // (x,z) plane movement
-
     // Updating velocity
+
+    // (x,z) plane movement
     if (camera->onGround || camera->airControl)
     {
         camera->xVelocity = 0;
@@ -108,26 +108,28 @@ void handleCameraMovement(Camera* camera, const Uint8* keyboardState, double dt,
             camera->zVelocity += camera->movSin;
         }
     }
-    // Applying velocity
-    camera->x += camera->xVelocity * dt;
-    camera->z += camera->zVelocity * dt;
-
-    // y axis movement
-
+    
+    // y-axis movement
     if (!camera->onGround)  // Fall
     {
         camera->yVelocity -= GRAVITY * dt;
-        camera->y += camera->yVelocity * dt;
-        // I am currently assuming that ground is at y = 0
-        // This is very likely to change in the future
-        if (camera->y < 0.0f)  // Check if on ground
-        {
-            camera->onGround = 1;
-            camera->hasDoubleJump = 1;
-            camera->yVelocity = 0.0f;
-            camera->y = 0.0f;
-        }
     }
+
+    // Applying velocity
+    camera->x += camera->xVelocity * dt;
+    camera->y += camera->yVelocity * dt;
+    camera->z += camera->zVelocity * dt;
+
+    // I am currently assuming that ground is at y = 0
+    // This is very likely to change in the future
+    if (camera->y < 0.0f)  // Check if on ground
+    {
+        camera->onGround = 1;
+        camera->hasDoubleJump = 1;
+        camera->yVelocity = 0.0f;
+        camera->y = 0.0f;
+    }
+
 }
 
 void cameraJump(Camera* camera)
