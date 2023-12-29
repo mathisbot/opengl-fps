@@ -309,7 +309,7 @@ int main(int argc, char* argv[])
     }
 
     // Window creation
-    SDL_Window* window = SDL_CreateWindow("Retro FPS", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
+    window = SDL_CreateWindow("Retro FPS", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
                                           WINDOW_WIDTH, WINDOW_HEIGHT, SDL_WINDOW_OPENGL);
     if (window == NULL)
         cleanUpAndExit(EXIT_FAILURE, "Error when creating window : %s", SDL_GetError());
@@ -325,7 +325,7 @@ int main(int argc, char* argv[])
 
 
     // OpenGL context creation
-    SDL_GLContext glContext = SDL_GL_CreateContext(window);
+    glContext = SDL_GL_CreateContext(window);
     if (glContext == NULL)
         cleanUpAndExit(EXIT_FAILURE, "Error when creating OpenGL context : %s", SDL_GetError());
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
@@ -380,12 +380,12 @@ int main(int argc, char* argv[])
 
 
     // Loading player
-    Player* player = createPlayer(HP, 1);
+    player = createPlayer(HP, 1);
     if (!player)
         cleanUpAndExit(EXIT_FAILURE, "Error creating player\n");
 
     // Loading level
-    Level* level = loadLevel(player->currentLevel);
+    level = loadLevel(player->currentLevel);
     if (!level)
         cleanUpAndExit(EXIT_FAILURE, "Error loading level\n");
 
@@ -405,11 +405,14 @@ int main(int argc, char* argv[])
     );
     if (!bindings)
         cleanUpAndExit(EXIT_FAILURE, "Error creating bindings for camera\n");
-    Camera* camera = initCamera(level->startX, level->startY, level->startZ,
+    camera = initCamera(level->startX, level->startY, level->startZ,
                                 level->startYaw, level->startPitch, SPEED, SPRINTINGBOOST,
                                 SENSITIVITY, bindings, DOUBLEJUMP, AIRCONTROL);
     if (!camera)
+    {
+        freeBindings(bindings);
         cleanUpAndExit(EXIT_FAILURE, "Error creating camera\n");
+    }
 
     // Main loop
     Uint64 last_frame = SDL_GetTicks64();
