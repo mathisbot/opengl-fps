@@ -1,21 +1,27 @@
 CC = gcc
 CFLAGS = -Wall -I src/include
-LDFLAGS = -L src/lib -lmingw32 -lSDL2main -lSDL2 -lopengl32 -lglu32
+LDFLAGS = -L src/lib
+LIBS = -lmingw32 -lSDL2main -lSDL2 -lopengl32 -lglu32
+
 SRC_DIR = src
-OBJ_DIR = obj
+INCLUDE_DIR = $(SRC_DIR)/include
 
-SRCS = $(wildcard $(SRC_DIR)/include/*.c) $(SRC_DIR)/main.c
-OBJS = $(patsubst $(SRC_DIR)/%, $(OBJ_DIR)/%, $(SRCS:.c=.o))
+# Retrieve all .c files recursively in the include directory
+SOURCES = $(shell find $(INCLUDE_DIR) -name '*.c')
 
-TARGET = $(SRC_DIR)/retro_fps
+# Generate object file names from source files
+OBJECTS = $(SOURCES:.c=.o)
 
-$(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
+# Target executable name
+TARGET = retro_fps
+
+all: $(TARGET)
+
+$(TARGET): $(OBJECTS)
+	$(CC) $(CFLAGS) $(LDFLAGS) -o $(SRC_DIR)/$(TARGET) $(SRC_DIR)/main.c $(OBJECTS) $(LIBS)
+
+%.o: %.c
 	$(CC) $(CFLAGS) -c $< -o $@
 
-$(TARGET): $(OBJS)
-	$(CC) $(CFLAGS) $^ -o $@ $(LDFLAGS)
-
-.PHONY: clean
-
 clean:
-	rm -f $(OBJ_DIR)/*.o $(TARGET)
+	rm -f $(OBJECTS) $(SRC_DIR)/$(TARGET)
