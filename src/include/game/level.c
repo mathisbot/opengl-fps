@@ -17,7 +17,6 @@ static Point** points = NULL;
 static bool pointsInitialized = 0;
 static int pointInitializedIndex = 0;
 
-
 static void cleanUp(const char* log, ...)
 {
     va_list args;

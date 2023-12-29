@@ -63,6 +63,10 @@ tex_x tex_y x y z  // bottom left
 tex_x tex_y x y z  // top right
 tex_x tex_y x y z  // bottom right
 ...
+
+Walls are drawn as triangles, so pointcount that are over 3
+are split into multiple triangles (n-2 triangles for n points)
+as each new triangle is defined by the first point and the last two points
 */
 
 

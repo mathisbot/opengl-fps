@@ -39,4 +39,12 @@ Enemy* createEnemy(float x, float y, float z, float yaw, float pitch, int type);
 */
 void freeEnemy(Enemy* enemy);
 
+
+/**
+ * @brief Update an enemy
+ * 
+ * @param enemy Pointer to the enemy
+*/
+void updateEnemy(Enemy* enemy, double dt);
+
 #endif

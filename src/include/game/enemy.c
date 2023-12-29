@@ -25,3 +25,15 @@ void freeEnemy(Enemy* enemy)
 {
     free(enemy);
 }
+
+
+void updateEnemy(Enemy* enemy, double dt)
+{
+    if (enemy->hp <= 0.0f)
+    {
+        // Kill enemy
+        return;
+    }
+    // Move enemy
+    return;
+}

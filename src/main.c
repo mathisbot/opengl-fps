@@ -28,6 +28,9 @@
 #define ZNEAR 0.05f
 #define ZFAR  32.0f
 
+#define CROSSHAIR 1
+#define NO_POINTER 0
+
 
 // Game variables that should be free'd
 Camera* camera = NULL;
@@ -107,9 +110,13 @@ static void cleanUpAndExit(bool exitCode, const char* log, ...)
  * @param player Player of the game
  * @param dt Time since last frame
  */
-void update(Camera* camera, Level* level, Player* player, double dt)
+void updateGame(Camera* camera, Level* level, Player* player, double dt)
 {
-    return;
+    for (int i = 0; i < level->enemyCount; i++)
+    {
+        updateEnemy(level->enemies[i], dt);
+    }
+    updatePlayer(player, dt);
 }
 
 
@@ -122,19 +129,10 @@ void drawWall(Wall* wall) {
     glBindTexture(GL_TEXTURE_2D, wall->textureID);
     glColor4f(1.0, 1.0, 1.0, 1.0);
 
-    if (wall->pointCount == 4 || wall->pointCount == 3)
-        glBegin(GL_TRIANGLE_STRIP);
-    // Very inefficient, should not be used
-    else if (wall->pointCount > 4)
-        glBegin(GL_POLYGON);
-    // Unknown, skipping
-    else
-    {
-        printf("Unknown pointCount : %d", wall->pointCount);
-        return;
-    }
+    glBegin(GL_TRIANGLE_STRIP);
 
     // Defining vertices
+    // Vertices should be defined in a counter-clockwise order
     for (int i = 0; i < wall->pointCount; i++)
     {
         glTexCoord2f(wall->points[i]->tex_x, wall->points[i]->tex_y);
@@ -155,14 +153,12 @@ void drawWall(Wall* wall) {
 void drawLevel(Level* level, Camera* camera)
 {
     // Draw textured square
-    glPushMatrix();
     for (int i = 0; i < level->wallCount; i++)
     {
         glPushMatrix();
         drawWall(level->walls[i]);
         glPopMatrix();
     }
-    glPopMatrix();
 }
 
 /**
@@ -175,18 +171,10 @@ void drawLevel(Level* level, Camera* camera)
 void drawUI(int w, int h, int pointerType)
 {
     // Draw crosshair
-    if (pointerType == 1)
+    if (pointerType == CROSSHAIR)
     {
         static float lineThickness = 2.0f;
         static float length = 7.0f;
-
-        glMatrixMode(GL_PROJECTION);
-        glPushMatrix();
-        glLoadIdentity();
-        glOrtho(0, w, h, 0, -1, 1);
-        glMatrixMode(GL_MODELVIEW);
-        glPushMatrix();
-        glLoadIdentity();
 
         // Crosshair
         glLineWidth(lineThickness);
@@ -206,11 +194,6 @@ void drawUI(int w, int h, int pointerType)
         glVertex2f(w/2 - length-1, h/2);
         glVertex2f(w/2 + length+1, h/2);
         glEnd();
-        
-        glMatrixMode(GL_PROJECTION);
-        glPopMatrix();
-        glMatrixMode(GL_MODELVIEW);
-        glPopMatrix();
     }
 }
 
@@ -242,6 +225,7 @@ void render(SDL_Window* window, Camera* camera, Level* level, Player* player)
     // Get window size
     static int w=0, h=0;
 
+    // Window size should not change during the game
     if (w == 0 && h == 0)
         SDL_GetWindowSize(SDL_GL_GetCurrentWindow(), &w, &h);
 
@@ -254,9 +238,7 @@ void render(SDL_Window* window, Camera* camera, Level* level, Player* player)
     updateCamera(camera);
 
     // Draw level
-    glPushMatrix();
     drawLevel(level, camera);
-    glPopMatrix();
 
     // Testing cubes
     glPushMatrix();
@@ -270,11 +252,25 @@ void render(SDL_Window* window, Camera* camera, Level* level, Player* player)
     glPopMatrix();
 
     // Draw User Interface
+
+    // Push and reinitialise matrices
+    glMatrixMode(GL_PROJECTION);
     glPushMatrix();
-    drawUI(w, h, 1);
+    glLoadIdentity();
+    glOrtho(0, w, h, 0, -1, 1);
+    glMatrixMode(GL_MODELVIEW);
+    glPushMatrix();
+    glLoadIdentity();
+
+    drawUI(w, h, CROSSHAIR);
+
+    // Pop matrices
+    glMatrixMode(GL_PROJECTION);
+    glPopMatrix();
+    glMatrixMode(GL_MODELVIEW);
     glPopMatrix();
 
-    // Flip screen
+    // Swap buffers
     SDL_GL_SwapWindow(window);
 }
 
@@ -333,7 +329,6 @@ int main(int argc, char* argv[])
     if (glContext == NULL)
         cleanUpAndExit(EXIT_FAILURE, "Error when creating OpenGL context : %s", SDL_GetError());
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
-    // SDL_GL_SetAttribute(SDL_GL_STEREO, SDL_ENABLE);
 
     // OpenGL settings
     if (DEBUG)
@@ -502,7 +497,7 @@ int main(int argc, char* argv[])
 
         // Game logic
         if (!pause)
-            update(camera, level, player, dt);
+            updateGame(camera, level, player, dt);
 
         // Render screen
         render(window, camera, level, player);

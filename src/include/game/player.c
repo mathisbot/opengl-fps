@@ -20,3 +20,15 @@ void freePlayer(Player* player)
 {
     free(player);
 }
+
+
+void updatePlayer(Player* player, double dt)
+{
+    if (player->hp <= 0.0f)
+    {
+        // Kill player
+        return;
+    }
+    // If enemy close, take damage
+    return;
+}
