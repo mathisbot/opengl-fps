@@ -8,6 +8,7 @@
 #include <SDL2/SDL_mixer.h>
 #include <GL/glu.h>
 
+#include "include/game/audio.h"
 #include "include/game/camera.h"
 #include "include/game/level.h"
 #include "include/game/player.h"
@@ -28,14 +29,18 @@
 #define ZFAR  32.0f
 
 
-/*
-TODO :
-- Rework level loading
-    - Encoding?
-        - Walls that share a side should be defined with only 2 points
-    - Collisions
-        - To ensure collisions are fast, sector should be defined
-*/
+/**
+ * @brief Update game logic
+ * 
+ * @param camera Camera of the game
+ * @param level Level of the game
+ * @param player Player of the game
+ * @param dt Time since last frame
+ */
+void update(Camera* camera, Level* level, Player* player, double dt)
+{
+    return;
+}
 
 
 /**
@@ -140,19 +145,6 @@ void drawUI(int w, int h, int pointerType)
 }
 
 /**
- * @brief Update game logic
- * 
- * @param camera Camera of the game
- * @param level Level of the game
- * @param player Player of the game
- * @param dt Time since last frame
- */
-void update(Camera* camera, Level* level, Player* player, double dt)
-{
-    return;
-}
-
-/**
  * @brief Update the camera on the screen
  * 
  * @param camera Pointer to the camera
@@ -227,7 +219,7 @@ void render(SDL_Window* window, Camera* camera, Level* level, Player* player)
 int main(int argc, char* argv[])
 {
     // Initialising SDL
-    if (SDL_Init(SDL_INIT_VIDEO))
+    if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO))
     {
         fprintf(stderr, "Error initialising SDL : %s\n", SDL_GetError());
         return EXIT_FAILURE;
@@ -269,7 +261,11 @@ int main(int argc, char* argv[])
     if (!DEBUG)
         SDL_SetWindowFullscreen(window, SDL_WINDOW_FULLSCREEN);
     else
+    {
         SDL_SetWindowFullscreen(window, 0);
+        // SDL_SetWindowResizable(window, SDL_TRUE);  // Cursed
+    }
+
 
     // OpenGL context creation
     SDL_GLContext glContext = SDL_GL_CreateContext(window);
@@ -323,8 +319,17 @@ int main(int argc, char* argv[])
     // Stencil test
     glEnable(GL_STENCIL_TEST);
 
+
     // Load audio
-    // TODO
+    if (Mix_OpenAudio(AUDIO_SAMPLERATE, MIX_DEFAULT_FORMAT, MIX_DEFAULT_CHANNELS, AUDIO_CHUNKSIZE) < 0)
+    {
+        printf("Error initialising SDL_mixer : %s\n", Mix_GetError());
+        SDL_GL_DeleteContext(glContext);
+        SDL_DestroyWindow(window);
+        SDL_Quit();
+        return EXIT_FAILURE;
+    }
+    Mix_AllocateChannels(AUDIO_NUMCHANS);
 
 
     // Loading player
@@ -332,6 +337,7 @@ int main(int argc, char* argv[])
     if (!player)
     {
         fprintf(stderr, "Error creating player\n");
+        Mix_CloseAudio();
         SDL_GL_DeleteContext(glContext);
         SDL_DestroyWindow(window);
         SDL_Quit();
@@ -345,6 +351,7 @@ int main(int argc, char* argv[])
         fprintf(stderr, "Error loading level\n");
         freePlayer(player);
         player = NULL;
+        Mix_CloseAudio();
         SDL_GL_DeleteContext(glContext);
         SDL_DestroyWindow(window);
         SDL_Quit();
@@ -375,6 +382,7 @@ int main(int argc, char* argv[])
         level = NULL;
         freePlayer(player);
         player = NULL;
+        Mix_CloseAudio();
         SDL_GL_DeleteContext(glContext);
         SDL_DestroyWindow(window);
         SDL_Quit();
@@ -480,6 +488,7 @@ int main(int argc, char* argv[])
     player = NULL;
     freeLevel(level);
     level = NULL;
+    Mix_CloseAudio();
     SDL_GL_DeleteContext(glContext);
     SDL_DestroyWindow(window);
     SDL_Quit();
