@@ -29,6 +29,76 @@
 #define ZFAR  32.0f
 
 
+// Game variables that should be free'd
+Camera* camera = NULL;
+Level* level = NULL;
+Player* player = NULL;
+// SDL variables that should be free'd
+SDL_GLContext glContext = NULL;
+SDL_Window* window = NULL;
+// Viarables witnessing the initialization of parts that should be free'd
+bool mixerInitialized = 0;
+bool SDLInitialized = 0;
+
+
+/**
+ * @brief Free memory and quit the program
+*/
+static void cleanUp()
+{
+    // Game objects
+    if (camera)
+    {
+        freeCamera(camera);
+        camera = NULL;
+    }
+    if (level)
+    {
+        freeLevel(level);
+        level = NULL;
+    }
+    if (player)
+    {
+        freePlayer(player);
+        player = NULL;
+    }
+    // SDL objects
+    if (mixerInitialized)
+    {
+        Mix_CloseAudio();
+        mixerInitialized = 0;
+    }
+    if (glContext)
+    {
+        SDL_GL_DeleteContext(glContext);
+        glContext = NULL;
+    }
+    if (window)
+    {
+        SDL_DestroyWindow(window);
+        window = NULL;
+    }
+    if (SDLInitialized)
+    {
+        SDL_Quit();
+        SDLInitialized = 0;
+    }
+}
+
+/**
+ * @brief Free memory and quit the program with an error code and a log
+*/
+static void cleanUpAndExit(bool exitCode, const char* log, ...)
+{
+    va_list args;
+    va_start(args, log);
+    if (log)
+        vfprintf(stderr, log, args);
+    cleanUp();
+    exit(exitCode);
+}
+
+
 /**
  * @brief Update game logic
  * 
@@ -220,10 +290,9 @@ int main(int argc, char* argv[])
 {
     // Initialising SDL
     if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO))
-    {
-        fprintf(stderr, "Error initialising SDL : %s\n", SDL_GetError());
-        return EXIT_FAILURE;
-    }
+        cleanUpAndExit(EXIT_FAILURE, "Error initialising SDL : %s", SDL_GetError());
+    else
+        SDLInitialized = 1;
 
     // Getting display information
     uint16_t WINDOW_WIDTH;
@@ -233,11 +302,7 @@ int main(int argc, char* argv[])
     {
         SDL_DisplayMode displayMode;
         if (SDL_GetCurrentDisplayMode(0, &displayMode))
-        {
-            fprintf(stderr, "Error getting display information : %s\n", SDL_GetError());
-            SDL_Quit();
-            return EXIT_FAILURE;
-        }
+            cleanUpAndExit(EXIT_FAILURE, "Error getting display mode : %s", SDL_GetError());
         WINDOW_WIDTH = displayMode.w;
         WINDOW_HEIGHT = displayMode.h;
     }
@@ -251,11 +316,7 @@ int main(int argc, char* argv[])
     SDL_Window* window = SDL_CreateWindow("Retro FPS", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
                                           WINDOW_WIDTH, WINDOW_HEIGHT, SDL_WINDOW_OPENGL);
     if (window == NULL)
-    {
-        fprintf(stderr, "Error when creating window : %s\n", SDL_GetError());
-        SDL_Quit();
-        return EXIT_FAILURE;
-    }
+        cleanUpAndExit(EXIT_FAILURE, "Error when creating window : %s", SDL_GetError());
     SDL_ShowCursor(SDL_DISABLE);
     // Handling fullscreen
     if (!DEBUG)
@@ -270,12 +331,7 @@ int main(int argc, char* argv[])
     // OpenGL context creation
     SDL_GLContext glContext = SDL_GL_CreateContext(window);
     if (glContext == NULL)
-    {
-        fprintf(stderr, "Error when creating OpenGL context : %s\n", SDL_GetError());
-        SDL_DestroyWindow(window);
-        SDL_Quit();
-        return EXIT_FAILURE;
-    }
+        cleanUpAndExit(EXIT_FAILURE, "Error when creating OpenGL context : %s", SDL_GetError());
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
     // SDL_GL_SetAttribute(SDL_GL_STEREO, SDL_ENABLE);
 
@@ -322,41 +378,21 @@ int main(int argc, char* argv[])
 
     // Load audio
     if (Mix_OpenAudio(AUDIO_SAMPLERATE, MIX_DEFAULT_FORMAT, MIX_DEFAULT_CHANNELS, AUDIO_CHUNKSIZE) < 0)
-    {
-        printf("Error initialising SDL_mixer : %s\n", Mix_GetError());
-        SDL_GL_DeleteContext(glContext);
-        SDL_DestroyWindow(window);
-        SDL_Quit();
-        return EXIT_FAILURE;
-    }
+        cleanUpAndExit(EXIT_FAILURE, "Error initialising mixer audio : %s", Mix_GetError());
+    else
+        mixerInitialized = 1;
     Mix_AllocateChannels(AUDIO_NUMCHANS);
 
 
     // Loading player
     Player* player = createPlayer(HP, 1);
     if (!player)
-    {
-        fprintf(stderr, "Error creating player\n");
-        Mix_CloseAudio();
-        SDL_GL_DeleteContext(glContext);
-        SDL_DestroyWindow(window);
-        SDL_Quit();
-        return EXIT_FAILURE;
-    }
+        cleanUpAndExit(EXIT_FAILURE, "Error creating player\n");
 
     // Loading level
     Level* level = loadLevel(player->currentLevel);
     if (!level)
-    {
-        fprintf(stderr, "Error loading level\n");
-        freePlayer(player);
-        player = NULL;
-        Mix_CloseAudio();
-        SDL_GL_DeleteContext(glContext);
-        SDL_DestroyWindow(window);
-        SDL_Quit();
-        return EXIT_FAILURE;
-    }
+        cleanUpAndExit(EXIT_FAILURE, "Error loading level\n");
 
     // Loading camera
     Bindings* bindings = createBindings(
@@ -372,22 +408,13 @@ int main(int argc, char* argv[])
         SDL_SCANCODE_K,  // Map
         SDL_SCANCODE_ESCAPE  // Pause
     );
+    if (!bindings)
+        cleanUpAndExit(EXIT_FAILURE, "Error creating bindings for camera\n");
     Camera* camera = initCamera(level->startX, level->startY, level->startZ,
                                 level->startYaw, level->startPitch, SPEED, SPRINTINGBOOST,
                                 SENSITIVITY, bindings, DOUBLEJUMP, AIRCONTROL);
     if (!camera)
-    {
-        fprintf(stderr, "Error creating camera\n");
-        freeLevel(level);
-        level = NULL;
-        freePlayer(player);
-        player = NULL;
-        Mix_CloseAudio();
-        SDL_GL_DeleteContext(glContext);
-        SDL_DestroyWindow(window);
-        SDL_Quit();
-        return EXIT_FAILURE;
-    }
+        cleanUpAndExit(EXIT_FAILURE, "Error creating camera\n");
 
     // Main loop
     Uint64 last_frame = SDL_GetTicks64();
@@ -481,17 +508,8 @@ int main(int argc, char* argv[])
         render(window, camera, level, player);
     }
 
-    // Free memory and quit SDL
-    freeCamera(camera);
-    camera = NULL;
-    freePlayer(player);
-    player = NULL;
-    freeLevel(level);
-    level = NULL;
-    Mix_CloseAudio();
-    SDL_GL_DeleteContext(glContext);
-    SDL_DestroyWindow(window);
-    SDL_Quit();
+    // Clean up memory and exit
+    cleanUp();
     
     return EXIT_SUCCESS;
 }

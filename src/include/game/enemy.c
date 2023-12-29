@@ -6,7 +6,7 @@ Enemy* createEnemy(float x, float y, float z, float yaw, float pitch, int type)
     Enemy* enemy = malloc(sizeof(Enemy));
     if (!enemy)
     {
-        printf("Error allocating memory for enemy\n");
+        fprintf(stderr, "Error allocating memory for enemy\n");
         return NULL;
     }
 

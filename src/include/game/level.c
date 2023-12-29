@@ -1,12 +1,68 @@
 #include "level.h"
 
 
+// Variables witnessing whether variables have been initialized or not
+static Level* level = NULL;
+static bool levelInitialized = 0;
+static Enemy** enemies = NULL;
+static bool enemiesInitialized = 0;
+static int enemyInitializedIndex = 0;
+static Texture** textures = NULL;
+static bool texturesInitialized = 0;
+static int textureInitializedIndex = 0;
+static Wall** walls = NULL;
+static bool wallsInitialized = 0;
+static int wallInitializedIndex = 0;
+static Point** points = NULL;
+static bool pointsInitialized = 0;
+static int pointInitializedIndex = 0;
+
+
+static void cleanUp(const char* log, ...)
+{
+    va_list args;
+    va_start(args, log);
+    if (log)
+        vfprintf(stderr, log, args);
+
+    if (levelInitialized)
+        free(level);
+    if (enemiesInitialized)
+    {
+        for (int i = 0; i < enemyInitializedIndex; i++)
+            freeEnemy(enemies[i]);
+        free(enemies);
+    }
+    // TODO: free health packs
+    // TODO: free ammo
+    if (texturesInitialized)
+    {
+        for (int i = 0; i < textureInitializedIndex; i++)
+            freeTexture(textures[i]);
+        free(textures);
+    }
+    if (wallsInitialized)
+    {
+        for (int i = 0; i < wallInitializedIndex; i++)
+            freeWall(walls[i]);
+        free(walls);
+    }
+    if (pointsInitialized)
+    {
+        for (int i = 0; i < pointInitializedIndex; i++)
+            freePoint(points[i]);
+        free(points);
+    }
+    
+}
+
+
 Point* createPoint(float x, float y, float z, float tex_x, float tex_y)
 {
     Point* point = malloc(sizeof(Point));
     if (!point)
     {
-        printf("Error allocating memory for point\n");
+        fprintf(stderr, "Error allocating memory for point\n");
         exit(1);
     }
 
@@ -30,7 +86,7 @@ Wall* createWall(Point** points, int pointCount, GLuint textureID)
     Wall* wall = malloc(sizeof(Wall));
     if (!wall)
     {
-        printf("Error allocating memory for wall\n");
+        fprintf(stderr, "Error allocating memory for wall\n");
         exit(1);
     }
 
@@ -53,13 +109,21 @@ void freeWall(Wall* wall)
 
 Level* loadLevel(uint16_t levelNumber)
 {
+    levelInitialized = 0;
+    enemiesInitialized = 0;
+    texturesInitialized = 0;
+    wallsInitialized = 0;
+    pointsInitialized = 0;
+
     // Allocating memory for Level structure
-    Level* level = malloc(sizeof(Level));
+    level = (Level*)malloc(sizeof(Level));
     if (!level)
     {
-        printf("Error allocating memory for level\n");
-        exit(1);
+        fprintf(stderr, "Error allocating memory for level\n");
+        return NULL;
     }
+    else
+        levelInitialized = 1;
 
     // Opening file
     static char path[256];
@@ -67,9 +131,7 @@ Level* loadLevel(uint16_t levelNumber)
     FILE* file = fopen(path, "r");
     if (!file)
     {
-        printf("Error opening file %s\n", path);
-        free(level);
-        fclose(file);
+        cleanUp("Error opening file %s\n", path);
         return NULL;
     }
 
@@ -96,7 +158,17 @@ Level* loadLevel(uint16_t levelNumber)
     static int enemyCount;
     fscanf(file, "enemies: %d\n", &enemyCount);
 
-    Enemy** enemies = (Enemy**)malloc(sizeof(Enemy*)*enemyCount);
+    enemies = (Enemy**)malloc(sizeof(Enemy*)*enemyCount);
+    if (!enemies)
+    {
+        fclose(file);
+        cleanUp("Error allocating memory for enemies\n");
+    }
+    else
+    {
+        enemiesInitialized = 1;
+        enemyInitializedIndex = 0;
+    }
     static float ex, ey, ez, eyaw, epitch;
     static int etype;
     for (int i = 0; i < enemyCount; i++)
@@ -105,12 +177,9 @@ Level* loadLevel(uint16_t levelNumber)
         enemies[i] = createEnemy(ex, ey, ez, eyaw, epitch, etype);
         if (!enemies[i])
         {
-            printf("Error creating enemy %d\n", i);
-            free(level);
-            for (int j = 0; j < i; j++)
-                freeEnemy(enemies[j]);
-            free(enemies);
-            return NULL;
+            fclose(file);
+            enemyInitializedIndex = i;
+            cleanUp("Error creating enemy %d\n", i);
         }
     }
 
@@ -132,13 +201,9 @@ Level* loadLevel(uint16_t levelNumber)
         // TODO: add health packs
         if (0)
         {
-            printf("Error creating healthpack %d\n", i);
-            free(level);
-            for (int j = 0; j < enemyCount; j++)
-                freeEnemy(enemies[j]);
-            free(enemies);
-            // TODO: free health packs
-            return NULL;
+            fclose(file);
+            // healthInitializedIndex = i;
+            cleanUp("Error creating healthpack %d\n", i);
         }
     }
 
@@ -157,14 +222,9 @@ Level* loadLevel(uint16_t levelNumber)
         // TODO: add ammo packs
         if (0)
         {
-            printf("Error creating healthpack %d\n", i);
-            free(level);
-            for (int j = 0; j < enemyCount; j++)
-                freeEnemy(enemies[j]);
-            free(enemies);
-            // TODO: free health packs
-            // TODO: free ammo
-            return NULL;
+            fclose(file);
+            // ammoInitializedIndex = i;
+            cleanUp("Error creating ammopack %d\n", i);
         }
     }
 
@@ -176,7 +236,17 @@ Level* loadLevel(uint16_t levelNumber)
     static int textureCount;
     fscanf(file, "textures: %d\n", &textureCount);
 
-    Texture** textures = (Texture**)malloc(sizeof(Texture*)*textureCount);
+    textures = (Texture**)malloc(sizeof(Texture*)*textureCount);
+    if (!textures)
+    {
+        fclose(file);
+        cleanUp("Error allocating memory for textures\n");
+    }
+    else
+    {
+        texturesInitialized = 1;
+        textureInitializedIndex = 0;
+    }
     static char texturePath[128];
     for (int i = 0; i < textureCount; i++)
     {
@@ -184,17 +254,9 @@ Level* loadLevel(uint16_t levelNumber)
         textures[i] = loadTexture(texturePath, TEXTURE_REPEAT);
         if (!textures[i])
         {
-            printf("Error creating texture %d\n", i);
-            free(level);
-            for (int j = 0; j < enemyCount; j++)
-                freeEnemy(enemies[j]);
-            free(enemies);
-            // TODO: free health packs
-            // TODO: free ammo
-            for (int j = 0; j < i; j++)
-                freeTexture(textures[j]);
-            free(textures);
-            return NULL;
+            fclose(file);
+            textureInitializedIndex = i;
+            cleanUp("Error loading texture %s\n", texturePath);
         }
     }
 
@@ -212,18 +274,48 @@ Level* loadLevel(uint16_t levelNumber)
     static int wallCount;
     fscanf(file, "walls: %d\n", &wallCount);
 
-    Wall** walls = (Wall**)malloc(sizeof(Wall*)*wallCount);
+    walls = (Wall**)malloc(sizeof(Wall*)*wallCount);
+    if (!walls)
+    {
+        fclose(file);
+        cleanUp("Error allocating memory for walls\n");
+    }
+    else
+    {
+        wallsInitialized = 1;
+        wallInitializedIndex = 0;
+    }
     static int textureIndex;
     static int pointCount;
     for (int i = 0; i < wallCount; i++)
     {
+        pointsInitialized = 1;
+
         // Reading wall texture
         fscanf(file, "texture: %d\n", &textureIndex);
+
+        if (textureIndex >= textureCount)
+        {
+            fclose(file);
+            wallInitializedIndex = i;
+            cleanUp("Error: texture index %d out of bounds\n", textureIndex);
+        }
 
         // Reading points (vertices)
         fscanf(file, "pointcount: %d\n", &pointCount);
 
-        Point** points = (Point**)malloc(sizeof(Point*)*pointCount);
+        points = (Point**)malloc(sizeof(Point*)*pointCount);
+        if (!points)
+        {
+            fclose(file);
+            wallInitializedIndex = i;
+            cleanUp("Error allocating memory for points in wall %d\n", i);
+        }
+        else
+        {
+            pointsInitialized = 1;
+            pointInitializedIndex = 0;
+        }
         for (int j = 0; j < pointCount; j++)
         {
             static float tex_x, tex_y, wx, wy, wz;
@@ -231,51 +323,22 @@ Level* loadLevel(uint16_t levelNumber)
             points[j] = createPoint(wx, wy, wz, tex_x, tex_y);
             if (!points[j])
             {
-                printf("Error creating point %d of wall %d\n", j, i);
-                free(level);
-                for (int k = 0; k < enemyCount; k++)
-                    freeEnemy(enemies[k]);
-                free(enemies);
-                // TODO: free health packs
-                // TODO: free ammo
-                for (int k = 0; k < textureCount; k++)
-                    freeTexture(textures[k]);
-                free(textures);
-                for (int k = 0; k < j; k++)
-                    freePoint(points[i]);
-                free(points);
-                for (int k = 0; k < i; k++)
-                    freeWall(walls[i]);
-                free(walls);
-                return NULL;
+                fclose(file);
+                pointInitializedIndex = j;
+                cleanUp("Error creating point %d in wall %d\n", j, i);
             }
-        }
-
-        if (textureIndex >= textureCount)
-        {
-            printf("Error: textureIndex out of bounds\n");
-            exit(1);
         }
 
         walls[i] = createWall(points, pointCount, textures[textureIndex]->id);
         if (!walls[i])
         {
-            printf("Error creating texture %d\n", i);
-            free(level);
-            for (int j = 0; j < enemyCount; j++)
-                freeEnemy(enemies[j]);
-            free(enemies);
-            // TODO: free health packs
-            // TODO: free ammo
-            for (int j = 0; j < textureCount; j++)
-                freeTexture(textures[i]);
-            free(textures);
-            for (int j = 0; j < i; j++)
-                freeWall(walls[i]);
-            free(walls);
-            return NULL;
+            fclose(file);
+            wallInitializedIndex = i;
+            cleanUp("Error creating wall %d\n", i);
         }
     }
+
+    fclose(file);
 
     level->walls = walls;
     level->wallCount = wallCount;

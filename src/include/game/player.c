@@ -6,7 +6,7 @@ Player* createPlayer(uint16_t hp, uint16_t currentLevel)
     Player* player = malloc(sizeof(Player));
     if (!player)
     {
-        printf("Error allocating memory for player\n");
+        fprintf(stderr, "Error allocating memory for player\n");
         return NULL;
     }
 

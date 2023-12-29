@@ -7,7 +7,7 @@ Bindings* createBindings(SDL_Scancode forward, SDL_Scancode backward, SDL_Scanco
     Bindings* bindings = (Bindings*)malloc(sizeof(Bindings));
     if (!bindings)
     {
-        printf("Error allocating memory for bindings\n");
+        fprintf(stderr, "Error allocating memory for bindings\n");
         return NULL;
     }
 
@@ -39,7 +39,7 @@ Camera* initCamera(float x, float y, float z, float yaw, float pitch, float movi
     Camera* camera = malloc(sizeof(Camera));
     if (!camera)
     {
-        printf("Error allocating memory for camera\n");
+        fprintf(stderr, "Error allocating memory for camera\n");
         return NULL;
     }
 
