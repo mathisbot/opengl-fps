@@ -34,6 +34,16 @@
 #define NO_POINTER 0
 
 
+/*
+TODO:
+- Move to OpenGL Core Profile
+    - Create shaders
+    - Stop using glBeing/glEnd
+    - Stop using glMatrixMode
+    - ...
+*/
+
+
 // Game variables that should be free'd
 Camera* camera = NULL;
 Level* level = NULL;
@@ -298,6 +308,15 @@ int main(int argc, char* argv[])
     if (DEBUG)
         printf("SDL version : %d.%d.%d\n", SDL_MAJOR_VERSION, SDL_MINOR_VERSION, SDL_PATCHLEVEL);
 
+    // Setting OpenGL attributes
+    // The code is still made for OpenGL pre-3.3
+    // The code needs a huge update to be compatible with OpenGL 3.3+
+    // SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
+    // SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 6);
+    // SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
+    if (DEBUG)
+        SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_DEBUG_FLAG);
+
     // Getting display information
     uint16_t WINDOW_WIDTH;
     uint16_t WINDOW_HEIGHT;
@@ -336,7 +355,6 @@ int main(int argc, char* argv[])
     glContext = SDL_GL_CreateContext(window);
     if (glContext == NULL)
         cleanUpAndExit(EXIT_FAILURE, "Error when creating OpenGL context : %s", SDL_GetError());
-
     // OpenGL settings
     if (DEBUG)
     {
@@ -421,9 +439,9 @@ int main(int argc, char* argv[])
     }
 
     // DUMMY: testing models loading
-    loadModel("shotgun/shotgun");
-    if (DEBUG)
-        printf("Shotgun loaded\n");
+    // loadModel("shotgun/shotgun");
+    // if (DEBUG)
+    //     printf("Shotgun loaded\n");
 
 
     // Main loop
