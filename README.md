@@ -173,10 +173,11 @@ This section organizes the development process, defining a minimum product and a
 Achieving the Minimum Viable Product would already be a success. Further development is not guaranteed and may depend on factors such as development time, will or other external factors (free time, ...).
 
 MVP should be a classic, straightforward FPS with a retro feel:
-- Full first-person camera
+- First-person camera
 - Retro 3D rendering
 - Guns
 - Enemies
+- Sound effects
 
 Overall, the game MUST be playable and enjoyable.
 
@@ -190,9 +191,11 @@ This roadmap helps organizing development and may be subject to change.
 - [X] Opening a window
 - [X] First Person Camera
 - [X] Level rendering
+- [ ] Gun
+- [ ] Audio
 - [ ] Collisions
-- [ ] Guns and enemies
 - [ ] Health packs and ammo
+- [ ] Enemies
 - [ ] MVP
 - [ ] Level editor
 - [ ] Better lights
