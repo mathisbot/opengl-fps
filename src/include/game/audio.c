@@ -1,7 +1,7 @@
 #include "audio.h"
 
 
-static char* path[256];
+static char path[256];
 
 Sound* createSound(char* filename, int channel, int volume) {
     Sound* sound = malloc(sizeof(Sound));

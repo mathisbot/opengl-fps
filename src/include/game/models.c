@@ -40,15 +40,15 @@ Model* createModel(Point* points, int num_points)
     return model;
 }
 
-static char* path[256];
+static char path[256];
 
-Model* loadModel(char* path)
+Model* loadModel(char* filename)
 {
     int num_vertex;
     int num_textures;
     int num_points;
 
-    sprintf(path, "%s%s", MODELPATH, path);
+    sprintf(path, "%s%s", MODELPATH, filename);
     FILE* file = fopen(path, "r");
     if (file == NULL) {
         fprintf(stderr, "Error: Could not open model file %s\n", path);
@@ -57,8 +57,8 @@ Model* loadModel(char* path)
 
     fscanf(file, "format: %d %d %d\n", &num_vertex, &num_textures, &num_points);
 
-    float* vertex[3] = (float*)malloc(3*num_points*sizeof(float));
-    float* textures[3] = (float*)malloc(2*num_textures*sizeof(float));
+    float (*vertex)[3] = (float (*)[3])malloc(num_points*sizeof(float[3]));
+    float (*textures)[3] = (float (*)[3])malloc(2*num_textures*sizeof(float[3]));
     Point* points = (Point*)malloc(num_points*sizeof(Point));
 
     float x, y, z, tex_x, tex_y;
