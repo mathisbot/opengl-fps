@@ -17,6 +17,7 @@
 
 
 #define DEBUG 1
+#define WIREFRAME 0
 
 #define VSYNC 1
 
@@ -293,6 +294,8 @@ int main(int argc, char* argv[])
         SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_DEBUG_FLAG);
         glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
     }
+    if (WIREFRAME)
+        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     glEnable(GL_TEXTURE_2D);
     if (VSYNC)
     {
