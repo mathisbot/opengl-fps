@@ -4,6 +4,8 @@
 
 #include <stdio.h>
 #include <stdbool.h>
+#include <stdlib.h>
+#include <math.h>
 
 
 typedef struct {
@@ -27,8 +29,8 @@ typedef struct {
 } CollisionBox;
 
 
-Point3D* createPoint(float x, float y, float z);
-void freePoint(Point3D* point);
+Point3D* createPoint3D(float x, float y, float z);
+void freePoint3D(Point3D* point);
 
 Vector3D* createVector(float x, float y, float z);
 void freeVector(Vector3D* vector);

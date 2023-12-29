@@ -9,11 +9,11 @@
  * @param z The z coordinate of the point.
  * @return Point3D* A pointer to the point.
 */
-Point3D* createPoint(float x, float y, float z)
+Point3D* createPoint3D(float x, float y, float z)
 {
     Point3D* point = malloc(sizeof(Point3D));
     if (point == NULL) {
-        fprintf(stderr, "Error: malloc failed in createPoint()\n");
+        fprintf(stderr, "Error: malloc failed in createPoint3D()\n");
         return NULL;
     }
     point->x = x;
@@ -27,7 +27,7 @@ Point3D* createPoint(float x, float y, float z)
  * 
  * @param point The point to free.
 */
-void freePoint(Point3D* point)
+void freePoint3D(Point3D* point)
 {
     free(point);
 }
@@ -95,6 +95,10 @@ Quad* createQuad(Point3D* p1, Point3D* p2, Point3D* p3, Point3D* p4)
 */
 void freeQuad(Quad* rect)
 {
+    free(rect->p[0]);
+    free(rect->p[1]);
+    free(rect->p[2]);
+    free(rect->p[3]);
     free(rect);
 }
 
@@ -139,14 +143,14 @@ CollisionBox* createCollisionBox(Point3D* p1, Point3D* p2, Point3D* p3, Point3D*
 */
 CollisionBox* createCollisionBoxFromQuad(Quad* quad, float thickness)
 {
-    Point3D* p1 = createPoint(quad->p[0]->x+thickness, quad->p[0]->y+thickness, quad->p[0]->z+thickness);
-    Point3D* p2 = createPoint(quad->p[0]->x-thickness, quad->p[0]->y-thickness, quad->p[0]->z-thickness);
-    Point3D* p3 = createPoint(quad->p[1]->x+thickness, quad->p[1]->y+thickness, quad->p[1]->z+thickness);
-    Point3D* p4 = createPoint(quad->p[1]->x-thickness, quad->p[1]->y-thickness, quad->p[1]->z-thickness);
-    Point3D* p5 = createPoint(quad->p[2]->x+thickness, quad->p[2]->y+thickness, quad->p[2]->z+thickness);
-    Point3D* p6 = createPoint(quad->p[2]->x-thickness, quad->p[2]->y-thickness, quad->p[2]->z-thickness);
-    Point3D* p7 = createPoint(quad->p[3]->x+thickness, quad->p[3]->y+thickness, quad->p[3]->z+thickness);
-    Point3D* p8 = createPoint(quad->p[3]->x-thickness, quad->p[3]->y-thickness, quad->p[3]->z-thickness);
+    Point3D* p1 = createPoint3D(quad->p[0]->x+thickness, quad->p[0]->y+thickness, quad->p[0]->z+thickness);
+    Point3D* p2 = createPoint3D(quad->p[0]->x-thickness, quad->p[0]->y-thickness, quad->p[0]->z-thickness);
+    Point3D* p3 = createPoint3D(quad->p[1]->x+thickness, quad->p[1]->y+thickness, quad->p[1]->z+thickness);
+    Point3D* p4 = createPoint3D(quad->p[1]->x-thickness, quad->p[1]->y-thickness, quad->p[1]->z-thickness);
+    Point3D* p5 = createPoint3D(quad->p[2]->x+thickness, quad->p[2]->y+thickness, quad->p[2]->z+thickness);
+    Point3D* p6 = createPoint3D(quad->p[2]->x-thickness, quad->p[2]->y-thickness, quad->p[2]->z-thickness);
+    Point3D* p7 = createPoint3D(quad->p[3]->x+thickness, quad->p[3]->y+thickness, quad->p[3]->z+thickness);
+    Point3D* p8 = createPoint3D(quad->p[3]->x-thickness, quad->p[3]->y-thickness, quad->p[3]->z-thickness);
     if (p1 == NULL || p2 == NULL || p3 == NULL || p4 == NULL || p5 == NULL || p6 == NULL || p7 == NULL || p8 == NULL) {
         fprintf(stderr, "Error: malloc failed in createCollisionBoxFromQuad()\n");
         free(p1);

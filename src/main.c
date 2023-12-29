@@ -278,6 +278,10 @@ int main(int argc, char* argv[])
         SDL_Quit();
         return EXIT_FAILURE;
     }
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
+    // SDL_GL_SetAttribute(SDL_GL_STEREO, SDL_ENABLE);
+
+    // OpenGL settings
     if (DEBUG)
     {
         printf("OpenGL version : %s\n", glGetString(GL_VERSION));
@@ -286,6 +290,7 @@ int main(int argc, char* argv[])
         printf("OpenGL shading language version : %s\n", glGetString(GL_SHADING_LANGUAGE_VERSION));
         printf("Vertex shader version : %s\n", glGetString(GL_VERTEX_SHADER));
         printf("Vertex shader max attribribute count : %d\n", GL_MAX_VERTEX_ATTRIBS);
+        SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_DEBUG_FLAG);
         glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
     }
     glEnable(GL_TEXTURE_2D);
@@ -298,7 +303,6 @@ int main(int argc, char* argv[])
             SDL_GL_SetSwapInterval(1);
         }
     }
-
     // View settings
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
@@ -426,7 +430,7 @@ int main(int argc, char* argv[])
                         break;
                     handleCameraRotation(camera, e.motion.xrel, e.motion.yrel, dt);
                     // Ensure mouse stays in the middle of the screen
-                    SDL_WarpMouseInWindow(window, WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2);
+                    SDL_WarpMouseInWindow(window, WINDOW_WIDTH/2, WINDOW_HEIGHT/2);
                     break;
                 // Shoot
                 case SDL_MOUSEBUTTONDOWN:
