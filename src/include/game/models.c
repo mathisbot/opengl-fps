@@ -96,7 +96,6 @@ Model* loadModel(char* filename)
             while (fscanf(file, " %d/%d", &pointIndex, &textureIndex) > 0)
             {
                 createPoint(vertex[pointIndex][0], vertex[pointIndex][1], vertex[pointIndex][2], textures[textureIndex][0], textures[textureIndex][1]);
-
                 // Check if end of line
                 char nextChar = fgetc(file);
                 if (nextChar == '\n' || nextChar == EOF)

@@ -239,6 +239,7 @@ This roadmap helps organizing development and may be subject to change.
 Some bugs appear during development, but no direct solution is found. Here is a list of known bugs for which no solution has yet been found. By the way, if you manage to find a bug during a game, don't hesitate to share it in Issues.
 - For some graphics drivers, presumably for recent graphics cards, launching the game in full screen mode takes longer than expected: the screen remains dark (while the game runs correctly in the background).
 - Fullscreen mode seems to reset refresh rate to 60Hz when Vsync is enabled. This limits FPS count to 60, even on fast monitors.
+- It is possible that the game crashes on launch. This bug is related to the OpenGL Context and I am still investigating
 
 <p align="right">(<a href="#readme-top">Up</a>)</p>
 

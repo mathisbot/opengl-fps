@@ -20,6 +20,7 @@
 
 
 #define DEBUG 1
+#define PRINT_FPS 0
 #define WIREFRAME 0
 
 #define VSYNC 1
@@ -142,6 +143,7 @@ void drawWall(Wall* wall) {
 
     glEnd();
 
+    // Unbind texture
     glBindTexture(GL_TEXTURE_2D, 0);
 }
 
@@ -293,6 +295,8 @@ int main(int argc, char* argv[])
         cleanUpAndExit(EXIT_FAILURE, "Error initialising SDL : %s", SDL_GetError());
     else
         SDLInitialized = 1;
+    if (DEBUG)
+        printf("SDL version : %d.%d.%d\n", SDL_MAJOR_VERSION, SDL_MINOR_VERSION, SDL_PATCHLEVEL);
 
     // Getting display information
     uint16_t WINDOW_WIDTH;
@@ -332,20 +336,18 @@ int main(int argc, char* argv[])
     glContext = SDL_GL_CreateContext(window);
     if (glContext == NULL)
         cleanUpAndExit(EXIT_FAILURE, "Error when creating OpenGL context : %s", SDL_GetError());
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
 
     // OpenGL settings
     if (DEBUG)
     {
-        printf("OpenGL version : %s\n", glGetString(GL_VERSION));
-        printf("OpenGL vendor : %s\n", glGetString(GL_VENDOR));
-        printf("OpenGL renderer : %s\n", glGetString(GL_RENDERER));
-        printf("OpenGL shading language version : %s\n", glGetString(GL_SHADING_LANGUAGE_VERSION));
-        printf("Vertex shader max attribribute count : %d\n", GL_MAX_VERTEX_ATTRIBS);
-        SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_DEBUG_FLAG);
+        printf("> OpenGL version : %s\n", glGetString(GL_VERSION));
+        printf("> OpenGL vendor : %s\n", glGetString(GL_VENDOR));
+        printf("> OpenGL renderer : %s\n", glGetString(GL_RENDERER));
+        printf("> OpenGL shading language version : %s\n", glGetString(GL_SHADING_LANGUAGE_VERSION));
+        printf("> Vertex shader max attribribute count : %d\n", GL_MAX_VERTEX_ATTRIBS);
         glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
     }
-    if (WIREFRAME)
+    if (WIREFRAME && DEBUG)
         glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     glEnable(GL_TEXTURE_2D);
     if (VSYNC)
@@ -418,6 +420,12 @@ int main(int argc, char* argv[])
         cleanUpAndExit(EXIT_FAILURE, "Error creating camera\n");
     }
 
+    // DUMMY: testing models loading
+    loadModel("shotgun/shotgun");
+    if (DEBUG)
+        printf("Shotgun loaded\n");
+
+
     // Main loop
     Uint64 last_frame = SDL_GetTicks64();
     Uint64 now;
@@ -440,7 +448,7 @@ int main(int argc, char* argv[])
         }
         dt = dt_ms / 1000.0;
         last_frame = now;
-        if (DEBUG)
+        if (DEBUG && PRINT_FPS)
             printf("FPS : %f\n", 1.0 / dt);
 
         // Event loop
@@ -493,7 +501,6 @@ int main(int argc, char* argv[])
         if (quit)
             break;
         // Move camera
-        SDL_PumpEvents();
         if (!pause)
         {
             if (keyboardState[camera->bindings->sprint])
