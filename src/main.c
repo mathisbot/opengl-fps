@@ -11,6 +11,7 @@
 #include "include/game/audio.h"
 #include "include/game/camera.h"
 #include "include/game/level.h"
+#include "include/game/models.h"
 #include "include/game/player.h"
 #include "include/game/enemy.h"
 #include "include/game/textures.h"
@@ -195,6 +196,9 @@ void drawUI(int w, int h, int pointerType)
         glVertex2f(w/2 + length+1, h/2);
         glEnd();
     }
+
+    // Draw weapon
+    // TODO
 }
 
 /**

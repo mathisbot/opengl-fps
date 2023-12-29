@@ -9,19 +9,12 @@
 
 #include "enemy.h"
 #include "textures.h"
+#include "models.h"  // Needed for Point struct
 
 
 #define LEVELCOUNT 1
 #define LEVELPATH "assets/levels/"
 
-
-typedef struct {
-    float x;
-    float y;
-    float z;
-    float tex_x;
-    float tex_y;
-} Point;
 
 // Walls are defined by points (vertices)
 typedef struct {
@@ -68,26 +61,6 @@ Walls are drawn as triangles, so pointcount that are over 3
 are split into multiple triangles (n-2 triangles for n points)
 as each new triangle is defined by the first point and the last two points
 */
-
-
-/**
- * @brief Create a point
- * 
- * @param x X position of the point
- * @param y Y position of the point
- * @param z Z position of the point
- * @param tex_x X position of the texture
- * @param tex_y Y position of the texture
- * @return Point* Pointer to the point
- */
-Point* createPoint(float x, float y, float z, float tex_x, float tex_y);
-
-/**
- * @brief Free a point
- * 
- * @param point Pointer to the point
- */
-void freePoint(Point* point);
 
 
 /**

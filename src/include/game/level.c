@@ -56,30 +56,6 @@ static void cleanUp(const char* log, ...)
 }
 
 
-Point* createPoint(float x, float y, float z, float tex_x, float tex_y)
-{
-    Point* point = malloc(sizeof(Point));
-    if (!point)
-    {
-        fprintf(stderr, "Error allocating memory for point\n");
-        exit(1);
-    }
-
-    point->x = x;
-    point->y = y;
-    point->z = z;
-    point->tex_x = tex_x;
-    point->tex_y = tex_y;
-
-    return point;
-}
-
-void freePoint(Point* point)
-{
-    free(point);
-}
-
-
 Wall* createWall(Point** points, int pointCount, GLuint textureID)
 {
     Wall* wall = malloc(sizeof(Wall));
