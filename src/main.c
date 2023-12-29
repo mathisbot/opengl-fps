@@ -363,7 +363,7 @@ int main(int argc, char* argv[])
     );
     Camera* camera = initCamera(level->startX, level->startY, level->startZ,
                                 level->startYaw, level->startPitch, SPEED, SPRINTINGBOOST,
-                                SENSITIVITY, bindings, DOUBLEJUMP);
+                                SENSITIVITY, bindings, DOUBLEJUMP, AIRCONTROL);
     if (!camera)
     {
         fprintf(stderr, "Error creating camera\n");

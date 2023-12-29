@@ -32,7 +32,9 @@ void freeBindings(Bindings* bindings)
 }
 
 
-Camera* initCamera(float x, float y, float z, float yaw, float pitch, float movingSpeed, float sprintingBoost, float rotationSpeed, Bindings* bindings, bool canDoubleJump)
+Camera* initCamera(float x, float y, float z, float yaw, float pitch, float movingSpeed,
+                    float sprintingBoost, float rotationSpeed, Bindings* bindings,
+                    bool canDoubleJump, bool airControl)
 {
     Camera* camera = malloc(sizeof(Camera));
     if (!camera)
@@ -62,6 +64,7 @@ Camera* initCamera(float x, float y, float z, float yaw, float pitch, float movi
     camera->onGround = 1;
     camera->canDoubleJump = canDoubleJump;
     camera->hasDoubleJump = 1;
+    camera->airControl = AIRCONTROL;
 
     return camera;
 }
@@ -75,33 +78,42 @@ void freeCamera(Camera* camera)
 
 void handleCameraMovement(Camera* camera, const Uint8* keyboardState, double dt, float speedMultiplier)
 {
-    // Updating movement factor
-    camera->movCos = camera->movingSpeed * camera->yawCos * dt;
-    camera->movSin = camera->movingSpeed * camera->yawSin * dt;
-
     // (x,z) plane movement
-    if (keyboardState[camera->bindings->forward])  // Forward
+
+    // Updating velocity
+    if (camera->onGround || camera->airControl)
     {
-        camera->x += camera->movSin * speedMultiplier;
-        camera->z -= camera->movCos * speedMultiplier;
+        camera->xVelocity = 0;
+        camera->zVelocity = 0;
+        camera->movCos = camera->movingSpeed * camera->yawCos;
+        camera->movSin = camera->movingSpeed * camera->yawSin;
+        if (keyboardState[camera->bindings->forward])  // Forward
+        {
+            camera->xVelocity += camera->movSin * speedMultiplier;
+            camera->zVelocity -= camera->movCos * speedMultiplier;
+        }
+        if (keyboardState[camera->bindings->backward])  // Backward
+        {
+            camera->xVelocity -= camera->movSin;
+            camera->zVelocity += camera->movCos;
+        }
+        if (keyboardState[camera->bindings->left])  // Left
+        {
+            camera->xVelocity -= camera->movCos;
+            camera->zVelocity -= camera->movSin;
+        }
+        if (keyboardState[camera->bindings->right])  // Right
+        {
+            camera->xVelocity += camera->movCos;
+            camera->zVelocity += camera->movSin;
+        }
     }
-    if (keyboardState[camera->bindings->backward])  // Backward
-    {
-        camera->x -= camera->movSin;
-        camera->z += camera->movCos;
-    }
-    if (keyboardState[camera->bindings->left])  // Left
-    {
-        camera->x -= camera->movCos;
-        camera->z -= camera->movSin;
-    }
-    if (keyboardState[camera->bindings->right])  // Right
-    {
-        camera->x += camera->movCos;
-        camera->z += camera->movSin;
-    }
+    // Applying velocity
+    camera->x += camera->xVelocity * dt;
+    camera->z += camera->zVelocity * dt;
 
     // y axis movement
+
     if (!camera->onGround)  // Fall
     {
         camera->yVelocity -= GRAVITY * dt;
@@ -111,6 +123,7 @@ void handleCameraMovement(Camera* camera, const Uint8* keyboardState, double dt,
         if (camera->y < 0.0f)  // Check if on ground
         {
             camera->onGround = 1;
+            camera->hasDoubleJump = 1;
             camera->yVelocity = 0.0f;
             camera->y = 0.0f;
         }
@@ -124,6 +137,11 @@ void cameraJump(Camera* camera)
     {
         camera->yVelocity += JUMPSPEED;
         camera->onGround = 0;
+    }
+    else if (camera->canDoubleJump && camera->hasDoubleJump)
+    {
+        camera->yVelocity = JUMPSPEED;
+        camera->hasDoubleJump = 0;
     }
 }
 

@@ -18,7 +18,8 @@
 #define SPEED 10.0f
 #define SPRINTINGBOOST 1.5f
 #define SENSITIVITY 0.13f
-#define DOUBLEJUMP 0
+#define DOUBLEJUMP 1
+#define AIRCONTROL 1
 
 
 typedef struct {
@@ -51,6 +52,7 @@ typedef struct {
     bool onGround;
     bool canDoubleJump;
     bool hasDoubleJump;
+    bool airControl;
 
     // Used for optimization
     // These quantities are used multiple times each frames
@@ -100,11 +102,14 @@ void freeBindings(Bindings* bindings);
  * @param yaw Yaw of the camera
  * @param pitch Pitch of the camera
  * @param movingSpeed Speed at which the camera moves
+ * @param sprintingBoost Boost of the camera when sprinting
  * @param rotationSpeed Speed at which the camera rotates
  * @param bindings Bindings of the camera
+ * @param canDoubleJump Whether the camera can double jump
+ * @param airControl Whether the camera can control itself in the air
  * @return Camera* Pointer to the camera
 */
-Camera* initCamera(float x, float y, float z, float yaw, float pitch, float movingSpeed, float sprintingBoost, float rotationSpeed, Bindings* bindings, bool canDoubleJump);
+Camera* initCamera(float x, float y, float z, float yaw, float pitch, float movingSpeed, float sprintingBoost, float rotationSpeed, Bindings* bindings, bool canDoubleJump, bool airControl);
 
 /**
  * @brief Free a camera
