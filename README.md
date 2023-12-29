@@ -71,7 +71,7 @@ Among the many choices available (GLFW, GLUT, SFML, ...), one stood out for its 
 
 - One of the key advantages of SDL2 is its provision of low-level access to graphics, but also audio drivers, and input devices.
 
-- SDL2's cross-platform compatibility makes it easy to eamlessly operate on various operating systems, including Windows, macOS, and Linux.
+- SDL2's cross-platform compatibility makes it easy to seamlessly operate on various operating systems, including Windows, macOS, and Linux.
 
 - SDL2's built-in vertex and fragment shaders. Creating a vertex/fragment shader requires a very advanced level of skill. Perhaps, once the project is advanced, I'll try to implement a rudimentary one, in particular to deal with light.
 
