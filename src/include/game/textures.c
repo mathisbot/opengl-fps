@@ -38,7 +38,7 @@ int loadTexture(Texture* tex, const char* path, int numMipmaps, bool repeat)
         glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
     }
 
-    glTexStorage2D(GL_TEXTURE_2D, numMipmaps, GL_RGB8, surface->w, surface->h);
+    glTexStorage2D(GL_TEXTURE_2D, numMipmaps, GL_SRGB8, surface->w, surface->h);
     glTexSubImage2D(
         GL_TEXTURE_2D, 0, 0, 0,
         surface->w, surface->h,

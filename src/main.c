@@ -21,8 +21,8 @@
 /* --- TODO --- */
 
 /*
-- Ray tracing ?
-    -> Light currently passes through objects
+- Add shadows
+    -> https://learnopengl.com/Advanced-Lighting/Shadows/Point-Shadows
 - Add textures
     -> Add normal mapping
     -> Add specular mapping
@@ -374,9 +374,9 @@ static void render(GLuint width, GLuint height)
         sprintf(locate, "pointLights[%d].specular", i);
         glUniform3f(glGetUniformLocation(shaderProgram, locate), 1.0f, 1.0f, 1.0f);
         sprintf(locate, "pointLights[%d].linear", i);
-        glUniform1f(glGetUniformLocation(shaderProgram, locate), 0.09f);
+        glUniform1f(glGetUniformLocation(shaderProgram, locate), 0.12f);
         sprintf(locate, "pointLights[%d].quadratic", i);
-        glUniform1f(glGetUniformLocation(shaderProgram, locate), 0.032f);
+        glUniform1f(glGetUniformLocation(shaderProgram, locate), 0.06f);
         sprintf(locate, "pointLights[%d].color", i);
         glUniform3f(glGetUniformLocation(shaderProgram, locate), lightColor[i][0], lightColor[i][1], lightColor[i][2]);
     }
@@ -388,7 +388,7 @@ static void render(GLuint width, GLuint height)
     glUniform3f(glGetUniformLocation(shaderProgram, "material.ambient"), 1.0f, 0.5f, 0.31f);
     glUniform3f(glGetUniformLocation(shaderProgram, "material.diffuse"), 1.0f, 0.5f, 0.31f);
     glUniform3f(glGetUniformLocation(shaderProgram, "material.specular"), 0.5f, 0.5f, 0.5f);
-    glUniform1f(glGetUniformLocation(shaderProgram, "material.shininess"), 32.0f);
+    glUniform1f(glGetUniformLocation(shaderProgram, "material.shininess"), 64.0f);
 
 
     // Rendering
@@ -510,6 +510,7 @@ int main(int argc, char *argv[])
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_MULTISAMPLE);
     glEnable(GL_CULL_FACE);  // Triangles have to be defined in counter-clockwise order
+    glEnable(GL_FRAMEBUFFER_SRGB);  // Gamma correction
     glViewport(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT);
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 
