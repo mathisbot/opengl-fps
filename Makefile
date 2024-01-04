@@ -1,7 +1,7 @@
 CC = gcc
 CFLAGS = -Wall -I src/include
 LDFLAGS = -L src/lib
-LIBS = -lmingw32 -lSDL2main -lSDL2 -lSDL2_mixer -lopengl32 -lglu32
+LIBS = -lmingw32 -lSDL2main -lSDL2 -lSDL2_mixer -lopengl32 -lglew32
 
 SRC_DIR = src
 INCLUDE_DIR = $(SRC_DIR)/include
@@ -13,12 +13,13 @@ SOURCES = $(shell find $(INCLUDE_DIR) -name '*.c')
 OBJECTS = $(SOURCES:.c=.o)
 
 # Target executable name
+TRGT_DIR = bin
 TARGET = retro_fps
 
 all: $(TARGET)
 
 $(TARGET): $(OBJECTS)
-	$(CC) $(CFLAGS) $(LDFLAGS) -o $(SRC_DIR)/$(TARGET) $(SRC_DIR)/main.c $(OBJECTS) $(LIBS)
+	$(CC) $(CFLAGS) $(LDFLAGS) -o $(TRGT_DIR)/$(TARGET) $(SRC_DIR)/main.c $(OBJECTS) $(LIBS)
 
 %.o: %.c
 	$(CC) $(CFLAGS) -c $< -o $@

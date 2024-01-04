@@ -1,33 +1,34 @@
 #include "audio.h"
 
 
-static char path[256];
-
-Sound* createSound(char* filename, int channel, int volume) {
-    Sound* sound = malloc(sizeof(Sound));
-    if (sound == NULL) {
-        fprintf(stderr, "Error: Could not allocate memory for Sound object\n");
-        return NULL;
-    }
+int loadSound(Sound *sound, char* filename, int volume)
+{
+    static char path[256];
     sprintf(path, "%s%s", AUDIOPATH, filename);
     sound->chunk = Mix_LoadWAV(path);
-    if (sound->chunk == NULL) {
+    if (sound->chunk == NULL)
+    {
         fprintf(stderr, "Error: Could not load sound file %s\n", path);
-        free(sound);
-        return NULL;
+        return -1;
     }
-    sound->channel = channel;
     sound->volume = volume;
     Mix_VolumeChunk(sound->chunk, volume);
-    return sound;
+    return 0;
 }
 
-void freeSound(Sound* sound) {
-    Mix_FreeChunk(sound->chunk);
-    free(sound);
+void destroySound(Sound sound)
+{
+    Mix_FreeChunk(sound.chunk);
 }
 
+void playSound(Sound sound, unsigned int loops)
+{
+    Mix_PlayChannel(-1, sound.chunk, loops);
+}
 
-void playSound(Sound* sound, unsigned int loops) {
-    Mix_PlayChannel(sound->channel, sound->chunk, loops);
+int initMixer(int numchans)
+{
+    if (Mix_OpenAudio(AUDIO_SAMPLERATE, MIX_DEFAULT_FORMAT, MIX_DEFAULT_CHANNELS, AUDIO_CHUNKSIZE) < 0) return -1;
+    else return 0;
+    Mix_AllocateChannels(numchans);
 }

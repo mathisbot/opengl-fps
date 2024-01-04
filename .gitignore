@@ -50,5 +50,5 @@ dkms.conf
 .git/
 src/include/SDL2/
 src/include/cglm/
-src/include/sokol/
+src/include/GL/
 src/lib/

@@ -8,15 +8,16 @@
 #include <string.h>
 
 #include <SDL2/SDL.h>
+#include <GL/glew.h>
 #include <SDL2/SDL_opengl.h>
 
 
 #define TEXTUREPATH "assets/textures/"
 #define TEXTURE_REPEAT 1
+#define TEXTURE_CLAMP 0
 
 
 typedef struct {
-    char path[256];
     GLuint id;
     int width;
     int height;
@@ -26,18 +27,20 @@ typedef struct {
 /**
  * @brief Load a texture
  *   
+ * @param tex Pointer to the texture
  * @param path Path to the texture, must be relative to the TEXTUREPATH
+ * @param numMipmaps Number of mipmaps to generate
  * @param repeat Repeat the texture
- * @return Texture* Pointer to the texture 
+ * @return int 0 if success, -1 if error
 */
-Texture* loadTexture(const char* path, bool repeat);
+int loadTexture(Texture *tex, const char* path, int numMipmaps, bool repeat);
 
 /**
- * @brief Free a texture
+ * @brief Destroy a texture
  * 
- * @param texture Pointer to the texture
+ * @param tex Texture to destroy
 */
-void freeTexture(Texture* texture);
+void destroyTexture(Texture tex);
 
 
 #endif

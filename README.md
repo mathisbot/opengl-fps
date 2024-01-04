@@ -52,8 +52,8 @@
 
 The aim of this project is to create a simple FPS game, using no game engine. This allows for a low-level approach to game design, and therefore very thorough optimization.
 
-In this case, I chose the C language along with only one very low-level library: SDL2.
-This means that rendering methods are close to nil, and that I had to start from scratch (although SDL can take some of the work out of the equation).
+In this case, I chose the C language along with only one very low-level library: SDL2 (in order to use OpenGL).
+This means that rendering methods are close to nil, and that I had to start from scratch (although SDL and OpenGL can take some of the work out of the equation).
 
 Although the context of the project resembles that of the 1990s, the game's content should resemble a modern FPS with simplified graphics. The game should therefore include familiar mechanics.
 
@@ -63,9 +63,14 @@ Although the context of the project resembles that of the 1990s, the game's cont
 <a name="about-sdl2"></a>
 
 #### Context
-Generally speaking, when you want to display something on a screen, you have to go through a large number of steps.
-Fortunately, over the years, this long process has been divided over the different component of computers.
-From a development point of view, it is needed to discuss with the OS and graphic card drivers. This is done using standardized languages. The best-known is DirectX, but OpenGL is open-source and, above all, easier to learn/use.
+The first question to ask is: how do you display elements on screen? As the display is connected directly to the GPU, you need to ask the graphics drivers politely.
+This is usually done via standardized languages called specifications. Their implementation is the responsibility of the card manufacturer.
+
+The best-known are DirectX, Vulkan and OpenGL. Although Vulkan is the most recent and was specifically designed for optimization, taking into account recent technological advances, OpenGL remains the most widely used, open-source and, above all, the easiest to learn.
+
+> OpenGL® is the most widely adopted 2D and 3D graphics API in the industry, bringing thousands of applications to a wide variety of computer platforms. It is window-system and operating-system independent as well as network-transparent. OpenGL enables developers of software for PC, workstation, and supercomputing hardware to create high-performance, visually compelling graphics software application
+
+on *khronos.org*
 
 #### SDL
 
@@ -73,7 +78,7 @@ From a development point of view, it is needed to discuss with the OS and graphi
 
 on *libsdl.org*
 
-As OpenGL is a set of specifications and not a library, I had to choose a library that would allow me to use it.
+As OpenGL is a set of specifications and not a library, I had to choose a library that would allow me to create a context around it, like opening a window.
 Among the many choices available (GLFW, GLUT, SFML, ...), one stood out for its characteristics:
 
 - SDL2 is renowned for its lightweight design, which ensures efficient resource utilization without compromising performance.
@@ -82,7 +87,7 @@ Among the many choices available (GLFW, GLUT, SFML, ...), one stood out for its 
 
 - SDL2's cross-platform compatibility makes it easy to seamlessly operate on various operating systems, including Windows, macOS, and Linux.
 
-- SDL2's built-in vertex and fragment shaders. Creating a vertex/fragment shader requires a very advanced level of skill. Perhaps, once the project is advanced, I'll try to implement a rudimentary one, in particular to deal with light.
+Overall, I think SDL2 is best suited to video game design.
 
 <p align="right">(<a href="#readme-top">Up</a>)</p>
 
@@ -90,14 +95,24 @@ Among the many choices available (GLFW, GLUT, SFML, ...), one stood out for its 
 <a name="built-with"></a>
 
 * [C][c-url]
+* [cglm][cglm-url] (0.9.2)
+* [GLEW][glew-url] (2.1.0)
 * [SDL2][sdl-url] (2.28.5)
 * [SDL_mixer][sdl_mixer-url] (2.6.3)
 
 #### Quick note
 
-SDL_mixer is not part of the default SDL library. However, it is an official SDL extension promoted on the SDL website.
+cglm stands for OpenGL Mathematics (glm) for C. Its is a highly optimized 2D/3D math library. cglm provides lot of utils to help math operations to be fast and quick to write. The functions implemented take advantage of SSE2 and vectorization.
 
+SDL_mixer is not part of the default SDL library. However, it is an official SDL extension promoted on the SDL website.
 It is also practically indispensable when developing a game, as it allows several sounds to be played at the same time, which is impossible with SDL alone.
+
+GLEW stands for OpenGL Extension Wrangler. It is an extension that loads OpenGL function headers :
+as stated before, OpenGL's implementation is the responsibility of the card manufacturer. GLEW takes care of retrieving and normalizing function names.
+
+> GLEW provides efficient run-time mechanisms for determining which OpenGL extensions are supported on the target platform. OpenGL core and extension functionality is exposed in a single header file.
+
+on *glew.curseforge.net*
 
 <p align="right">(<a href="#readme-top">Up</a>)</p>
 
@@ -108,10 +123,9 @@ It is also practically indispensable when developing a game, as it allows severa
 #### Try the game
 If you just want to try out the game, simply download the `release.zip` file.
 
-Please note that the game files given in this zip-file are only compatible with 64-bit Windows systems. In the future, I plan to compile the project for other widespread systems (Linux and 32-bit).
+Please note that the game files given in this zip file are only compatible with 64-bit Windows systems. In the future, I plan to compile the project for other widespread systems (Linux and 32-bit, maybe macOS).
 
 For the moment, no interface or menu has been implemented, so that there's no way to change  key bindings from within the game.
-Furthermore, it is likely that default bindings won't be modifiable in the final version of the game (you will only be able to modify bindings for the game session).
 
 Current bindings are detailed in <a href="#usage">Usage</a>.
 
@@ -129,6 +143,8 @@ Otherwise, follow these steps:
 Inside the zip file are the 32- and 64-bit SDL library files. Choose the one that suits your system.
 * SDL_mixer : As with SDL, download the development (`devel`) version of SDL_mixer. I chose the `mingw` one.
 Inside the zip file are the 32- and 64-bit SDL library files. Choose the one that suits your system.
+* GLEW : Download GLEW binaries on their website.
+* cglm : Download latest release on GitHub (it is a source code).
 
 ### Installation
 <a name="installation"></a>
@@ -137,26 +153,31 @@ Inside the zip file are the 32- and 64-bit SDL library files. Choose the one tha
   ```sh
   git clone https://github.com/Dozer35/retro-fps.git
   ```
-2. Add the `include` and `lib` directories of the SDL library files you downloaded earlier to `src`. Also put the content of the `bin` folder (`bin/SDL2.dll` for Windows) inside of `src`
+
+  or download code as Zip.
+
+2. Add the `include` and `lib` directories of the SDL library files you downloaded earlier to `src`. Also put the content of the `bin` folder (`bin/SDL2.dll` for Windows) inside of `bin`
   The project tree should then contain :
   - `src/include/SDL2/*.h`
   - `src/lib/*.a`
-  - `src/SDL2.dll`
+  - `bin/SDL2.dll`
 
-    Follow the same procedure for SDL_mixer.
+    Follow the same procedure for SDL_mixer and GLEW.
+
+    As for cglm, cglm provides different ways of including it. The easiest one, and the one I chose, is to use inline functions. This means that all you have to do is add `cglm/*.h` to `include/cglm` and just include the header.
 
     I didn't include these files in the repository because I didn't write them myself. Besides, the repository would be unnecessarily heavier.
 3. WINDOWS - Compile the project with :
   ```sh
-    gcc -Wall -I src/include -L src/lib -o src/retro_fps src/main.c $(Get-ChildItem -Recurse -Path src/include -Filter \"*.c\").FullName -lmingw32 -lSDL2main -lSDL2 -lSDL2_mixer -lopengl32 -lglu32
+    gcc -Wall -I src/include -L src/lib -o bin/retro_fps src/main.c $(Get-ChildItem -Recurse -Path src/include -Filter \"*.c\").FullName -lmingw32 -lSDL2main -lSDL2 -lSDL2_mixer -lopengl32 -lglew32
   ```
 
   UNIX - A Makefile is available. Alternatively, compile the project with :
 
   ```
-    gcc -Wall -I src/include -L src/lib -o src/retro_fps src/main.c $(find src/include -name "*.c") -lmingw32 -lSDL2main -lSDL2 -lSDL2_mixer -lopengl32 -lglu32
+    gcc -Wall -I src/include -L src/lib -o bin/retro_fps src/main.c $(find src/include -name "*.c") -lmingw32 -lSDL2main -lSDL2 -lSDL2_mixer -lopengl32 -lglew32
   ```
-  A compiled file will then be generated as `src/retro_fps` or `src/retro_fps.exe`, depending on your OS.
+  A compiled file will then be generated as `bin/retro_fps` or `bin/retro_fps.exe`, depending on your OS.
 
 
 <p align="right">(<a href="#readme-top">Up</a>)</p>
@@ -167,10 +188,10 @@ Inside the zip file are the 32- and 64-bit SDL library files. Choose the one tha
 ### Gameplay
 <a name="gameplay"></a>
 
-In its current state, the game only allows you to move freely in a black space. The player can jump, run and look around.
-The stage also contains 3 cubes and a brick wall.
+In its current state, the game only allows you to move freely in a black space. The player can run and look around.
+The stage also contains brick cubes and a movable light source.
 
-This is a placeholder for the level: the 3 cubes are static and the wall is dynamically generated accordingly to what is written in assets/levels/level1.
+This is a placeholder for the level.
 
 <p align="right">(<a href="#readme-top">Up</a>)</p>
 
@@ -186,7 +207,7 @@ By default, the bindings are :
 - V - Left
 - N - Right
 - Space - Jump
-- Left click - Shoot
+- Left click - Shoot (Not fully implemented)
 
 Other bindings are set in the game files, but they are not used yet.
 
@@ -219,8 +240,8 @@ Overall, the game MUST be playable and enjoyable.
 This roadmap helps organizing development and may be subject to change.
 
 - [X] Opening a window
-- [X] First Person Camera
-- [X] Level rendering
+- [ ] First Person Camera
+- [ ] Level rendering
 - [ ] PAUSE - Need to move to OpenGL 4.6.0 Core
 - [ ] Gun
 - [ ] Audio
@@ -238,13 +259,13 @@ This roadmap helps organizing development and may be subject to change.
 <a name="known-bugs"></a>
 
 Some bugs appear during development, but no direct solution is found. Here is a list of known bugs for which no solution has yet been found. By the way, if you manage to find a bug during a game, don't hesitate to share it in Issues.
-- For some graphics drivers, presumably for recent graphics cards, launching the game in full screen mode takes longer than expected: the screen remains dark (while the game runs correctly in the background).
-- Fullscreen mode seems to reset refresh rate to 60Hz when Vsync is enabled. This limits FPS count to 60, even on fast monitors.
 
 <p align="right">(<a href="#readme-top">Up</a>)</p>
 
 
 [c-url]: https://fr.wikipedia.org/wiki/C_(langage)
+[cglm-url]: https://github.com/recp/cglm
+[glew-url]: https://glew.sourceforge.net/
 [sdl-url]: https://www.libsdl.org/
 [sdl_mixer-url]: https://github.com/libsdl-org/SDL_mixer
 [winlibs-url]: https://winlibs.com/#download-release

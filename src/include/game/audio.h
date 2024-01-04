@@ -18,29 +18,34 @@
 #define AUDIOPATH "assets/audio/"
 
 
+/**
+ * @brief Sound object
+ * 
+ * @param chunk Pointer to the Mix_Chunk object
+ * @param volume The volume of the sound
+*/
 typedef struct {
-    Mix_Chunk* chunk;
-    int channel;
+    Mix_Chunk *chunk;
     int volume;
 } Sound;
 
 
 /**
- * @brief Creates a new Sound object
+ * @brief Loads an audio file
  * 
+ * @param sound Pointer to the Sound object to create
  * @param filename The name of the file to load
- * @param channel The channel to play the sound on
- * @return Sound* A pointer to the new Sound object
+ * @param volume The volume of the sound
+ * @return int 0 on success, -1 on failure
 */
-Sound* createSound(char* filename, int channel, int volume);
+int loadSound(Sound *sound, char* filename, int volume);
 
 /**
- * @brief Frees a Sound object
+ * @brief Destroys a Sound object
  * 
- * @param sound Pointer to the Sound object to free
+ * @param sound Sound object to destroy
 */
-void freeSound(Sound* sound);
-
+void destroySound(Sound sound);
 
 /**
  * @brief Plays a sound
@@ -48,7 +53,16 @@ void freeSound(Sound* sound);
  * @param sound Pointer to the Sound object to play
  * @param loops Number of times to loop the sound
 */
-void playSound(Sound* sound, unsigned int loops);
+void playSound(Sound sound, unsigned int loops);
+
+
+/**
+ * @brief Initializes the audio mixer
+ * 
+ * @param numchans The number of channels to initialize
+ * @return int 0 on success, -1 on failure
+*/
+int initMixer(int numchans);
 
 
 #endif

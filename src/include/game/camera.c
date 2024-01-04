@@ -1,167 +1,133 @@
 #include "camera.h"
 
 
-Bindings* createBindings(SDL_Scancode forward, SDL_Scancode backward, SDL_Scancode left, SDL_Scancode right, SDL_Scancode sprint, SDL_Scancode jump,
-                         SDL_Scancode use, SDL_Scancode reload, SDL_Scancode inventory, SDL_Scancode map, SDL_Scancode pause)
+// Assuming up is {0.0f, 1.0f, 0.0f}
+
+
+static void bindingsCopy(Bindings *dst, Bindings *src)
 {
-    Bindings* bindings = (Bindings*)malloc(sizeof(Bindings));
-    if (!bindings)
-    {
-        fprintf(stderr, "Error allocating memory for bindings\n");
-        return NULL;
-    }
-
-    bindings->forward = forward;
-    bindings->backward = backward;
-    bindings->left = left;
-    bindings->right = right;
-    bindings->sprint = sprint;
-    bindings->jump = jump;
-    bindings->use = use;
-    bindings->reload = reload;
-    bindings->inventory = inventory;
-    bindings->map = map;
-    bindings->pause = pause;
-
-    return bindings;
+    dst->forward = src->forward;
+    dst->backward = src->backward;
+    dst->left = src->left;
+    dst->right = src->right;
+    dst->sprint = src->sprint;
+    dst->jump = src->jump;
+    dst->use = src->use;
+    dst->reload = src->reload;
 }
 
-void freeBindings(Bindings* bindings)
+int initCamera(Camera *camera, vec3 pos, vec3 target, Bindings *bindings)
 {
-    free(bindings);
-}
-
-
-Camera* initCamera(float x, float y, float z, float yaw, float pitch, float movingSpeed,
-                    float sprintingBoost, float rotationSpeed, Bindings* bindings,
-                    bool canDoubleJump, bool airControl)
-{
-    Camera* camera = malloc(sizeof(Camera));
-    if (!camera)
-    {
-        fprintf(stderr, "Error allocating memory for camera\n");
-        return NULL;
-    }
-
-    camera->x = x;
-    camera->y = y;
-    camera->z = z;
-    camera->yaw = yaw;
-    camera->yawCos = cos(DEG2RAD(yaw));
-    camera->yawSin = sin(DEG2RAD(yaw));
-    camera->pitch = pitch;
-    camera->pitchCos = cos(DEG2RAD(pitch));
-    camera->pitchSin = sin(DEG2RAD(pitch));
-    camera->movCos = 0.0f;
-    camera->movSin = 0.0f;
-    camera->movingSpeed = movingSpeed;
-    camera->sprintingBoost = sprintingBoost;
-    camera->rotationSpeed = rotationSpeed;
-    camera->xVelocity = 0.0f;
-    camera->yVelocity = 0.0f;
-    camera->zVelocity = 0.0f;
-    camera->bindings = bindings;
+    glm_vec3_copy(pos, camera->pos);
+    glm_vec3_copy(target, camera->target);
+    glm_vec3_copy((vec3){0.0f, 1.0f, 0.0f}, camera->up);
+    glm_vec3_normalize(camera->up);
+    glm_vec3_sub(camera->pos, camera->target, camera->direction);
+    glm_vec3_normalize(camera->direction);
+    glm_vec3_cross(camera->up, camera->direction, camera->right);
+    glm_vec3_normalize(camera->right);
+    camera->speed = SPEED;
+    camera->sprintBoost = SPRINTBOOST;
+    camera->sensitivity = SENSITIVITY;
     camera->onGround = 1;
-    camera->canDoubleJump = canDoubleJump;
-    camera->hasDoubleJump = 1;
-    camera->airControl = AIRCONTROL;
-
-    return camera;
-}
-
-void freeCamera(Camera* camera)
-{
-    freeBindings(camera->bindings);
-    free(camera);
+    camera->jumpSpeed = JUMPSPEED;
+    glm_vec3_copy(GLM_VEC3_ZERO, camera->upVelocity);
+    bindingsCopy(&camera->bindings, bindings);
+    return 0;
 }
 
 
-void handleCameraMovement(Camera* camera, const Uint8* keyboardState, double dt, float speedMultiplier)
+void translateCamera(Camera *camera, const Uint8* keyboardState, double dt)
 {
-    // Updating velocity
+    vec3 translation = {0.0f, 0.0f, 0.0f};
 
-    // (x,z) plane movement
-    if (camera->onGround || camera->airControl)
+    // (Direction2D, Right2D) plane movement
+
+    if (keyboardState[camera->bindings.forward])
     {
-        camera->xVelocity = 0;
-        camera->zVelocity = 0;
-        camera->movCos = camera->movingSpeed * camera->yawCos;
-        camera->movSin = camera->movingSpeed * camera->yawSin;
-        if (keyboardState[camera->bindings->forward])  // Forward
-        {
-            camera->xVelocity += camera->movSin * speedMultiplier;
-            camera->zVelocity -= camera->movCos * speedMultiplier;
-        }
-        if (keyboardState[camera->bindings->backward])  // Backward
-        {
-            camera->xVelocity -= camera->movSin;
-            camera->zVelocity += camera->movCos;
-        }
-        if (keyboardState[camera->bindings->left])  // Left
-        {
-            camera->xVelocity -= camera->movCos;
-            camera->zVelocity -= camera->movSin;
-        }
-        if (keyboardState[camera->bindings->right])  // Right
-        {
-            camera->xVelocity += camera->movCos;
-            camera->zVelocity += camera->movSin;
-        }
+        glm_vec3_sub(translation, camera->direction2D, translation);
+        if (keyboardState[camera->bindings.sprint])
+            glm_vec3_scale(translation, camera->sprintBoost, translation);
     }
-    
-    // y-axis movement
-    if (!camera->onGround)  // Fall
+    if (keyboardState[camera->bindings.backward])
+        glm_vec3_add(translation, camera->direction2D, translation);
+    if (keyboardState[camera->bindings.left])
+        glm_vec3_sub(translation, camera->right2D, translation);
+    if (keyboardState[camera->bindings.right])
+        glm_vec3_add(translation, camera->right2D, translation);
+    glm_vec3_scale(translation, camera->speed * dt, translation);
+
+    // Up vector (gravity and jumping)
+
+    // Jumping
+    if (keyboardState[camera->bindings.jump] && camera->onGround)
     {
-        camera->yVelocity -= GRAVITY * dt;
-    }
-
-    // Applying velocity
-    camera->x += camera->xVelocity * dt;
-    camera->y += camera->yVelocity * dt;
-    camera->z += camera->zVelocity * dt;
-
-    // I am currently assuming that ground is at y = 0
-    // This is very likely to change in the future
-    if (camera->y < 0.0f)  // Check if on ground
-    {
-        camera->onGround = 1;
-        camera->hasDoubleJump = 1;
-        camera->yVelocity = 0.0f;
-        camera->y = 0.0f;
-    }
-
-}
-
-void cameraJump(Camera* camera)
-{
-    // Handle jump
-    if (camera->onGround)
-    {
-        camera->yVelocity += JUMPSPEED;
+        static vec3 jump;
+        glm_vec3_scale(camera->up, camera->jumpSpeed, jump);
+        glm_vec3_copy(jump, camera->upVelocity);
         camera->onGround = 0;
     }
-    else if (camera->canDoubleJump && camera->hasDoubleJump)
+    // Falling
+    else if (!camera->onGround)
     {
-        camera->yVelocity = JUMPSPEED;
-        camera->hasDoubleJump = 0;
+        static vec3 gravity;
+
+        // Gravity
+        glm_vec3_scale(camera->up, -GRAVITY * dt * dt, gravity);
+        glm_vec3_add(camera->upVelocity, gravity, camera->upVelocity);
+
+        // Check if camera is below ground
+        // Currently assuming that the ground is at y=0
+        if (camera->pos[1]+camera->upVelocity[1] < EYE_Y)
+        {
+            // Move camera to ground
+            camera->upVelocity[1] = -camera->pos[1] + EYE_Y;
+            glm_vec3_add(translation, camera->upVelocity, translation);
+
+            // Reset velocity
+            camera->onGround = 1;
+            glm_vec3_copy(GLM_VEC3_ZERO, camera->upVelocity);
+        }
+        else glm_vec3_add(translation, camera->upVelocity, translation);
     }
+
+    // Update position
+    glm_vec3_add(camera->pos, translation, camera->pos);
+    glm_vec3_add(camera->target, translation, camera->target);
 }
 
-void handleCameraRotation(Camera* camera, float motionX, float motionY, double dt)
+
+void rotateCamera(Camera *camera, int dx, int dy)
 {
+    static float yaw = 0.0f;
+    static float pitch = 0;
+    static vec3 addTarget = {0.0f, 0.0f, 0.0f};
+
     // fmod is used to prevent yaw from getting too large
     // thus keeping precision in the float
-    camera->yaw += fmod(motionX * camera->rotationSpeed, 360.0f);
-    camera->yawCos = cos(DEG2RAD(camera->yaw));
-    camera->yawSin = sin(DEG2RAD(camera->yaw));
-
-    camera->pitch -= motionY * camera->rotationSpeed;  
+    yaw += fmod(dx * camera->sensitivity, 360.0f);
+    pitch -= dy * camera->sensitivity;
     // 89 degrees is the limit for pitch
     // This prevents the camera from flipping over
-    if (camera->pitch > 89)
-        camera->pitch = 89;
-    else if (camera->pitch < -89)
-        camera->pitch = -89;
-    camera->pitchCos = cos(DEG2RAD(camera->pitch));
-    camera->pitchSin = sin(DEG2RAD(camera->pitch));
+    if (pitch > 89) pitch = 89;
+    else if (pitch < -89) pitch = -89;
+
+    // Update target
+    addTarget[0] = cosf(glm_rad(yaw)) * cosf(glm_rad(pitch));
+    addTarget[1] = sinf(glm_rad(pitch));
+    addTarget[2] = sinf(glm_rad(yaw)) * cosf(glm_rad(pitch));
+    glm_vec3_add(addTarget, camera->pos, camera->target);
+}
+
+
+void updateCamera(Camera *camera)
+{
+    // Update direction and right
+    glm_vec3_sub(camera->pos, camera->target, camera->direction);
+    glm_vec3_normalize(camera->direction);
+    glm_vec3_cross(camera->up, camera->direction, camera->right);
+    glm_vec3_copy(camera->direction, camera->direction2D);
+    camera->direction2D[1] = 0.0f;
+    glm_vec3_normalize(camera->direction2D);
+    glm_vec3_cross(camera->up, camera->direction2D, camera->right2D);
 }

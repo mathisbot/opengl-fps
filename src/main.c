@@ -1,107 +1,148 @@
+/*
+ * (c) [2023-2024] [Dozer35]
+ * 
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ * 
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ * 
+ * Description: The aim of this project is to create a simple FPS game,
+ * using no game engine. This allows for a low-level approach to game
+ * design, and therefore very thorough optimization.
+*/
+
+/* --- TODO --- */
+
+/*
+- Add pointer !!!
+- Add textures
+    -> Add normal mapping
+    -> Add specular mapping
+    -> Add parallax mapping
+    -> ...
+- Re-enable Face Culling (when level properly designed)
+    -> Add normals to vertices
+    -> Objects are hard-coded for now
+- Geometry shader ?
+- Refactor rendering code (render() and game loop)?
+    -> Use EBO : DrawElements instead of DrawArrays
+- Find other ways to load sounds (WAV is too big)
+    -> OGG ?
+*/
+
+
+/* --- INCLUDES --- */
+
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
+#include <ctype.h>
+#include <string.h>
 
 #include <SDL2/SDL.h>
+#include <GL/glew.h>
 #include <SDL2/SDL_opengl.h>
 #include <SDL2/SDL_mixer.h>
-#include <GL/glu.h>
+
+#include <cglm/cglm.h>
 
 #include "include/game/audio.h"
 #include "include/game/camera.h"
-#include "include/game/level.h"
-#include "include/game/models.h"
-#include "include/game/player.h"
-#include "include/game/enemy.h"
+#include "include/game/collision.h"
+#include "include/game/shader.h"
 #include "include/game/textures.h"
 
-#include "include/testing/cube.h"
 
+/* --- MACROS --- */
 
+// Debug mode
 #define DEBUG 1
 #define PRINT_FPS 0
 #define WIREFRAME 0
 
+// Graphic options
 #define VSYNC 1
+#define FULLSCREEN 0
+#define MSAADEPTH 4
 
-#define EYE_Y 1.8f
-#define VFOV 70.0f
+// View options
+#define FOV 70.0f
 #define ZNEAR 0.05f
-#define ZFAR  32.0f
-
-#define CROSSHAIR 1
-#define NO_POINTER 0
+#define ZFAR  64.0f
 
 
-/*
-TODO:
-- Move to OpenGL Core Profile
-    - Create shaders
-    - Stop using glBeing/glEnd
-    - Stop using glMatrixMode
-    - ...
-*/
+/* --- GLOBAL VARIABLES --- */
+
+Camera camera;
+// Level level;
+// ...
 
 
-// Game variables that should be free'd
-Camera* camera = NULL;
-Level* level = NULL;
-Player* player = NULL;
-// SDL variables that should be free'd
-SDL_GLContext glContext = NULL;
-SDL_Window* window = NULL;
-// Viarables witnessing the initialization of parts that should be free'd
-bool mixerInitialized = 0;
-bool SDLInitialized = 0;
+/* --- CLEAN-UP FUNCTIONS --- */
+
+/* --- Global Variables --- */
+
+// SDL
+static SDL_GLContext glContext = NULL;
+static SDL_Window* window = NULL;
+static bool SDLInitialized = 0;
+static bool mixerInitalized = 0;
+// OpenGL
+static GLuint lightVAO = 0;  // Light sources
+static GLuint uiVAO = 0;  // UI
+static GLuint VAO = 0;  // Scene Objects
+static GLuint VBO = 0;  // Vertices
+static GLuint EBO = 0;  // Indices
+static Shader vertexShader = {0};  // Vertex shader
+static Shader vertexShaderUI = {0};  // Vertex shader for UI
+static Shader fragmentShader = {0};  // Fragment shader for scene objects
+static Shader fragmentShaderUI = {0};  // Fragment shader for UI
+static Shader fragmentShaderLight = {0};  // Fragment shader for light
+static unsigned int shaderProgram = 0;  // Shader program for scene objects
+static unsigned int shaderProgramUI = 0;  // Shader program for UI
+static unsigned int shaderProgramLight = 0;  // Shader program for light
 
 
 /**
- * @brief Free memory and quit the program
+ * @brief Free memory
 */
 static void cleanUp()
 {
-    // Game objects
-    if (camera)
-    {
-        freeCamera(camera);
-        camera = NULL;
-    }
-    if (level)
-    {
-        freeLevel(level);
-        level = NULL;
-    }
-    if (player)
-    {
-        freePlayer(player);
-        player = NULL;
-    }
-    // SDL objects
-    if (mixerInitialized)
-    {
-        Mix_CloseAudio();
-        mixerInitialized = 0;
-    }
-    if (glContext)
-    {
-        SDL_GL_DeleteContext(glContext);
-        glContext = NULL;
-    }
-    if (window)
-    {
-        SDL_DestroyWindow(window);
-        window = NULL;
-    }
-    if (SDLInitialized)
-    {
-        SDL_Quit();
-        SDLInitialized = 0;
-    }
+    // SDL
+    if (glContext) {SDL_GL_DeleteContext(glContext); glContext = NULL;}
+    if (window) {SDL_DestroyWindow(window); window = NULL;}
+    if (SDLInitialized) {SDL_Quit(); SDLInitialized = 0;}
+    if (mixerInitalized) {Mix_CloseAudio(); Mix_Quit(); mixerInitalized = 0;}
+
+    // OpenGL
+    if (VBO) {glDeleteBuffers(1, &VBO); VBO = 0;}
+    if (EBO) {glDeleteBuffers(1, &EBO); EBO = 0;}
+    if (VAO) {glDeleteVertexArrays(1, &VAO); VAO = 0;}
+    if (lightVAO) {glDeleteVertexArrays(1, &lightVAO); lightVAO = 0;}
+    if (vertexShader.id) {destroyShader(&vertexShader); memset(&vertexShader, 0, sizeof(Shader));}
+    if (vertexShaderUI.id) {destroyShader(&vertexShaderUI); memset(&vertexShaderUI, 0, sizeof(Shader));}
+    if (fragmentShader.id) {destroyShader(&fragmentShader); memset(&fragmentShader, 0, sizeof(Shader));}
+    if (fragmentShaderUI.id) {destroyShader(&fragmentShaderUI); memset(&fragmentShaderUI, 0, sizeof(Shader));}
+    if (fragmentShaderLight.id) {destroyShader(&fragmentShaderLight); memset(&fragmentShaderLight, 0, sizeof(Shader));}
+    if (shaderProgram) {glDeleteProgram(shaderProgram); shaderProgram = 0;}
+    if (shaderProgramUI) {glDeleteProgram(shaderProgramUI); shaderProgramUI = 0;}
+    if (shaderProgramLight) {glDeleteProgram(shaderProgramLight); shaderProgramLight = 0;}
 }
 
 /**
  * @brief Free memory and quit the program with an error code and a log
+ * 
+ * @param exitCode Error code
+ * @param log Log to print
+ * @param ... Arguments for the log
 */
 static void cleanUpAndExit(bool exitCode, const char* log, ...)
 {
@@ -114,182 +155,163 @@ static void cleanUpAndExit(bool exitCode, const char* log, ...)
 }
 
 
+/* --- GAME LOGIC --- */
+
 /**
- * @brief Update game logic
- * 
- * @param camera Camera of the game
- * @param level Level of the game
- * @param player Player of the game
- * @param dt Time since last frame
- */
-void updateGame(Camera* camera, Level* level, Player* player, double dt)
+ * @brief Update the game
+*/
+void updateGame()
 {
-    for (int i = 0; i < level->enemyCount; i++)
-    {
-        updateEnemy(level->enemies[i], dt);
-    }
-    updatePlayer(player, dt);
-}
-
-
-/**
- * @brief Draw a wall
- * 
- * @param wall Wall to draw
- */
-void drawWall(Wall* wall) {
-    glBindTexture(GL_TEXTURE_2D, wall->textureID);
-    glColor4f(1.0, 1.0, 1.0, 1.0);
-
-    glBegin(GL_TRIANGLE_STRIP);
-
-    // Defining vertices
-    // Vertices should be defined in a counter-clockwise order
-    for (int i = 0; i < wall->pointCount; i++)
-    {
-        glTexCoord2f(wall->points[i]->tex_x, wall->points[i]->tex_y);
-        glVertex3f(wall->points[i]->x, wall->points[i]->y, wall->points[i]->z);
-    }
-
-    glEnd();
-
-    // Unbind texture
-    glBindTexture(GL_TEXTURE_2D, 0);
-}
-
-/**
- * @brief Draw a level on the screen
- * 
- * @param level Level to draw
- * @param camera Camera to draw from
- */
-void drawLevel(Level* level, Camera* camera)
-{
-    // Draw textured square
-    for (int i = 0; i < level->wallCount; i++)
-    {
-        glPushMatrix();
-        drawWall(level->walls[i]);
-        glPopMatrix();
-    }
-}
-
-/**
- * @brief Draw the User Interface
- * 
- * @param w Window width
- * @param h Window height
- * @param pointerType Type of pointer to draw (0 : None, 1 : Crosshair)
- */
-void drawUI(int w, int h, int pointerType)
-{
-    // Draw crosshair
-    if (pointerType == CROSSHAIR)
-    {
-        static float lineThickness = 2.0f;
-        static float length = 7.0f;
-
-        // Crosshair
-        glLineWidth(lineThickness);
-        glBegin(GL_LINES);
-        glColor3f(1.0f, 1.0f, 1.0f);
-        glVertex2f(w/2, h/2 - length);
-        glVertex2f(w/2, h/2 + length);
-        glVertex2f(w/2 - length, h/2);
-        glVertex2f(w/2 + length, h/2);
-        glEnd();
-        // Outline
-        glLineWidth(lineThickness+2);
-        glBegin(GL_LINES);
-        glColor3f(0.0f, 0.0f, 0.0f);
-        glVertex2f(w/2, h/2 - length-1);
-        glVertex2f(w/2, h/2 + length+1);
-        glVertex2f(w/2 - length-1, h/2);
-        glVertex2f(w/2 + length+1, h/2);
-        glEnd();
-    }
-
-    // Draw weapon
     // TODO
+    return;
 }
 
-/**
- * @brief Update the camera on the screen
- * 
- * @param camera Pointer to the camera
- */
-void updateCamera(Camera* camera)
-{
-    glLoadIdentity();
-    gluLookAt(camera->x, camera->y + EYE_Y, camera->z,
-              camera->x + camera->yawSin * camera->pitchCos,
-              camera->y + EYE_Y + camera->pitchSin,
-              camera->z - camera->yawCos * camera->pitchCos,
-              0.0f, 1.0f, 0.0f);
-}
+
+/* --- RENDERING FUNCTION --- */
 
 /**
- * @brief Render the game
+ * @brief Render the screen
  * 
- * @param window Window of the game
- * @param camera Camera of the game
- * @param level Level of the game
- * @param player Player of the game
- */
-void render(SDL_Window* window, Camera* camera, Level* level, Player* player)
+ * @param width Width of the screen
+ * @param height Height of the screen
+*/
+vec3 lightPos = {1.2f, 1.0f, 2.0f};
+static void render(Uint16 width, Uint16 height)
 {
-    // Get window size
-    static int w=0, h=0;
+    // Clear buffers
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    // Window size should not change during the game
-    if (w == 0 && h == 0)
-        SDL_GetWindowSize(SDL_GL_GetCurrentWindow(), &w, &h);
+    // Order : UI, Light, Objects
 
-    // Clear screen
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-    glMatrixMode(GL_MODELVIEW);
-    glLoadIdentity();
 
-    // Update camera
-    updateCamera(camera);
+    /* --- UI --- */
 
-    // Draw level
-    drawLevel(level, camera);
+    glUseProgram(shaderProgramUI);
 
-    // Testing cubes
-    glPushMatrix();
-    drawCube(3.0f, 1.0f, 3.0f, 2.0f);
-    glPopMatrix();
-    glPushMatrix();
-    drawCube(-3.0f, 0.5f, 3.0f, 1.0f);
-    glPopMatrix();
-    glPushMatrix();
-    drawCube(3.0f, 0.5f, -3.0f, 1.0f);
-    glPopMatrix();
+    glUniform2ui(glGetUniformLocation(shaderProgramUI, "screenSize"), width, height);
+    glUniform1f(glGetUniformLocation(shaderProgramUI, "pointerRadius"), 1.0f);
 
-    // Draw User Interface
+    // Attempt to draw a pointer
+    glBindVertexArray(uiVAO);
+    glDrawArrays(GL_TRIANGLES, 0, 36);
+    glBindVertexArray(0);
 
-    // Push and reinitialise matrices
-    glMatrixMode(GL_PROJECTION);
-    glPushMatrix();
-    glLoadIdentity();
-    glOrtho(0, w, h, 0, -1, 1);
-    glMatrixMode(GL_MODELVIEW);
-    glPushMatrix();
-    glLoadIdentity();
+    glUseProgram(0);
 
-    drawUI(w, h, CROSSHAIR);
 
-    // Pop matrices
-    glMatrixMode(GL_PROJECTION);
-    glPopMatrix();
-    glMatrixMode(GL_MODELVIEW);
-    glPopMatrix();
+    /* --- Light --- */
+
+    // Use light shader
+    glUseProgram(shaderProgramLight);
+
+    // Light position
+
+    // Model matrix
+    static mat4 modelLight = GLM_MAT4_IDENTITY_INIT;
+    glm_mat4_identity(modelLight);
+    glm_translate(modelLight, lightPos);
+    glm_scale(modelLight, (vec3){0.2f, 0.2f, 0.2f});
+
+    // View matrix
+    static mat4 viewLight = GLM_MAT4_IDENTITY_INIT;
+    glm_lookat(camera.pos, camera.target, camera.up, viewLight);
+
+    // Projection matrix
+    static mat4 projectionLight = GLM_MAT4_IDENTITY_INIT;
+    glm_mat4_identity(projectionLight);
+    glm_perspective(glm_rad(FOV), (float)width / (float)height, ZNEAR, ZFAR, projectionLight);
+
+    // Send to shader
+    glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "model"), 1, GL_FALSE, (float*)modelLight);
+    glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "view"), 1, GL_FALSE, (float*)viewLight);
+    glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "projection"), 1, GL_FALSE, (float*)projectionLight);
+
+    // Rendering
+    glBindVertexArray(lightVAO);
+    glDrawArrays(GL_TRIANGLES, 0, 36);
+    glBindVertexArray(0);
+
+
+    /* --- Objects --- */
+
+    // Cubes positions
+    vec3 cubePositions[10];
+    float positions[10][3] = {
+        { 0.0f,  1.0f,  0.0f},
+        { 2.0f,  5.0f, -15.0f},
+        {-1.5f, -2.2f, -2.5f},
+        {-3.8f, -2.0f, -12.3f},
+        { 2.4f, -0.4f, -3.5f},
+        {-1.7f,  3.0f, -7.5f},
+        { 1.3f, -2.0f, -2.5f},
+        { 1.5f,  2.0f, -2.5f},
+        { 1.5f,  0.2f, -1.5f},
+        {-1.3f,  1.0f, -1.5f}
+    };
+
+    for (int i = 0; i < 10; ++i) {
+        for (int j = 0; j < 3; ++j) {
+            cubePositions[i][j] = positions[i][j];
+        }
+    }
+
+    glUseProgram(shaderProgram);
+
+    // View matrix
+    static mat4 view = GLM_MAT4_IDENTITY_INIT;
+    glm_lookat(camera.pos, camera.target, camera.up, view);
+
+    // Projection matrix
+    static mat4 projection = GLM_MAT4_IDENTITY_INIT;
+    glm_mat4_identity(projection);
+    glm_perspective(glm_rad(FOV), (float)width / (float)height, ZNEAR, ZFAR, projection);
+
+    // Send to shader
+    glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "view"), 1, GL_FALSE, (float*)view);
+    glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "projection"), 1, GL_FALSE, (float*)projection);
+
+    // Light
+    static vec3 lightColor = {1.0f, 1.0f, 1.0f};
+    glUniform3f(glGetUniformLocation(shaderProgram, "lightColor"), lightColor[0], lightColor[1], lightColor[2]);
+    glUniform3f(glGetUniformLocation(shaderProgram, "objectColor"), 1.0f, 1.0f, 1.0f);
+    glUniform3f(glGetUniformLocation(shaderProgram, "light.position"), lightPos[0], lightPos[1], lightPos[2]);
+    glUniform3f(glGetUniformLocation(shaderProgram, "viewPos"), camera.pos[0], camera.pos[1], camera.pos[2]);
+
+    glUniform3f(glGetUniformLocation(shaderProgram, "material.ambient"), 1.0f, 0.5f, 0.31f);
+    glUniform3f(glGetUniformLocation(shaderProgram, "material.diffuse"), 1.0f, 0.5f, 0.31f);
+    glUniform3f(glGetUniformLocation(shaderProgram, "material.specular"), 0.5f, 0.5f, 0.5f);
+    glUniform1f(glGetUniformLocation(shaderProgram, "material.shininess"), 32.0f);
+
+    glUniform3f(glGetUniformLocation(shaderProgram, "light.ambient"), 0.2f, 0.2f, 0.2f);
+    glUniform3f(glGetUniformLocation(shaderProgram, "light.diffuse"), 0.5f, 0.5f, 0.5f);
+    glUniform3f(glGetUniformLocation(shaderProgram, "light.specular"), 1.0f, 1.0f, 1.0f);
+    glUniform1f(glGetUniformLocation(shaderProgram, "light.linear"), 0.09f);
+    glUniform1f(glGetUniformLocation(shaderProgram, "light.quadratic"), 0.032f);
+
+    // Rendering
+    glBindVertexArray(VAO);
+    // glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+    for (uint8_t i=0; i<10; i++)
+    {
+        // Model matrix
+        static mat4 model = GLM_MAT4_IDENTITY_INIT;
+        glm_mat4_identity(model);
+        glm_translate(model, cubePositions[i]);
+        glm_rotate(model, glm_rad(20.0f*i), (vec3){0.5f, 1.0f, 0.0f});
+
+        // Send to shader
+        glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "model"), 1, GL_FALSE, (float*)model);
+
+        glDrawArrays(GL_TRIANGLES, 0, 36);
+    }
+    glBindVertexArray(0);
 
     // Swap buffers
     SDL_GL_SwapWindow(window);
 }
 
+
+/* --- MAIN --- */
 
 /**
  * @brief Main function
@@ -297,27 +319,23 @@ void render(SDL_Window* window, Camera* camera, Level* level, Player* player)
  * @param argc Number of arguments
  * @param argv Arguments
  * @return int Exit code
- */
-int main(int argc, char* argv[])
+*/
+int main(int argc, char *argv[])
 {
+    // These arguments are unused for now
+    (void)argc;
+    (void)argv;
+
+
+    /* --- Initialise Components --- */
+
     // Initialising SDL
     if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO))
         cleanUpAndExit(EXIT_FAILURE, "Error initialising SDL : %s", SDL_GetError());
-    else
-        SDLInitialized = 1;
-    if (DEBUG)
-        printf("SDL version : %d.%d.%d\n", SDL_MAJOR_VERSION, SDL_MINOR_VERSION, SDL_PATCHLEVEL);
+    else SDLInitialized = 1;
+    if (DEBUG) printf("SDL version : %d.%d.%d\n", SDL_MAJOR_VERSION, SDL_MINOR_VERSION, SDL_PATCHLEVEL);
 
-    // Setting OpenGL attributes
-    // The code is still made for OpenGL pre-3.3
-    // The code needs a huge update to be compatible with OpenGL 3.3+
-    // SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
-    // SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 6);
-    // SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
-    if (DEBUG)
-        SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_DEBUG_FLAG);
-
-    // Getting display information
+    // Getting display information for window creation
     uint16_t WINDOW_WIDTH;
     uint16_t WINDOW_HEIGHT;
     // Handling custom resolution
@@ -329,32 +347,33 @@ int main(int argc, char* argv[])
         WINDOW_WIDTH = displayMode.w;
         WINDOW_HEIGHT = displayMode.h;
     }
-    else
-    {
-        WINDOW_WIDTH = 1280;
-        WINDOW_HEIGHT = 720;
-    }
+    else {WINDOW_WIDTH = 1280; WINDOW_HEIGHT = 720;}
+
+    // OpenGL attributes
+    // OpenGL version 4.6.0 Core profile
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 6);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
+    // if (DEBUG) SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_DEBUG_FLAG);
+    // MSAA
+    SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 1);
+    SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, MSAADEPTH);
+
 
     // Window creation
     window = SDL_CreateWindow("Retro FPS", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
                                           WINDOW_WIDTH, WINDOW_HEIGHT, SDL_WINDOW_OPENGL);
-    if (window == NULL)
-        cleanUpAndExit(EXIT_FAILURE, "Error when creating window : %s", SDL_GetError());
+    if (window == NULL) cleanUpAndExit(EXIT_FAILURE, "Error when creating window : %s", SDL_GetError());
     SDL_ShowCursor(SDL_DISABLE);
     // Handling fullscreen
-    if (!DEBUG)
-        SDL_SetWindowFullscreen(window, SDL_WINDOW_FULLSCREEN);
-    else
-    {
-        SDL_SetWindowFullscreen(window, 0);
-        // SDL_SetWindowResizable(window, SDL_TRUE);  // Cursed
-    }
+    if (FULLSCREEN) SDL_SetWindowFullscreen(window, SDL_WINDOW_FULLSCREEN);
+    else SDL_SetWindowFullscreen(window, 0);
 
 
     // OpenGL context creation
     glContext = SDL_GL_CreateContext(window);
-    if (glContext == NULL)
-        cleanUpAndExit(EXIT_FAILURE, "Error when creating OpenGL context : %s", SDL_GetError());
+    if (glContext == NULL) cleanUpAndExit(EXIT_FAILURE, "Error when creating OpenGL context : %s", SDL_GetError());
+
     // OpenGL settings
     if (DEBUG)
     {
@@ -365,111 +384,218 @@ int main(int argc, char* argv[])
         printf("> Vertex shader max attribribute count : %d\n", GL_MAX_VERTEX_ATTRIBS);
         glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
     }
-    if (WIREFRAME && DEBUG)
-        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-    glEnable(GL_TEXTURE_2D);
-    if (VSYNC)
-    {
-        // Try to enable Adaptative VSync
-        if (SDL_GL_SetSwapInterval(-1) == -1)
-        {
-            // If it fails, try to enable VSync
-            SDL_GL_SetSwapInterval(1);
-        }
-    }
-    // View settings
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-    gluPerspective(VFOV, (GLfloat)WINDOW_WIDTH / (GLfloat)WINDOW_HEIGHT, ZNEAR, ZFAR);
-    glMatrixMode(GL_MODELVIEW);
-    glLoadIdentity();
-
-    // Optimizations
-    // Depth test
+    if (VSYNC) {if (SDL_GL_SetSwapInterval(-1) == -1) SDL_GL_SetSwapInterval(1);}
+    if (WIREFRAME) glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     glEnable(GL_DEPTH_TEST);
-    glDepthFunc(GL_LESS);
-    // Backface culling
-    glEnable(GL_CULL_FACE);
-    glCullFace(GL_BACK);  // This is the default value
-    // Stencil test
-    glEnable(GL_STENCIL_TEST);
+    glEnable(GL_MULTISAMPLE);
+    // glEnable(GL_CULL_FACE);  // Triangles have to be defined in counter-clockwise order
+    glViewport(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT);
+    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 
 
-    // Load audio
-    if (Mix_OpenAudio(AUDIO_SAMPLERATE, MIX_DEFAULT_FORMAT, MIX_DEFAULT_CHANNELS, AUDIO_CHUNKSIZE) < 0)
-        cleanUpAndExit(EXIT_FAILURE, "Error initialising mixer audio : %s", Mix_GetError());
-    else
-        mixerInitialized = 1;
-    Mix_AllocateChannels(AUDIO_NUMCHANS);
+    // GLEW initialization
+    GLenum glewError = glewInit();
+    if (glewError != GLEW_OK) cleanUpAndExit(EXIT_FAILURE, "Error initialising GLEW : %s", glewGetErrorString(glewError));
 
 
-    // Loading player
-    player = createPlayer(HP, 1);
-    if (!player)
-        cleanUpAndExit(EXIT_FAILURE, "Error creating player\n");
+    // OpenGL Buffer/Shader creation
+    glGenBuffers(1, &VBO);
+    glGenBuffers(1, &EBO);
+    glGenVertexArrays(1, &VAO);
+    glGenVertexArrays(1, &lightVAO);
+    glGenVertexArrays(1, &uiVAO);
+    if (loadShader(&vertexShader, "vertex.glsl", GL_VERTEX_SHADER) < 0) cleanUpAndExit(EXIT_FAILURE, "Error creating vertex shader");
+    if (loadShader(&vertexShaderUI, "vertex_ui.glsl", GL_VERTEX_SHADER) < 0) cleanUpAndExit(EXIT_FAILURE, "Error creating vertex shader for UI");
+    if (loadShader(&fragmentShader, "fragment.glsl", GL_FRAGMENT_SHADER) < 0) cleanUpAndExit(EXIT_FAILURE, "Error creating fragment shader");
+    if (loadShader(&fragmentShaderUI, "fragment_ui.glsl", GL_FRAGMENT_SHADER) < 0) cleanUpAndExit(EXIT_FAILURE, "Error creating fragment shader for UI");
+    if (loadShader(&fragmentShaderLight, "fragment_light.glsl", GL_FRAGMENT_SHADER) < 0) cleanUpAndExit(EXIT_FAILURE, "Error creating fragment shader for light");
 
-    // Loading level
-    level = loadLevel(player->currentLevel);
-    if (!level)
-        cleanUpAndExit(EXIT_FAILURE, "Error loading level\n");
+    // Program Shader creation
+    int success;
+    char infoLog[512];
+    shaderProgram = glCreateProgram();
+    glAttachShader(shaderProgram, vertexShader.id);
+    glAttachShader(shaderProgram, fragmentShader.id);
+    glLinkProgram(shaderProgram);
+    // Check for shader linking errors
+    glGetProgramiv(shaderProgram, GL_LINK_STATUS, &success);
+    if(!success) { glGetProgramInfoLog(shaderProgram, 512, NULL, infoLog); cleanUpAndExit(EXIT_FAILURE, "Error linking shaders : %s", infoLog);}
+    
+    // Light Program Shader creation
+    shaderProgramLight = glCreateProgram();
+    glAttachShader(shaderProgramLight, vertexShader.id);
+    glAttachShader(shaderProgramLight, fragmentShaderLight.id);
+    glLinkProgram(shaderProgramLight);
+    // Check for shader linking errors
+    glGetProgramiv(shaderProgramLight, GL_LINK_STATUS, &success);
+    if(!success) { glGetProgramInfoLog(shaderProgramLight, 512, NULL, infoLog); cleanUpAndExit(EXIT_FAILURE, "Error linking shaders : %s", infoLog);}
 
-    // Loading camera
-    Bindings* bindings = createBindings(
+    // UI Program Shader creation
+    shaderProgramUI = glCreateProgram();
+    glAttachShader(shaderProgramUI, vertexShaderUI.id);
+    glAttachShader(shaderProgramUI, fragmentShaderUI.id);
+    glLinkProgram(shaderProgramUI);
+    // Check for shader linking errors
+    glGetProgramiv(shaderProgramUI, GL_LINK_STATUS, &success);
+    if(!success) { glGetProgramInfoLog(shaderProgramUI, 512, NULL, infoLog); cleanUpAndExit(EXIT_FAILURE, "Error linking shaders : %s", infoLog);}
+    
+    // Delete now useless shaders
+    destroyShader(&vertexShader);
+    memset(&vertexShader, 0, sizeof(Shader));
+    destroyShader(&vertexShaderUI);
+    memset(&vertexShaderUI, 0, sizeof(Shader));
+    destroyShader(&fragmentShader);
+    memset(&fragmentShader, 0, sizeof(Shader));
+    destroyShader(&fragmentShaderUI);
+    memset(&fragmentShaderUI, 0, sizeof(Shader));
+    destroyShader(&fragmentShaderLight);
+    memset(&fragmentShaderLight, 0, sizeof(Shader));
+
+
+    // Load Mixer
+    if (initMixer(AUDIO_NUMCHANS) < 0)
+        cleanUpAndExit(EXIT_FAILURE, "Error initialising Mixer : %s", Mix_GetError());
+    else mixerInitalized = 1;
+
+
+    /* --- Load game objects --- */
+
+    // Camera
+    Bindings bindings = {
         SDL_SCANCODE_H,  // Forward
         SDL_SCANCODE_B,  // Backward
         SDL_SCANCODE_V,  // Left
-        SDL_SCANCODE_N, // Right
+        SDL_SCANCODE_N,  // Right
         SDL_SCANCODE_G,  // Sprint
         SDL_SCANCODE_SPACE,  // Jump
         SDL_SCANCODE_U,  // Use
-        SDL_SCANCODE_I,  // Reload
-        SDL_SCANCODE_E,  // Inventory
-        SDL_SCANCODE_K,  // Map
-        SDL_SCANCODE_ESCAPE  // Pause
-    );
-    if (!bindings)
-        cleanUpAndExit(EXIT_FAILURE, "Error creating bindings for camera\n");
-    camera = initCamera(level->startX, level->startY, level->startZ,
-                                level->startYaw, level->startPitch, SPEED, SPRINTINGBOOST,
-                                SENSITIVITY, bindings, DOUBLEJUMP, AIRCONTROL);
-    if (!camera)
-    {
-        freeBindings(bindings);
-        cleanUpAndExit(EXIT_FAILURE, "Error creating camera\n");
-    }
+        SDL_SCANCODE_I  // Reload
+    };
+    initCamera(&camera, (vec3){-2.0f, EYE_Y, 2.0f}, (vec3){-1.0f, EYE_Y, 2.0f}, &bindings);
 
-    // DUMMY: testing models loading
-    // loadModel("shotgun/shotgun");
-    // if (DEBUG)
-    //     printf("Shotgun loaded\n");
+    // Load textures
+    Texture brickwall;
+    loadTexture(&brickwall, "brickwall.bmp", 4, TEXTURE_REPEAT);
+
+    // Vertices and indices
+    float vertices[] = {
+        -0.5f, -0.5f, -0.5f,  0.0f, 0.0f, 0.0f,  0.0f, -1.0f,
+        0.5f, -0.5f, -0.5f,  1.0f, 0.0f, 0.0f,  0.0f, -1.0f, 
+        0.5f,  0.5f, -0.5f,  1.0f, 1.0f, 0.0f,  0.0f, -1.0f,
+        0.5f,  0.5f, -0.5f,  1.0f, 1.0f, 0.0f,  0.0f, -1.0f,
+        -0.5f,  0.5f, -0.5f,  0.0f, 1.0f, 0.0f,  0.0f, -1.0f,
+        -0.5f, -0.5f, -0.5f,  0.0f, 0.0f, 0.0f,  0.0f, -1.0f,
+
+        -0.5f, -0.5f,  0.5f,  0.0f, 0.0f, 0.0f,  0.0f, 1.0f,
+        0.5f, -0.5f,  0.5f,  1.0f, 0.0f, 0.0f,  0.0f, 1.0f,
+        0.5f,  0.5f,  0.5f,  1.0f, 1.0f, 0.0f,  0.0f, 1.0f,
+        0.5f,  0.5f,  0.5f,  1.0f, 1.0f, 0.0f,  0.0f, 1.0f,
+        -0.5f,  0.5f,  0.5f,  0.0f, 1.0f, 0.0f,  0.0f, 1.0f,
+        -0.5f, -0.5f,  0.5f,  0.0f, 0.0f, 0.0f,  0.0f, 1.0f,
+
+        -0.5f,  0.5f,  0.5f,  1.0f, 0.0f, -1.0f,  0.0f,  0.0f,
+        -0.5f,  0.5f, -0.5f,  1.0f, 1.0f, -1.0f,  0.0f,  0.0f,
+        -0.5f, -0.5f, -0.5f,  0.0f, 1.0f, -1.0f,  0.0f,  0.0f,
+        -0.5f, -0.5f, -0.5f,  0.0f, 1.0f, -1.0f,  0.0f,  0.0f,
+        -0.5f, -0.5f,  0.5f,  0.0f, 0.0f, -1.0f,  0.0f,  0.0f,
+        -0.5f,  0.5f,  0.5f,  1.0f, 0.0f, -1.0f,  0.0f,  0.0f,
+
+        0.5f,  0.5f,  0.5f,  1.0f, 0.0f, 1.0f,  0.0f,  0.0f,
+        0.5f,  0.5f, -0.5f,  1.0f, 1.0f, 1.0f,  0.0f,  0.0f,
+        0.5f, -0.5f, -0.5f,  0.0f, 1.0f, 1.0f,  0.0f,  0.0f,
+        0.5f, -0.5f, -0.5f,  0.0f, 1.0f, 1.0f,  0.0f,  0.0f,
+        0.5f, -0.5f,  0.5f,  0.0f, 0.0f, 1.0f,  0.0f,  0.0f,
+        0.5f,  0.5f,  0.5f,  1.0f, 0.0f, 1.0f,  0.0f,  0.0f,
+
+        -0.5f, -0.5f, -0.5f,  0.0f, 1.0f, 0.0f, -1.0f,  0.0f,
+        0.5f, -0.5f, -0.5f,  1.0f, 1.0f, 0.0f, -1.0f,  0.0f,
+        0.5f, -0.5f,  0.5f,  1.0f, 0.0f, 0.0f, -1.0f,  0.0f,
+        0.5f, -0.5f,  0.5f,  1.0f, 0.0f, 0.0f, -1.0f,  0.0f,
+        -0.5f, -0.5f,  0.5f,  0.0f, 0.0f, 0.0f, -1.0f,  0.0f,
+        -0.5f, -0.5f, -0.5f,  0.0f, 1.0f, 0.0f, -1.0f,  0.0f,
+
+        -0.5f,  0.5f, -0.5f,  0.0f, 1.0f, 0.0f,  1.0f,  0.0f,
+        0.5f,  0.5f, -0.5f,  1.0f, 1.0f, 0.0f,  1.0f,  0.0f,
+        0.5f,  0.5f,  0.5f,  1.0f, 0.0f, 0.0f,  1.0f,  0.0f,
+        0.5f,  0.5f,  0.5f,  1.0f, 0.0f, 0.0f,  1.0f,  0.0f,
+        -0.5f,  0.5f,  0.5f,  0.0f, 0.0f, 0.0f,  1.0f,  0.0f,
+        -0.5f,  0.5f, -0.5f,  0.0f, 1.0f, 0.0f,  1.0f,  0.0f
+    };
+    unsigned int indices[] = {
+        0, 1, 3, // first triangle
+        1, 2, 3  // second triangle
+    };
+
+    // Binding buffers and copying data
+    glUseProgram(shaderProgram);
+
+    // Cubes
+    glBindVertexArray(VAO);
+
+    // Bindings buffers
+    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+    
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+
+    // Copying data to shader
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(5 * sizeof(float)));
+    glEnableVertexAttribArray(2);
+
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, brickwall.id);
+    glUniform1i(glGetUniformLocation(shaderProgram, "brickwallTexture"), 0);
 
 
-    // Main loop
+    // Light
+    glBindVertexArray(lightVAO);
+
+    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(0);
+
+
+
+    // UI
+    glBindVertexArray(uiVAO);
+
+    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(0);
+
+    // Unbinding buffers
+    glBindVertexArray(0);
+
+
+    /* --- Main loop --- */
+
     Uint64 last_frame = SDL_GetTicks64();
     Uint64 now;
-    Uint32 dt_ms;
+    Uint16 dt_ms;
     double dt;
     const Uint8* keyboardState = SDL_GetKeyboardState(NULL);
-    bool quit = 0;
     bool pause = 0;
+    bool quit = 0;
     SDL_Event e;
     while (!quit)
     {
         // Timing
         now = SDL_GetTicks64();
         dt_ms = now - last_frame;
-        // Don't run the game faster than 500 FPS
-        if (dt_ms < 3)
-        {
-            SDL_Delay(3 - dt_ms);
-            continue;
-        }
+        // Don't run the game faster than 333 FPS
+        // This limit will be removed when SDL3 is released
+        if (dt_ms < 3) {SDL_Delay(3-dt_ms); continue;}
         dt = dt_ms / 1000.0;
         last_frame = now;
-        if (DEBUG && PRINT_FPS)
-            printf("FPS : %f\n", 1.0 / dt);
+        if (DEBUG && PRINT_FPS) printf("FPS : %lf\n", 1.0 / dt);
 
-        // Event loop
         while (SDL_PollEvent(&e))
         {
             switch (e.type)
@@ -478,64 +604,56 @@ int main(int argc, char* argv[])
                 case SDL_QUIT:
                     quit = 1;
                     break;
-                // Pause
+                // Handle key presses
                 case SDL_KEYDOWN:
-                    if (e.key.keysym.scancode == camera->bindings->pause)
+                    switch (e.key.keysym.scancode)
                     {
-                        pause = !pause;
-                        if (pause)
-                            SDL_ShowCursor(SDL_ENABLE);
-                        else
-                            SDL_ShowCursor(SDL_DISABLE);
+                        case SDL_SCANCODE_F1:
+                            quit = 1;
+                            break;
+                        case SDL_SCANCODE_ESCAPE:
+                            pause = !pause;
+                            SDL_ShowCursor(pause ? SDL_ENABLE : SDL_DISABLE);
+                            break;
+                        default:
+                            break;
                     }
-                    else if (e.key.keysym.scancode == camera->bindings->jump && !pause)
-                        cameraJump(camera);
-                    else if (e.key.keysym.scancode == SDL_SCANCODE_F1)
-                        quit = 1;
                     break;
                 // Rotate camera
                 case SDL_MOUSEMOTION:
                     // Power saving
-                    if ((e.motion.xrel == 0 && e.motion.yrel == 0) || (pause))
+                    if ((e.motion.xrel == 0 && e.motion.yrel == 0) || pause)
                         break;
-                    handleCameraRotation(camera, e.motion.xrel, e.motion.yrel, dt);
-                    // Ensure mouse stays in the middle of the screen
+                    rotateCamera(&camera, e.motion.xrel, e.motion.yrel);
                     SDL_WarpMouseInWindow(window, WINDOW_WIDTH/2, WINDOW_HEIGHT/2);
                     break;
                 // Shoot
                 case SDL_MOUSEBUTTONDOWN:
                     if (e.button.button == SDL_BUTTON_LEFT && !pause)
-                        // Not implemented yet
+                        // TODO : Shoot
                         printf("Shoot !\n");
                     break;
                 default:
                     break;
             }
-            // Don't bother with the rest of the loop if quitting
-            if (quit)
-                break;
         }
-        // Don't bother with the rest of the loop if quitting
-        if (quit)
-            break;
-        // Move camera
         if (!pause)
         {
-            if (keyboardState[camera->bindings->sprint])
-                handleCameraMovement(camera, keyboardState, dt, camera->sprintingBoost);
-            else
-                handleCameraMovement(camera, keyboardState, dt, 1.0f);
+            translateCamera(&camera, keyboardState, dt);
+            updateCamera(&camera);
         }
+        // Temporary light movement
+        if (keyboardState[SDL_SCANCODE_F2]) lightPos[0] -= 0.1f;
 
-        // Game logic
-        if (!pause)
-            updateGame(camera, level, player, dt);
+        // Update game
+        if (!pause) updateGame();
 
         // Render screen
-        render(window, camera, level, player);
+        render(WINDOW_WIDTH, WINDOW_HEIGHT);
     }
 
-    // Clean up memory and exit
+
+    // Memory freeing and quitting
     cleanUp();
     
     return EXIT_SUCCESS;
