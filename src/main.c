@@ -21,7 +21,6 @@
 /* --- TODO --- */
 
 /*
-- Add dot in the center of the screen !!!
 - Ray tracing ?
     -> Light currently passes through objects
 - Add textures
