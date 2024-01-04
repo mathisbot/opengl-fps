@@ -15,13 +15,13 @@
  * 
  * Description: The aim of this project is to create a simple FPS game,
  * using no game engine. This allows for a low-level approach to game
- * design, and therefore very thorough optimization.
+ * making, and therefore very thorough optimization.
 */
 
 /* --- TODO --- */
 
 /*
-- Add pointer !!!
+- Add dot in the center of the screen !!!
 - Add textures
     -> Add normal mapping
     -> Add specular mapping

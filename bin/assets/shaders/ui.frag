@@ -6,8 +6,6 @@ uniform float pointerRadius;
 
 void main()
 {
-    FragColor = vec4(1.0);
-
     vec2 uv = (gl_FragCoord.xy / windowSize)*2.0 - 1.0;
     float distance = length(uv);
 
