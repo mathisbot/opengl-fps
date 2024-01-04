@@ -27,9 +27,6 @@
     -> Add specular mapping
     -> Add parallax mapping
     -> ...
-- Re-enable Face Culling (when level properly designed)
-    -> Add normals to vertices
-    -> Objects are hard-coded for now
 - Geometry shader ?
 - Refactor rendering code (render() and game loop)?
     -> Use EBO : DrawElements instead of DrawArrays
@@ -75,8 +72,8 @@
 
 // View options
 #define FOV 70.0f
-#define ZNEAR 0.05f
-#define ZFAR  64.0f
+#define ZNEAR 0.1f
+#define ZFAR  32.0f
 
 
 /* --- GLOBAL VARIABLES --- */
@@ -240,7 +237,6 @@ void updateGame()
  * @param width Width of the screen
  * @param height Height of the screen
 */
-vec3 lightPos = {1.2f, 1.0f, 2.0f};
 static void render(GLuint width, GLuint height)
 {
     // Clear buffers
@@ -265,18 +261,24 @@ static void render(GLuint width, GLuint height)
 
     /* --- Light --- */
 
-    static vec3 lightColor = {1.0f, 1.0f, 1.0f};
+    static vec3 lightColor[] = {
+        {1.0f, 1.0f, 1.0f},
+        {1.0f, 0.0f, 0.0f},
+        {0.0f, 1.0f, 0.0f},
+        {0.0f, 0.0f, 1.0f}
+    };
+
+    // Lights positions
+    static vec3 lightPos[] = {
+        {1.2f, 1.0f, 2.0f},
+        {2.3f, -3.3f, -4.0f},
+        {-4.0f, 2.0f, -12.0f},
+        {0.0f, 0.0f, -3.0f}
+    };
 
     // Use light shader
     glUseProgram(shaderProgramLight);
 
-    // Light position
-
-    // Model matrix
-    static mat4 modelLight = GLM_MAT4_IDENTITY_INIT;
-    glm_mat4_identity(modelLight);
-    glm_translate(modelLight, lightPos);
-    glm_scale(modelLight, (vec3){0.2f, 0.2f, 0.2f});
 
     // View matrix
     static mat4 viewLight = GLM_MAT4_IDENTITY_INIT;
@@ -288,19 +290,31 @@ static void render(GLuint width, GLuint height)
     glm_perspective(glm_rad(FOV), (float)width / (float)height, ZNEAR, ZFAR, projectionLight);
 
     // Send to shader
-    glUniformMatrix4fv(glGetUniformLocation(shaderProgramLight, "model"), 1, GL_FALSE, (float*)modelLight);
     glUniformMatrix4fv(glGetUniformLocation(shaderProgramLight, "view"), 1, GL_FALSE, (float*)viewLight);
     glUniformMatrix4fv(glGetUniformLocation(shaderProgramLight, "projection"), 1, GL_FALSE, (float*)projectionLight);
     
-    glUniform3f(glGetUniformLocation(shaderProgramLight, "lightColor"), lightColor[0], lightColor[1], lightColor[2]);
-
     // Used to draw pointer
     glUniform2ui(glGetUniformLocation(shaderProgramLight, "windowSize"), width, height);
     glUniform1f(glGetUniformLocation(shaderProgramLight, "pointerRadius"), 2.0f);
 
     // Rendering
     glBindVertexArray(lightVAO);
-    glDrawArrays(GL_TRIANGLES, 0, 36);
+    
+    for (uint8_t i=0; i<4; i++)
+    {
+        // Model matrix
+        static mat4 modelLight = GLM_MAT4_IDENTITY_INIT;
+        glm_mat4_identity(modelLight);
+        glm_translate(modelLight, lightPos[i]);
+        glm_scale(modelLight, (vec3){0.2f, 0.2f, 0.2f});
+
+        // Send to shader
+        glUniform3f(glGetUniformLocation(shaderProgramLight, "lightColor"), lightColor[i][0], lightColor[i][1], lightColor[i][2]);
+        glUniformMatrix4fv(glGetUniformLocation(shaderProgramLight, "model"), 1, GL_FALSE, (float*)modelLight);
+
+        glDrawArrays(GL_TRIANGLES, 0, 36);
+    }
+
     glBindVertexArray(0);
 
 
@@ -343,16 +357,26 @@ static void render(GLuint width, GLuint height)
     glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "projection"), 1, GL_FALSE, (float*)projection);
 
     // Light
-    glUniform3f(glGetUniformLocation(shaderProgram, "lightColor"), lightColor[0], lightColor[1], lightColor[2]);
-    glUniform3f(glGetUniformLocation(shaderProgram, "objectColor"), 1.0f, 1.0f, 1.0f);
-    glUniform3f(glGetUniformLocation(shaderProgram, "light.position"), lightPos[0], lightPos[1], lightPos[2]);
     glUniform3f(glGetUniformLocation(shaderProgram, "viewPos"), camera.pos[0], camera.pos[1], camera.pos[2]);
     
-    glUniform3f(glGetUniformLocation(shaderProgram, "light.ambient"), 0.2f, 0.2f, 0.2f);
-    glUniform3f(glGetUniformLocation(shaderProgram, "light.diffuse"), 0.5f, 0.5f, 0.5f);
-    glUniform3f(glGetUniformLocation(shaderProgram, "light.specular"), 1.0f, 1.0f, 1.0f);
-    glUniform1f(glGetUniformLocation(shaderProgram, "light.linear"), 0.09f);
-    glUniform1f(glGetUniformLocation(shaderProgram, "light.quadratic"), 0.032f);
+    char locate[32];
+    for (uint8_t i=0; i<4; i++)
+    {
+        sprintf(locate, "pointLights[%d].position", i);
+        glUniform3f(glGetUniformLocation(shaderProgram, locate), lightPos[i][0], lightPos[i][1], lightPos[i][2]);
+        sprintf(locate, "pointLights[%d].ambiant", i);
+        glUniform3f(glGetUniformLocation(shaderProgram, locate), 0.2f, 0.2f, 0.2f);
+        sprintf(locate, "pointLights[%d].diffuse", i);
+        glUniform3f(glGetUniformLocation(shaderProgram, locate), 0.5f, 0.5f, 0.5f);
+        sprintf(locate, "pointLights[%d].specular", i);
+        glUniform3f(glGetUniformLocation(shaderProgram, locate), 1.0f, 1.0f, 1.0f);
+        sprintf(locate, "pointLights[%d].linear", i);
+        glUniform1f(glGetUniformLocation(shaderProgram, locate), 0.09f);
+        sprintf(locate, "pointLights[%d].quadratic", i);
+        glUniform1f(glGetUniformLocation(shaderProgram, locate), 0.032f);
+        sprintf(locate, "pointLights[%d].color", i);
+        glUniform3f(glGetUniformLocation(shaderProgram, locate), lightColor[i][0], lightColor[i][1], lightColor[i][2]);
+    }
 
     // Used to draw pointer
     glUniform2ui(glGetUniformLocation(shaderProgram, "windowSize"), width, height);
@@ -415,7 +439,7 @@ int main(int argc, char *argv[])
     uint16_t WINDOW_WIDTH;
     uint16_t WINDOW_HEIGHT;
     // Handling custom resolution
-    if (!DEBUG)
+    if (FULLSCREEN)
     {
         SDL_DisplayMode displayMode;
         if (SDL_GetCurrentDisplayMode(0, &displayMode))
@@ -478,7 +502,7 @@ int main(int argc, char *argv[])
     if (WIREFRAME) glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_MULTISAMPLE);
-    // glEnable(GL_CULL_FACE);  // Triangles have to be defined in counter-clockwise order
+    glEnable(GL_CULL_FACE);  // Triangles have to be defined in counter-clockwise order
     glViewport(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT);
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 
@@ -565,11 +589,11 @@ int main(int argc, char *argv[])
     // Vertices and indices
     float vertices[] = {
         -0.5f, -0.5f, -0.5f,  0.0f, 0.0f, 0.0f,  0.0f, -1.0f,
+        0.5f,  0.5f, -0.5f,  1.0f, 1.0f, 0.0f,  0.0f, -1.0f,
         0.5f, -0.5f, -0.5f,  1.0f, 0.0f, 0.0f,  0.0f, -1.0f, 
         0.5f,  0.5f, -0.5f,  1.0f, 1.0f, 0.0f,  0.0f, -1.0f,
-        0.5f,  0.5f, -0.5f,  1.0f, 1.0f, 0.0f,  0.0f, -1.0f,
-        -0.5f,  0.5f, -0.5f,  0.0f, 1.0f, 0.0f,  0.0f, -1.0f,
         -0.5f, -0.5f, -0.5f,  0.0f, 0.0f, 0.0f,  0.0f, -1.0f,
+        -0.5f,  0.5f, -0.5f,  0.0f, 1.0f, 0.0f,  0.0f, -1.0f,
 
         -0.5f, -0.5f,  0.5f,  0.0f, 0.0f, 0.0f,  0.0f, 1.0f,
         0.5f, -0.5f,  0.5f,  1.0f, 0.0f, 0.0f,  0.0f, 1.0f,
@@ -586,11 +610,11 @@ int main(int argc, char *argv[])
         -0.5f,  0.5f,  0.5f,  1.0f, 0.0f, -1.0f,  0.0f,  0.0f,
 
         0.5f,  0.5f,  0.5f,  1.0f, 0.0f, 1.0f,  0.0f,  0.0f,
+        0.5f, -0.5f, -0.5f,  0.0f, 1.0f, 1.0f,  0.0f,  0.0f,
         0.5f,  0.5f, -0.5f,  1.0f, 1.0f, 1.0f,  0.0f,  0.0f,
         0.5f, -0.5f, -0.5f,  0.0f, 1.0f, 1.0f,  0.0f,  0.0f,
-        0.5f, -0.5f, -0.5f,  0.0f, 1.0f, 1.0f,  0.0f,  0.0f,
-        0.5f, -0.5f,  0.5f,  0.0f, 0.0f, 1.0f,  0.0f,  0.0f,
         0.5f,  0.5f,  0.5f,  1.0f, 0.0f, 1.0f,  0.0f,  0.0f,
+        0.5f, -0.5f,  0.5f,  0.0f, 0.0f, 1.0f,  0.0f,  0.0f,
 
         -0.5f, -0.5f, -0.5f,  0.0f, 1.0f, 0.0f, -1.0f,  0.0f,
         0.5f, -0.5f, -0.5f,  1.0f, 1.0f, 0.0f, -1.0f,  0.0f,
@@ -600,11 +624,11 @@ int main(int argc, char *argv[])
         -0.5f, -0.5f, -0.5f,  0.0f, 1.0f, 0.0f, -1.0f,  0.0f,
 
         -0.5f,  0.5f, -0.5f,  0.0f, 1.0f, 0.0f,  1.0f,  0.0f,
+        0.5f,  0.5f,  0.5f,  1.0f, 0.0f, 0.0f,  1.0f,  0.0f,
         0.5f,  0.5f, -0.5f,  1.0f, 1.0f, 0.0f,  1.0f,  0.0f,
         0.5f,  0.5f,  0.5f,  1.0f, 0.0f, 0.0f,  1.0f,  0.0f,
-        0.5f,  0.5f,  0.5f,  1.0f, 0.0f, 0.0f,  1.0f,  0.0f,
-        -0.5f,  0.5f,  0.5f,  0.0f, 0.0f, 0.0f,  1.0f,  0.0f,
-        -0.5f,  0.5f, -0.5f,  0.0f, 1.0f, 0.0f,  1.0f,  0.0f
+        -0.5f,  0.5f, -0.5f,  0.0f, 1.0f, 0.0f,  1.0f,  0.0f,
+        -0.5f,  0.5f,  0.5f,  0.0f, 0.0f, 0.0f,  1.0f,  0.0f
     };
     unsigned int indices[] = {
         0, 1, 3, // first triangle
@@ -634,7 +658,7 @@ int main(int argc, char *argv[])
 
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, brickwall.id);
-    glUniform1i(glGetUniformLocation(shaderProgram, "brickwallTexture"), 0);
+    glUniform1i(glGetUniformLocation(shaderProgram, "textureSampler"), 0);
 
 
     // Light
@@ -679,7 +703,7 @@ int main(int argc, char *argv[])
         if (dt_ms < 3) {SDL_Delay(3-dt_ms); continue;}
         dt = dt_ms / 1000.0;
         last_frame = now;
-        if (DEBUG && PRINT_FPS) printf("FPS : %lf\n", 1.0 / dt);
+        if (PRINT_FPS) printf("FPS : %lf\n", 1.0 / dt);
 
         while (SDL_PollEvent(&e))
         {
@@ -727,8 +751,6 @@ int main(int argc, char *argv[])
             translateCamera(&camera, keyboardState, dt);
             updateCamera(&camera);
         }
-        // Temporary light movement
-        if (keyboardState[SDL_SCANCODE_F2]) lightPos[0] -= 0.1f;
 
         // Update game
         if (!pause) updateGame();

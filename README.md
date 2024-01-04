@@ -208,7 +208,6 @@ By default, the bindings are :
 - N - Right
 - Space - Jump
 - Left click - Shoot (Not fully implemented)
-- F2 - Move light
 
 - Esc - Pause the game
 - F1 - Close the game
