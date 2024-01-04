@@ -10,6 +10,9 @@ uniform vec3 objectColor;
 uniform vec3 lightColor;
 uniform vec3 viewPos;
 
+uniform uvec2 windowSize;
+uniform float pointerRadius;
+
 struct Material {
     vec3 ambient;
     vec3 diffuse;
@@ -49,5 +52,17 @@ void main()
     vec3 specular = material.specular * spec * light.specular;
 
     vec4 result = vec4((ambient+diffuse+specular) * objectColor * lightColor * attenuation, 1.0);
-    FragColor = texture(brickwallTexture, TexCoords) * result;
+    vec4 color = texture(brickwallTexture, TexCoords) * result;
+
+    float distanceCenter = length(gl_FragCoord.xy-windowSize/2);
+
+    if (distanceCenter <= pointerRadius)
+    {
+        FragColor = vec4(1-color.rgb, color.a);
+    }
+    else
+    {
+        FragColor = color;
+    }
+
 }

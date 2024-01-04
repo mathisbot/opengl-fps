@@ -241,7 +241,7 @@ void updateGame()
  * @param height Height of the screen
 */
 vec3 lightPos = {1.2f, 1.0f, 2.0f};
-static void render(Uint16 width, Uint16 height)
+static void render(GLuint width, GLuint height)
 {
     // Clear buffers
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -256,15 +256,16 @@ static void render(Uint16 width, Uint16 height)
     glUniform2ui(glGetUniformLocation(shaderProgramUI, "screenSize"), width, height);
     glUniform1f(glGetUniformLocation(shaderProgramUI, "pointerRadius"), 1.0f);
 
-    // Attempt to draw a pointer
     glBindVertexArray(uiVAO);
-    glDrawArrays(GL_TRIANGLES, 0, 36);
+    // Draw UI
     glBindVertexArray(0);
 
     glUseProgram(0);
 
 
     /* --- Light --- */
+
+    static vec3 lightColor = {1.0f, 1.0f, 1.0f};
 
     // Use light shader
     glUseProgram(shaderProgramLight);
@@ -287,9 +288,15 @@ static void render(Uint16 width, Uint16 height)
     glm_perspective(glm_rad(FOV), (float)width / (float)height, ZNEAR, ZFAR, projectionLight);
 
     // Send to shader
-    glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "model"), 1, GL_FALSE, (float*)modelLight);
-    glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "view"), 1, GL_FALSE, (float*)viewLight);
-    glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "projection"), 1, GL_FALSE, (float*)projectionLight);
+    glUniformMatrix4fv(glGetUniformLocation(shaderProgramLight, "model"), 1, GL_FALSE, (float*)modelLight);
+    glUniformMatrix4fv(glGetUniformLocation(shaderProgramLight, "view"), 1, GL_FALSE, (float*)viewLight);
+    glUniformMatrix4fv(glGetUniformLocation(shaderProgramLight, "projection"), 1, GL_FALSE, (float*)projectionLight);
+    
+    glUniform3f(glGetUniformLocation(shaderProgramLight, "lightColor"), lightColor[0], lightColor[1], lightColor[2]);
+
+    // Used to draw pointer
+    glUniform2ui(glGetUniformLocation(shaderProgramLight, "windowSize"), width, height);
+    glUniform1f(glGetUniformLocation(shaderProgramLight, "pointerRadius"), 2.0f);
 
     // Rendering
     glBindVertexArray(lightVAO);
@@ -336,22 +343,26 @@ static void render(Uint16 width, Uint16 height)
     glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "projection"), 1, GL_FALSE, (float*)projection);
 
     // Light
-    static vec3 lightColor = {1.0f, 1.0f, 1.0f};
     glUniform3f(glGetUniformLocation(shaderProgram, "lightColor"), lightColor[0], lightColor[1], lightColor[2]);
     glUniform3f(glGetUniformLocation(shaderProgram, "objectColor"), 1.0f, 1.0f, 1.0f);
     glUniform3f(glGetUniformLocation(shaderProgram, "light.position"), lightPos[0], lightPos[1], lightPos[2]);
     glUniform3f(glGetUniformLocation(shaderProgram, "viewPos"), camera.pos[0], camera.pos[1], camera.pos[2]);
+    
+    glUniform3f(glGetUniformLocation(shaderProgram, "light.ambient"), 0.2f, 0.2f, 0.2f);
+    glUniform3f(glGetUniformLocation(shaderProgram, "light.diffuse"), 0.5f, 0.5f, 0.5f);
+    glUniform3f(glGetUniformLocation(shaderProgram, "light.specular"), 1.0f, 1.0f, 1.0f);
+    glUniform1f(glGetUniformLocation(shaderProgram, "light.linear"), 0.09f);
+    glUniform1f(glGetUniformLocation(shaderProgram, "light.quadratic"), 0.032f);
+
+    // Used to draw pointer
+    glUniform2ui(glGetUniformLocation(shaderProgram, "windowSize"), width, height);
+    glUniform1f(glGetUniformLocation(shaderProgram, "pointerRadius"), 2.0f);
 
     glUniform3f(glGetUniformLocation(shaderProgram, "material.ambient"), 1.0f, 0.5f, 0.31f);
     glUniform3f(glGetUniformLocation(shaderProgram, "material.diffuse"), 1.0f, 0.5f, 0.31f);
     glUniform3f(glGetUniformLocation(shaderProgram, "material.specular"), 0.5f, 0.5f, 0.5f);
     glUniform1f(glGetUniformLocation(shaderProgram, "material.shininess"), 32.0f);
 
-    glUniform3f(glGetUniformLocation(shaderProgram, "light.ambient"), 0.2f, 0.2f, 0.2f);
-    glUniform3f(glGetUniformLocation(shaderProgram, "light.diffuse"), 0.5f, 0.5f, 0.5f);
-    glUniform3f(glGetUniformLocation(shaderProgram, "light.specular"), 1.0f, 1.0f, 1.0f);
-    glUniform1f(glGetUniformLocation(shaderProgram, "light.linear"), 0.09f);
-    glUniform1f(glGetUniformLocation(shaderProgram, "light.quadratic"), 0.032f);
 
     // Rendering
     glBindVertexArray(VAO);
@@ -431,8 +442,7 @@ int main(int argc, char *argv[])
     if (window == NULL) cleanUpAndExit(EXIT_FAILURE, "Error when creating window : %s", SDL_GetError());
     SDL_ShowCursor(SDL_DISABLE);
     // Handling fullscreen
-    if (FULLSCREEN) SDL_SetWindowFullscreen(window, SDL_WINDOW_FULLSCREEN);
-    else SDL_SetWindowFullscreen(window, 0);
+    SDL_SetWindowFullscreen(window, FULLSCREEN ? SDL_WINDOW_FULLSCREEN : 0);
 
 
     // OpenGL context creation
