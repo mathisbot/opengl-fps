@@ -23,6 +23,11 @@
 /*
 - Add shadows
     -> https://learnopengl.com/Advanced-Lighting/Shadows/Point-Shadows
+- Better textures
+    -> https://learnopengl.com/Advanced-Lighting/Normal-Mapping
+    -> https://learnopengl.com/Advanced-Lighting/Parallax-Mapping
+    -> https://learnopengl.com/Advanced-Lighting/HDR
+    -> https://learnopengl.com/Advanced-Lighting/Bloom
 - Add textures
     -> Add normal mapping
     -> Add specular mapping
