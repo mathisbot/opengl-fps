@@ -2,7 +2,7 @@
 
 <br />
 <div align="center">
-    <img src="src/assets/images/icon.webp" alt="Logo" width="128" height="128">
+    <img src="bin/assets/images/icon.webp" alt="Logo" width="128" height="128">
 
   <h3 align="center">Retro FPS</h3>
 
