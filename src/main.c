@@ -22,10 +22,11 @@
 
 /*
 - Add dot in the center of the screen !!!
+- Ray tracing ?
+    -> Light currently passes through objects
 - Add textures
     -> Add normal mapping
     -> Add specular mapping
-    -> Add parallax mapping
     -> ...
 - Geometry shader ?
 - Refactor rendering code (render() and game loop)?
@@ -96,8 +97,11 @@ static bool mixerInitalized = 0;
 static GLuint lightVAO = 0;  // Light sources
 static GLuint uiVAO = 0;  // UI
 static GLuint VAO = 0;  // Scene Objects
+
 static GLuint VBO = 0;  // Vertices
+static GLuint uiVBO = 0;  // Vertices for UI
 static GLuint EBO = 0;  // Indices
+
 static Shader vertexShader = {0};  // Vertex shader
 static Shader vertexShaderUI = {0};  // Vertex shader for UI
 static Shader fragmentShader = {0};  // Fragment shader for scene objects
@@ -121,6 +125,7 @@ static void cleanUp()
 
     // OpenGL
     if (VBO) {glDeleteBuffers(1, &VBO); VBO = 0;}
+    if (uiVBO) {glDeleteBuffers(1, &uiVBO); uiVBO = 0;}
     if (EBO) {glDeleteBuffers(1, &EBO); EBO = 0;}
     if (VAO) {glDeleteVertexArrays(1, &VAO); VAO = 0;}
     if (lightVAO) {glDeleteVertexArrays(1, &lightVAO); lightVAO = 0;}
@@ -249,17 +254,16 @@ static void render(GLuint width, GLuint height)
 
     glUseProgram(shaderProgramUI);
 
-    glUniform2ui(glGetUniformLocation(shaderProgramUI, "screenSize"), width, height);
-    glUniform1f(glGetUniformLocation(shaderProgramUI, "pointerRadius"), 1.0f);
+    glUniform2ui(glGetUniformLocation(shaderProgramUI, "windowSize"), width, height);
+    glUniform1f(glGetUniformLocation(shaderProgramUI, "pointerRadius"), 2.0f);
 
     glBindVertexArray(uiVAO);
     // Draw UI
+    glDrawArrays(GL_TRIANGLES, 0, 6);
     glBindVertexArray(0);
 
-    glUseProgram(0);
 
-
-    /* --- Light --- */
+    /* --- Light sources --- */
 
     static vec3 lightColor[] = {
         {1.0f, 1.0f, 1.0f},
@@ -406,6 +410,10 @@ static void render(GLuint width, GLuint height)
     }
     glBindVertexArray(0);
 
+
+    // Unbind shader
+    glUseProgram(0);
+
     // Swap buffers
     SDL_GL_SwapWindow(window);
 }
@@ -509,6 +517,7 @@ int main(int argc, char *argv[])
 
     // OpenGL Buffer/Shader creation
     glGenBuffers(1, &VBO);
+    glGenBuffers(1, &uiVBO);
     glGenBuffers(1, &EBO);
     glGenVertexArrays(1, &VAO);
     glGenVertexArrays(1, &lightVAO);
@@ -666,17 +675,28 @@ int main(int argc, char *argv[])
 
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
 
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
 
 
-
     // UI
+    float uiVertices[] = {
+        -1.0f, -1.0f, 0.0f,  // Bottom left
+         1.0f,  1.0f, 0.0f,  // Top right
+        -1.0f,  1.0f, 0.0f,  // Top left
+        -1.0f, -1.0f, 0.0f,  // Bottom left
+         1.0f, -1.0f, 0.0f,  // Bottom right
+         1.0f,  1.0f, 0.0f,  // Top right
+    };
+
     glBindVertexArray(uiVAO);
 
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-
-    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
+    glBindBuffer(GL_ARRAY_BUFFER, uiVBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(uiVertices), uiVertices, GL_STATIC_DRAW);
+    
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
 
     // Unbinding buffers

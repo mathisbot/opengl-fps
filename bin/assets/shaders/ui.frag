@@ -6,15 +6,14 @@ uniform float pointerRadius;
 
 void main()
 {
-    vec2 uv = (gl_FragCoord.xy / windowSize)*2.0 - 1.0;
-    float distance = length(uv);
+    vec4 color = vec4(0.0, 0.0, 0.0, 1.0);
 
-    if (distance < pointerRadius)
+    // Drawing crosshair
+    float distance = length(gl_FragCoord.xy-windowSize/2);
+    if (distance <= pointerRadius)
     {
-        FragColor = vec4(1.0, 1.0, 1.0, 1.0);
+        gl_FragDepth = 0.99999;
+        FragColor = vec4(1-color.rgb, color.a);
     }
-    else
-    {
-        discard;
-    }
+    else discard;
 }
