@@ -245,10 +245,10 @@ Overall, the game MUST be playable and enjoyable.
 This roadmap helps organizing development and may be subject to change.
 
 - [X] Opening a window
-- [ ] First Person Camera
-- [ ] Level rendering
-- [ ] PAUSE - Need to move to OpenGL 4.6.0 Core
+- [X] First Person Camera
+- [ ] Import models
 - [ ] Gun
+- [ ] Level rendering
 - [ ] Audio
 - [ ] Collisions
 - [ ] Health packs and ammo
