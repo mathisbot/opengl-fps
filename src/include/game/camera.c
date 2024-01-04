@@ -71,14 +71,16 @@ void translateCamera(Camera *camera, const Uint8* keyboardState, double dt)
     else if (!camera->onGround)
     {
         static vec3 gravity;
+        static vec3 yTranslation;
 
         // Gravity
-        glm_vec3_scale(camera->up, -GRAVITY * dt * dt, gravity);
+        glm_vec3_scale(camera->up, -GRAVITY * dt, gravity);
         glm_vec3_add(camera->upVelocity, gravity, camera->upVelocity);
+        glm_vec3_scale(camera->upVelocity, dt, yTranslation);
 
         // Check if camera is below ground
         // Currently assuming that the ground is at y=0
-        if (camera->pos[1]+camera->upVelocity[1] < EYE_Y)
+        if (camera->pos[1]+yTranslation[1] < EYE_Y)
         {
             // Move camera to ground
             camera->upVelocity[1] = -camera->pos[1] + EYE_Y;
@@ -88,7 +90,10 @@ void translateCamera(Camera *camera, const Uint8* keyboardState, double dt)
             camera->onGround = 1;
             glm_vec3_copy(GLM_VEC3_ZERO, camera->upVelocity);
         }
-        else glm_vec3_add(translation, camera->upVelocity, translation);
+        else
+        {
+            glm_vec3_add(translation, yTranslation, translation);
+        }
     }
 
     // Update position

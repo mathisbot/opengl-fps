@@ -54,7 +54,6 @@ vec3 computePointLight(PointLight light, vec3 normal, vec3 fragPos, vec3 viewDir
     float attenuation = 1.0 / (1.0 + light.linear * distance + light.quadratic * (distance * distance));
 
     return (ambient + diffuse + specular) * light.color * attenuation;
-
 }
 
 void main()

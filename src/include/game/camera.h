@@ -14,7 +14,7 @@
 #define EYE_Y 1.8f
 
 #define GRAVITY 20.0f
-#define JUMPSPEED 0.075f
+#define JUMPSPEED 7.5f
 #define SPEED 7.5f
 #define SPRINTBOOST 1.75f
 #define SENSITIVITY 0.13f
