@@ -171,6 +171,8 @@ Inside the zip file are the 32- and 64-bit SDL library files. Choose the one tha
   ```sh
     gcc -Wall -I src/include -L src/lib -o bin/retro_fps src/main.c $(Get-ChildItem -Recurse -Path src/include -Filter \"*.c\").FullName -lmingw32 -lSDL2main -lSDL2 -lSDL2_mixer -lopengl32 -lglew32
   ```
+  If you don't want the program to open the terminal, add `-mwindows`.
+
 
   UNIX - A Makefile is available. Alternatively, compile the project with :
 
