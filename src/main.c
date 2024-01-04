@@ -155,6 +155,71 @@ static void cleanUpAndExit(bool exitCode, const char* log, ...)
 }
 
 
+/* --- GL ERRORS --- */
+// Used only if debug mode is enabled
+#if DEBUG
+
+void debugCallback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar *message, const void *userParam)
+{
+    if(id == 131169 || id == 131185 || id == 131218 || id == 131204)
+        return;
+    fprintf(stderr, "---------------\n");
+    fprintf(stderr, "Debug message (%d): %s\n", id, message);
+    switch (source)
+    {
+        case GL_DEBUG_SOURCE_API:
+            fprintf(stderr, "Source: API");
+        case GL_DEBUG_SOURCE_WINDOW_SYSTEM:
+            fprintf(stderr, "Source: Window System"); break;
+        case GL_DEBUG_SOURCE_SHADER_COMPILER:
+            fprintf(stderr, "Source: Shader Compiler"); break;
+        case GL_DEBUG_SOURCE_THIRD_PARTY:
+            fprintf(stderr, "Source: Third Party"); break;
+        case GL_DEBUG_SOURCE_APPLICATION:
+            fprintf(stderr, "Source: Application"); break;
+        case GL_DEBUG_SOURCE_OTHER:
+            fprintf(stderr, "Source: Other"); break;
+    }
+    fprintf(stderr, "\n");
+    switch (type)
+    {
+        case GL_DEBUG_TYPE_ERROR:
+        fprintf(stderr, "Type: Error"); break;
+        case GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR:
+        fprintf(stderr, "Type: Deprecated Behaviour"); break;
+        case GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR:
+        fprintf(stderr, "Type: Undefined Behaviour"); break;
+        case GL_DEBUG_TYPE_PORTABILITY:
+        fprintf(stderr, "Type: Portability"); break;
+        case GL_DEBUG_TYPE_PERFORMANCE:
+        fprintf(stderr, "Type: Performance"); break;
+        case GL_DEBUG_TYPE_MARKER:
+       fprintf(stderr, "Type: Marker"); break;
+        case GL_DEBUG_TYPE_PUSH_GROUP:
+        fprintf(stderr, "Type: Push Group"); break;
+        case GL_DEBUG_TYPE_POP_GROUP:
+        fprintf(stderr, "Type: Pop Group"); break;
+        case GL_DEBUG_TYPE_OTHER:
+        fprintf(stderr, "Type: Other"); break;
+    }
+    fprintf(stderr, "\n");
+    switch (severity)
+    {
+        case GL_DEBUG_SEVERITY_HIGH:
+        fprintf(stderr, "Severity: high"); break;
+        case GL_DEBUG_SEVERITY_MEDIUM:
+        fprintf(stderr, "Severity: medium"); break;
+        case GL_DEBUG_SEVERITY_LOW:
+        fprintf(stderr, "Severity: low"); break;
+        case GL_DEBUG_SEVERITY_NOTIFICATION:
+        fprintf(stderr, "Severity: notification"); break;
+    }
+    fprintf(stderr, "\n\n");
+}
+
+#endif
+
+
 /* --- GAME LOGIC --- */
 
 /**
@@ -354,7 +419,7 @@ int main(int argc, char *argv[])
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 6);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
-    // if (DEBUG) SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_DEBUG_FLAG);
+    if (DEBUG) SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_DEBUG_FLAG);
     // MSAA
     SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 1);
     SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, MSAADEPTH);
@@ -374,16 +439,31 @@ int main(int argc, char *argv[])
     glContext = SDL_GL_CreateContext(window);
     if (glContext == NULL) cleanUpAndExit(EXIT_FAILURE, "Error when creating OpenGL context : %s", SDL_GetError());
 
+    // GLEW initialization
+    GLenum glewInitState = glewInit();
+    if (glewInitState != GLEW_OK) cleanUpAndExit(EXIT_FAILURE, "Error initialising GLEW : %s", glewGetErrorString(glewInitState));
+
+
     // OpenGL settings
-    if (DEBUG)
+    #if DEBUG
+    GLint flags; glGetIntegerv(GL_CONTEXT_FLAGS, &flags);
+    if (flags & GL_CONTEXT_FLAG_DEBUG_BIT)
     {
-        printf("> OpenGL version : %s\n", glGetString(GL_VERSION));
-        printf("> OpenGL vendor : %s\n", glGetString(GL_VENDOR));
-        printf("> OpenGL renderer : %s\n", glGetString(GL_RENDERER));
-        printf("> OpenGL shading language version : %s\n", glGetString(GL_SHADING_LANGUAGE_VERSION));
-        printf("> Vertex shader max attribribute count : %d\n", GL_MAX_VERTEX_ATTRIBS);
+        printf("[GL Debug Output enabled]\n");
+        glEnable(GL_DEBUG_OUTPUT);
         glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
+        glDebugMessageCallback(debugCallback, NULL);
+        glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, NULL, GL_TRUE);
+    
     }
+    else fprintf(stderr, "[GL Debug Output failed to activate]");
+    printf("> OpenGL version : %s\n", glGetString(GL_VERSION));
+    printf("> OpenGL vendor : %s\n", glGetString(GL_VENDOR));
+    printf("> OpenGL renderer : %s\n", glGetString(GL_RENDERER));
+    printf("> OpenGL shading language version : %s\n", glGetString(GL_SHADING_LANGUAGE_VERSION));
+    printf("> Vertex shader max attribribute count : %d\n", GL_MAX_VERTEX_ATTRIBS);
+    #endif
+
     if (VSYNC) {if (SDL_GL_SetSwapInterval(-1) == -1) SDL_GL_SetSwapInterval(1);}
     if (WIREFRAME) glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     glEnable(GL_DEPTH_TEST);
@@ -393,22 +473,17 @@ int main(int argc, char *argv[])
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 
 
-    // GLEW initialization
-    GLenum glewError = glewInit();
-    if (glewError != GLEW_OK) cleanUpAndExit(EXIT_FAILURE, "Error initialising GLEW : %s", glewGetErrorString(glewError));
-
-
     // OpenGL Buffer/Shader creation
     glGenBuffers(1, &VBO);
     glGenBuffers(1, &EBO);
     glGenVertexArrays(1, &VAO);
     glGenVertexArrays(1, &lightVAO);
     glGenVertexArrays(1, &uiVAO);
-    if (loadShader(&vertexShader, "vertex.glsl", GL_VERTEX_SHADER) < 0) cleanUpAndExit(EXIT_FAILURE, "Error creating vertex shader");
-    if (loadShader(&vertexShaderUI, "vertex_ui.glsl", GL_VERTEX_SHADER) < 0) cleanUpAndExit(EXIT_FAILURE, "Error creating vertex shader for UI");
-    if (loadShader(&fragmentShader, "fragment.glsl", GL_FRAGMENT_SHADER) < 0) cleanUpAndExit(EXIT_FAILURE, "Error creating fragment shader");
-    if (loadShader(&fragmentShaderUI, "fragment_ui.glsl", GL_FRAGMENT_SHADER) < 0) cleanUpAndExit(EXIT_FAILURE, "Error creating fragment shader for UI");
-    if (loadShader(&fragmentShaderLight, "fragment_light.glsl", GL_FRAGMENT_SHADER) < 0) cleanUpAndExit(EXIT_FAILURE, "Error creating fragment shader for light");
+    if (loadShader(&vertexShader, "vertex.vert", GL_VERTEX_SHADER) < 0) cleanUpAndExit(EXIT_FAILURE, "Error creating vertex shader");
+    if (loadShader(&vertexShaderUI, "ui.vert", GL_VERTEX_SHADER) < 0) cleanUpAndExit(EXIT_FAILURE, "Error creating vertex shader for UI");
+    if (loadShader(&fragmentShader, "fragment.frag", GL_FRAGMENT_SHADER) < 0) cleanUpAndExit(EXIT_FAILURE, "Error creating fragment shader");
+    if (loadShader(&fragmentShaderUI, "ui.frag", GL_FRAGMENT_SHADER) < 0) cleanUpAndExit(EXIT_FAILURE, "Error creating fragment shader for UI");
+    if (loadShader(&fragmentShaderLight, "light.frag", GL_FRAGMENT_SHADER) < 0) cleanUpAndExit(EXIT_FAILURE, "Error creating fragment shader for light");
 
     // Program Shader creation
     int success;
