@@ -21,20 +21,11 @@
 /* --- TODO --- */
 
 /*
-- Add shadows
-    -> https://learnopengl.com/Advanced-Lighting/Shadows/Point-Shadows
 - Better textures
     -> https://learnopengl.com/Advanced-Lighting/Normal-Mapping
     -> https://learnopengl.com/Advanced-Lighting/Parallax-Mapping
     -> https://learnopengl.com/Advanced-Lighting/HDR
     -> https://learnopengl.com/Advanced-Lighting/Bloom
-- Add textures
-    -> Add normal mapping
-    -> Add specular mapping
-    -> ...
-- Geometry shader ?
-- Refactor rendering code (render() and game loop)?
-    -> Use EBO : DrawElements instead of DrawArrays
 - Find other ways to load sounds (WAV is too big)
     -> OGG ?
 */
@@ -49,6 +40,7 @@
 #include <ctype.h>
 #include <stdarg.h>
 #include <string.h>
+#include <time.h>  // For performance measurement
 
 #include <SDL2/SDL.h>
 #include <GL/glew.h>
@@ -60,6 +52,7 @@
 #include "include/game/audio.h"
 #include "include/game/camera.h"
 #include "include/game/collision.h"
+#include "include/game/light.h"
 #include "include/game/shader.h"
 #include "include/game/textures.h"
 
@@ -76,10 +69,6 @@
 #define FULLSCREEN 0
 #define MSAADEPTH 4
 
-#define SHADOWMAP_RES 1024
-#define SHADOWMAP_ZNEAR 1.0f
-#define SHADOWMAP_ZFAR 10.0f
-
 // View options
 #define FOV 70.0f
 #define ZNEAR 0.1f
@@ -88,20 +77,17 @@
 
 /* --- GLOBAL VARIABLES --- */
 
+
+// Game
 Camera camera;
+PointLight pointLights[4];  // 4 point lights
 // Level level;
 // ...
 
-
-/* --- CLEAN-UP FUNCTIONS --- */
-
-/* --- Global Variables --- */
-
 // SDL
-static SDL_GLContext glContext = NULL;
 static SDL_Window* window = NULL;
-static bool SDLInitialized = 0;
-static bool mixerInitalized = 0;
+static SDL_GLContext glContext = NULL;
+
 // OpenGL
 static GLuint lightVAO = 0;  // Light sources
 static GLuint uiVAO = 0;  // UI
@@ -112,7 +98,6 @@ static GLuint uiVBO = 0;  // Vertices for UI
 static GLuint EBO = 0;  // Indices
 
 static GLuint depthMapFBO = 0;  // Depth map framebuffer
-static GLuint depthCubemap = 0;  // Depth map texture
 
 static Shader vertexShader = {0};  // Vertex shader
 static Shader vertexShaderUI = {0};  // Vertex shader for UI
@@ -123,11 +108,16 @@ static Shader fragmentShaderUI = {0};  // Fragment shader for UI
 static Shader fragmentShaderLight = {0};  // Fragment shader for light
 static Shader fragmentShaderDepth = {0};  // Fragment shader for depth map
 
-static unsigned int shaderProgram = 0;  // Shader program for scene objects
-static unsigned int shaderProgramUI = 0;  // Shader program for UI
-static unsigned int shaderProgramLight = 0;  // Shader program for light
-static unsigned int shaderProgramDepth = 0;  // Shader program for depth map
+static GLuint shaderProgram = 0;  // Shader program for scene objects
+static GLuint shaderProgramUI = 0;  // Shader program for UI
+static GLuint shaderProgramLight = 0;  // Shader program for light
+static GLuint shaderProgramDepth = 0;  // Shader program for depth map
 
+
+/* --- CLEAN-UP FUNCTIONS --- */
+
+static bool SDLInitialized = 0;
+static bool mixerInitalized = 0;
 
 /**
  * @brief Free memory
@@ -147,7 +137,6 @@ static void cleanUp()
     if (VAO) {glDeleteVertexArrays(1, &VAO); VAO = 0;}
 
     if (depthMapFBO) {glDeleteFramebuffers(1, &depthMapFBO); depthMapFBO = 0;}
-    if (depthCubemap) {destroyDepthCubemap(depthCubemap); depthCubemap = 0;}
 
     if (lightVAO) {glDeleteVertexArrays(1, &lightVAO); lightVAO = 0;}
     if (uiVAO) {glDeleteVertexArrays(1, &uiVAO); uiVAO = 0;}
@@ -165,6 +154,9 @@ static void cleanUp()
     if (shaderProgramUI) {glDeleteProgram(shaderProgramUI); shaderProgramUI = 0;}
     if (shaderProgramLight) {glDeleteProgram(shaderProgramLight); shaderProgramLight = 0;}
     if (shaderProgramDepth) {glDeleteProgram(shaderProgramDepth); shaderProgramDepth = 0;}
+
+    // Freeing other components
+    for (uint8_t i=0; i<sizeof(pointLights)/sizeof(PointLight); i++) destroyPointLight(&pointLights[i]);
 }
 
 /**
@@ -273,40 +265,22 @@ void updateGame()
 */
 static void render(GLuint width, GLuint height)
 {
-    // Light colors
-    static vec3 lightColor[] = {
-        {1.0f, 1.0f, 1.0f},
-        {1.0f, 0.0f, 0.0f},
-        {0.0f, 1.0f, 0.0f},
-        {0.0f, 0.0f, 1.0f}
-    };
-
-    // Lights positions
-    static vec3 lightPos[] = {
-        {0.0f, 1.0f, 2.0f},
-        {2.3f, -3.3f, -4.0f},
-        {-4.0f, 2.0f, -12.0f},
-        {0.0f, 0.0f, -3.0f}
-    };
-
     // Cubes positions
-    vec3 cubePositions[13];
-    float positions[13][3] = {
-        { 0.0f,  1.0f,  0.0f},
-        { 2.0f,  5.0f, -15.0f},
-        {-1.5f, -2.2f, -2.5f},
-        {-3.8f, -2.0f, -12.3f},
-        { 2.4f, -0.4f, -3.5f},
+    vec3 cubePositions[10];
+    float positions[10][3] = {
+        { 0.0f,  0.0f,  0.0f},
+        { 2.0f,  5.0f, -9.0f},
+        { 2.4f,  0.4f, -3.5f},
         {-1.7f,  3.0f, -7.5f},
-        { 1.3f, -2.0f, -2.5f},
         { 1.5f,  2.0f, -2.5f},
         { 1.5f,  0.2f, -1.5f},
         {-1.3f,  1.0f, -1.5f},
         { 0.0f,  1.0f,  5.0f},
         {-0.5f,  2.0f,  7.5f},
-        { 1.0f, -0.5f,  7.5f},
+        { 1.0f,  0.5f,  7.5f},
     };
-    for (int i = 0; i < 13; ++i) {
+    // Ugliest way
+    for (int i = 0; i < 10; ++i) {
         for (int j = 0; j < 3; ++j) {
             cubePositions[i][j] = positions[i][j];
         }
@@ -315,61 +289,47 @@ static void render(GLuint width, GLuint height)
 
     /* --- RENDER ON DEPTH MAP --- */
 
+    glViewport(0, 0, SHADOWMAP_RES, SHADOWMAP_RES);
     glUseProgram(shaderProgramDepth);
     glBindVertexArray(VAO);
 
+    glUniform1f(glGetUniformLocation(shaderProgramDepth, "farPlane"), SHADOWMAP_ZFAR);
+
     // Shaders and matrices
-    mat4 lightProjection;
+    static mat4 lightProjection;
     glm_perspective(glm_rad(90.0f), 1.0f, SHADOWMAP_ZNEAR, SHADOWMAP_ZFAR, lightProjection);
 
-    mat4 lightView[6];  // 6 faces of the cubemap
-    vec3 lightTargets[6];
-    glm_vec3_add(lightPos[0], (vec3){1.0f, 0.0f, 0.0f}, lightTargets[0]);
-    glm_lookat(lightPos[0], lightTargets[0], (vec3){0.0f, -1.0f, 0.0f}, lightView[0]);
-    glm_vec3_add(lightPos[0], (vec3){-1.0f, 0.0f, 0.0f}, lightTargets[1]);
-    glm_lookat(lightPos[0], lightTargets[1], (vec3){0.0f, -1.0f, 0.0f}, lightView[1]);
-    glm_vec3_add(lightPos[0], (vec3){0.0f, 1.0f, 0.0f}, lightTargets[2]);
-    glm_lookat(lightPos[0], lightTargets[2], (vec3){0.0f, 0.0f, 1.0f}, lightView[2]);
-    glm_vec3_add(lightPos[0], (vec3){0.0f, -1.0f, 0.0f}, lightTargets[3]);
-    glm_lookat(lightPos[0], lightTargets[3], (vec3){0.0f, 0.0f, -1.0f}, lightView[3]);
-    glm_vec3_add(lightPos[0], (vec3){0.0f, 0.0f, 1.0f}, lightTargets[4]);
-    glm_lookat(lightPos[0], lightTargets[4], (vec3){0.0f, -1.0f, 0.0f}, lightView[4]);
-    glm_vec3_add(lightPos[0], (vec3){0.0f, 0.0f, -1.0f}, lightTargets[5]);
-    glm_lookat(lightPos[0], lightTargets[5], (vec3){0.0f, -1.0f, 0.0f}, lightView[5]);
-
-    mat4 shadowMatrices[6];
-    glm_mat4_mul(lightProjection, lightView[0], shadowMatrices[0]);
-    glm_mat4_mul(lightProjection, lightView[1], shadowMatrices[1]);
-    glm_mat4_mul(lightProjection, lightView[2], shadowMatrices[2]);
-    glm_mat4_mul(lightProjection, lightView[3], shadowMatrices[3]);
-    glm_mat4_mul(lightProjection, lightView[4], shadowMatrices[4]);
-    glm_mat4_mul(lightProjection, lightView[5], shadowMatrices[5]);
-
-    // Send to shader
-    glUniformMatrix4fv(glGetUniformLocation(shaderProgramDepth, "shadowMatrices"), 6, GL_FALSE, (float*)(shadowMatrices));
-    glUniform1f(glGetUniformLocation(shaderProgramDepth, "farPlane"), SHADOWMAP_ZFAR);
-    glUniform3f(glGetUniformLocation(shaderProgramDepth, "lightPos"), lightPos[0][0], lightPos[0][1], lightPos[0][2]);
-
-    // Rendering
-    glViewport(0, 0, SHADOWMAP_RES, SHADOWMAP_RES);
-    glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
-    glClear(GL_DEPTH_BUFFER_BIT);
-    glCullFace(GL_FRONT);  // To avoid Peter Panning
-
-    for (uint8_t i=0; i<13; i++)
+    // Compute depth map for each light
+    static mat4 shadowMatrices[6];
+    for (uint8_t i=0; i<4; i++)
     {
-        // Model matrix
-        static mat4 model = GLM_MAT4_IDENTITY_INIT;
-        glm_mat4_identity(model);
-        glm_translate(model, cubePositions[i]);
-        glm_rotate(model, glm_rad(20.0f*i), (vec3){0.5f, 1.0f, 0.0f});
+        // Each light has its own depth cubemap
+        bindPointLightToFBO(depthMapFBO, &(pointLights[i]));
 
-        // Send to shader
-        glUniformMatrix4fv(glGetUniformLocation(shaderProgramDepth, "model"), 1, GL_FALSE, (float*)model);
+        glUniform3f(glGetUniformLocation(shaderProgramDepth, "lightPos"), pointLights[i].position[0], pointLights[i].position[1], pointLights[i].position[2]);
 
-        glDrawArrays(GL_TRIANGLES, 0, 36);
+        pointLightGetProjMatrices(&(pointLights[i]), &lightProjection, &shadowMatrices);
+        glUniformMatrix4fv(glGetUniformLocation(shaderProgramDepth, "shadowMatrices"), 6, GL_FALSE, (float*)(shadowMatrices));
+
+        // Rendering
+        glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
+        glClear(GL_DEPTH_BUFFER_BIT);
+
+        for (uint8_t i=0; i<10; i++)
+        {
+            // Model matrix
+            static mat4 model = GLM_MAT4_IDENTITY_INIT;
+            glm_mat4_identity(model);
+
+            glm_translate(model, cubePositions[i]);
+            if (i==0) glm_scale(model, (vec3){30.0f, 0.01f, 30.0f});
+            glm_rotate(model, glm_rad(20.0f*i), (vec3){0.5f, 1.0f, 0.0f});
+
+            glUniformMatrix4fv(glGetUniformLocation(shaderProgramDepth, "model"), 1, GL_FALSE, (float*)model);
+
+            glDrawArrays(GL_TRIANGLES, 0, 36);
+        }
     }
-    glBindVertexArray(0);
 
 
     /* --- RENDER ON SCREEN --- */
@@ -377,7 +337,7 @@ static void render(GLuint width, GLuint height)
     glViewport(0, 0, width, height);
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    glCullFace(GL_BACK);
+
 
     // Order : UI, Light, Objects
 
@@ -391,6 +351,7 @@ static void render(GLuint width, GLuint height)
 
     glBindVertexArray(uiVAO);
 
+    // Simple overlay
     glDrawArrays(GL_TRIANGLES, 0, 6);
 
 
@@ -399,19 +360,18 @@ static void render(GLuint width, GLuint height)
     // Use light shader
     glUseProgram(shaderProgramLight);
 
-
     // View matrix
-    static mat4 viewLight = GLM_MAT4_IDENTITY_INIT;
-    glm_lookat(camera.pos, camera.target, camera.up, viewLight);
+    static mat4 view = GLM_MAT4_IDENTITY_INIT;
+    glm_lookat(camera.pos, camera.target, camera.up, view);
 
     // Projection matrix
-    static mat4 projectionLight = GLM_MAT4_IDENTITY_INIT;
-    glm_mat4_identity(projectionLight);
-    glm_perspective(glm_rad(FOV), (float)width / (float)height, ZNEAR, ZFAR, projectionLight);
+    static mat4 projection = GLM_MAT4_IDENTITY_INIT;
+    glm_mat4_identity(projection);
+    glm_perspective(glm_rad(FOV), (float)width / (float)height, ZNEAR, ZFAR, projection);
 
     // Send to shader
-    glUniformMatrix4fv(glGetUniformLocation(shaderProgramLight, "view"), 1, GL_FALSE, (float*)viewLight);
-    glUniformMatrix4fv(glGetUniformLocation(shaderProgramLight, "projection"), 1, GL_FALSE, (float*)projectionLight);
+    glUniformMatrix4fv(glGetUniformLocation(shaderProgramLight, "view"), 1, GL_FALSE, (float*)view);
+    glUniformMatrix4fv(glGetUniformLocation(shaderProgramLight, "projection"), 1, GL_FALSE, (float*)projection);
     
     // Used to draw pointer
     glUniform2ui(glGetUniformLocation(shaderProgramLight, "windowSize"), width, height);
@@ -422,14 +382,14 @@ static void render(GLuint width, GLuint height)
     
     for (uint8_t i=0; i<4; i++)
     {
+        glUniform3f(glGetUniformLocation(shaderProgramLight, "lightColor"), pointLights[i].color[0], pointLights[i].color[1], pointLights[i].color[2]);
+
         // Model matrix
         static mat4 modelLight = GLM_MAT4_IDENTITY_INIT;
         glm_mat4_identity(modelLight);
-        glm_translate(modelLight, lightPos[i]);
+        glm_translate(modelLight, pointLights[i].position);
         glm_scale(modelLight, (vec3){0.2f, 0.2f, 0.2f});
 
-        // Send to shader
-        glUniform3f(glGetUniformLocation(shaderProgramLight, "lightColor"), lightColor[i][0], lightColor[i][1], lightColor[i][2]);
         glUniformMatrix4fv(glGetUniformLocation(shaderProgramLight, "model"), 1, GL_FALSE, (float*)modelLight);
 
         glDrawArrays(GL_TRIANGLES, 0, 36);
@@ -442,30 +402,24 @@ static void render(GLuint width, GLuint height)
 
     glUseProgram(shaderProgram);
 
-    glBindTexture(GL_TEXTURE_CUBE_MAP, depthCubemap);
-    glUniform1i(glGetUniformLocation(shaderProgram, "depthCubemap"), 1);
-
-    // View matrix
-    static mat4 view = GLM_MAT4_IDENTITY_INIT;
-    glm_lookat(camera.pos, camera.target, camera.up, view);
-
-    // Projection matrix
-    static mat4 projection = GLM_MAT4_IDENTITY_INIT;
-    glm_mat4_identity(projection);
-    glm_perspective(glm_rad(FOV), (float)width / (float)height, ZNEAR, ZFAR, projection);
-
     // Send to shader
+    // Matrices are unchanged from light rendering
     glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "view"), 1, GL_FALSE, (float*)view);
     glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "projection"), 1, GL_FALSE, (float*)projection);
 
-    // Light
     glUniform3f(glGetUniformLocation(shaderProgram, "viewPos"), camera.pos[0], camera.pos[1], camera.pos[2]);
     glUniform1f(glGetUniformLocation(shaderProgram, "farPlane"), SHADOWMAP_ZFAR);
+
+    // Will be useful later to avoid binding too many textures
+    static int textureUnits = 0;
+    if (!textureUnits) glGetIntegerv(GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS, &textureUnits);
+    static const int textureStart = 1;  // 0 is reserved for face texture
+
     char locate[32];
     for (uint8_t i=0; i<4; i++)
     {
         sprintf(locate, "pointLights[%d].position", i);
-        glUniform3f(glGetUniformLocation(shaderProgram, locate), lightPos[i][0], lightPos[i][1], lightPos[i][2]);
+        glUniform3f(glGetUniformLocation(shaderProgram, locate), pointLights[i].position[0], pointLights[i].position[1], pointLights[i].position[2]);
         sprintf(locate, "pointLights[%d].ambiant", i);
         glUniform3f(glGetUniformLocation(shaderProgram, locate), 0.2f, 0.2f, 0.2f);
         sprintf(locate, "pointLights[%d].diffuse", i);
@@ -473,14 +427,17 @@ static void render(GLuint width, GLuint height)
         sprintf(locate, "pointLights[%d].specular", i);
         glUniform3f(glGetUniformLocation(shaderProgram, locate), 1.0f, 1.0f, 1.0f);
         sprintf(locate, "pointLights[%d].linear", i);
-        glUniform1f(glGetUniformLocation(shaderProgram, locate), 0.12f);
+        glUniform1f(glGetUniformLocation(shaderProgram, locate), 0.01f);
         sprintf(locate, "pointLights[%d].quadratic", i);
-        glUniform1f(glGetUniformLocation(shaderProgram, locate), 0.06f);
+        glUniform1f(glGetUniformLocation(shaderProgram, locate), 0.02f);
         sprintf(locate, "pointLights[%d].color", i);
-        glUniform3f(glGetUniformLocation(shaderProgram, locate), lightColor[i][0], lightColor[i][1], lightColor[i][2]);
+        glUniform3f(glGetUniformLocation(shaderProgram, locate), pointLights[i].color[0], pointLights[i].color[1], pointLights[i].color[2]);
+        sprintf(locate, "pointLights[%d].depthCubemap", i);
+        glActiveTexture(GL_TEXTURE0+i+textureStart);
+        glBindTexture(GL_TEXTURE_CUBE_MAP, pointLights[i].depthCubemap);
+        glUniform1i(glGetUniformLocation(shaderProgram, locate), i+textureStart);
     }
 
-    // Used to draw pointer
     glUniform2ui(glGetUniformLocation(shaderProgram, "windowSize"), width, height);
     glUniform1f(glGetUniformLocation(shaderProgram, "pointerRadius"), 2.0f);
 
@@ -489,30 +446,29 @@ static void render(GLuint width, GLuint height)
     glUniform3f(glGetUniformLocation(shaderProgram, "material.specular"), 0.5f, 0.5f, 0.5f);
     glUniform1f(glGetUniformLocation(shaderProgram, "material.shininess"), 64.0f);
 
-
     // Rendering
     glBindVertexArray(VAO);
-    glActiveTexture(GL_TEXTURE1);
-    glBindTexture(GL_TEXTURE_CUBE_MAP, depthCubemap);
-    // glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
-    for (uint8_t i=0; i<13; i++)
+    for (uint8_t i=0; i<10; i++)
     {
         // Model matrix
         static mat4 model = GLM_MAT4_IDENTITY_INIT;
         glm_mat4_identity(model);
+
         glm_translate(model, cubePositions[i]);
+        if (i==0) glm_scale(model, (vec3){30.0f, 0.01f, 30.0f});
         glm_rotate(model, glm_rad(20.0f*i), (vec3){0.5f, 1.0f, 0.0f});
 
-        // Send to shader
         glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "model"), 1, GL_FALSE, (float*)model);
 
+        // glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
         glDrawArrays(GL_TRIANGLES, 0, 36);
     }
+
+
+    // Unbind everything
     glBindVertexArray(0);
-
-
-    // Unbind shader
     glUseProgram(0);
+
 
     // Swap buffers
     SDL_GL_SwapWindow(window);
@@ -562,9 +518,9 @@ int main(int argc, char *argv[])
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 6);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_FORWARD_COMPATIBLE_FLAG);  // Performance improvement
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_FORWARD_COMPATIBLE_FLAG);
+
     if (DEBUG) SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_DEBUG_FLAG);
-    // MSAA
     SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 1);
     SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, MSAADEPTH);
 
@@ -581,6 +537,7 @@ int main(int argc, char *argv[])
     // OpenGL context creation
     glContext = SDL_GL_CreateContext(window);
     if (glContext == NULL) cleanUpAndExit(EXIT_FAILURE, "Error when creating OpenGL context : %s", SDL_GetError());
+
 
     // GLEW initialization
     GLenum glewInitState = glewInit();
@@ -612,24 +569,22 @@ int main(int argc, char *argv[])
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_MULTISAMPLE);
     glEnable(GL_CULL_FACE);  // Triangles have to be defined in counter-clockwise order
-    glEnable(GL_FRAMEBUFFER_SRGB);  // Gamma correction
-    glViewport(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT);
+    glEnable(GL_FRAMEBUFFER_SRGB);
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 
 
-    // OpenGL Buffer/Shader creation
+    // OpenGL Buffer creation
     glGenBuffers(1, &VBO);
     glGenBuffers(1, &uiVBO);
     glGenBuffers(1, &EBO);
 
     glGenFramebuffers(1, &depthMapFBO);
-    if (createDepthCubemap(&depthCubemap, SHADOWMAP_RES)<0) cleanUpAndExit(EXIT_FAILURE, "Error creating texture depth map");
-    bindDepthCubemapToFBO(depthMapFBO, depthCubemap);
     
     glGenVertexArrays(1, &VAO);
     glGenVertexArrays(1, &lightVAO);
     glGenVertexArrays(1, &uiVAO);
 
+    // OpenGL Shader creation
     if (loadShader(&vertexShader, "vertex.vert", GL_VERTEX_SHADER) < 0) cleanUpAndExit(EXIT_FAILURE, "Error creating vertex shader");
     if (loadShader(&vertexShaderUI, "ui.vert", GL_VERTEX_SHADER) < 0) cleanUpAndExit(EXIT_FAILURE, "Error creating vertex shader for UI");
     if (loadShader(&vertexShaderDepth, "depth.vert", GL_VERTEX_SHADER) < 0) cleanUpAndExit(EXIT_FAILURE, "Error creating vertex shader for depth map");
@@ -639,6 +594,7 @@ int main(int argc, char *argv[])
     if (loadShader(&fragmentShaderLight, "light.frag", GL_FRAGMENT_SHADER) < 0) cleanUpAndExit(EXIT_FAILURE, "Error creating fragment shader for light");
     if (loadShader(&fragmentShaderDepth, "depth.frag", GL_FRAGMENT_SHADER) < 0) cleanUpAndExit(EXIT_FAILURE, "Error creating fragment shader for depth map");
 
+    // Shader programs
     if (initShaderProgram(&shaderProgram, 2, vertexShader, fragmentShader) < 0) cleanUpAndExit(EXIT_FAILURE, "Error creating shader program");
     if (initShaderProgram(&shaderProgramLight, 2, vertexShader, fragmentShaderLight) < 0) cleanUpAndExit(EXIT_FAILURE, "Error creating shader program for light");
     if (initShaderProgram(&shaderProgramUI, 2, vertexShaderUI, fragmentShaderUI) < 0) cleanUpAndExit(EXIT_FAILURE, "Error creating shader program for UI");
@@ -661,7 +617,7 @@ int main(int argc, char *argv[])
     memset(&fragmentShaderDepth, 0, sizeof(Shader));
 
 
-    // Load Mixer
+    // Load SDL Mixer
     if (initMixer(AUDIO_NUMCHANS) < 0)
         cleanUpAndExit(EXIT_FAILURE, "Error initialising Mixer : %s", Mix_GetError());
     else mixerInitalized = 1;
@@ -682,11 +638,24 @@ int main(int argc, char *argv[])
     };
     initCamera(&camera, (vec3){-2.0f, EYE_Y, 2.0f}, (vec3){-1.0f, EYE_Y, 2.0f}, &bindings);
 
+    // Point lights
+    if (initPointLight(&pointLights[0], (vec3){0.0f, 2.0f, 2.0f}, (vec3){0.9f, 0.9f, 0.9f})<0) cleanUpAndExit(EXIT_FAILURE, "Error creating point light");
+    if (initPointLight(&pointLights[1], (vec3){2.3f, 3.3f, -4.0f}, (vec3){0.8f, 0.1f, 0.1f})<0) cleanUpAndExit(EXIT_FAILURE, "Error creating point light");
+    if (initPointLight(&pointLights[2], (vec3){-4.0f, 2.0f, -12.0f}, (vec3){0.0f, 0.85f, 0.15f})<0) cleanUpAndExit(EXIT_FAILURE, "Error creating point light");
+    if (initPointLight(&pointLights[3], (vec3){3.3f, 4.0f, -1.5f}, (vec3){0.1f, 0.0f, 0.95f})<0) cleanUpAndExit(EXIT_FAILURE, "Error creating point light");
+
     // Load textures
+    // Temporary way to load textures
     Texture brickwall;
     loadTexture(&brickwall, "brickwall/baseColor.bmp", 4, TEXTURE_REPEAT);
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, brickwall.id);
+    glUseProgram(shaderProgram);
+    glUniform1i(glGetUniformLocation(shaderProgram, "textureSampler"), 0);
+    glUseProgram(0);
+    glActiveTexture(GL_TEXTURE1);
 
-    // Vertices and indices
+    // Vertices for a cube
     float vertices[] = {
         -0.5f, -0.5f, -0.5f,  0.0f, 0.0f, 0.0f,  0.0f, -1.0f,
         0.5f,  0.5f, -0.5f,  1.0f, 1.0f, 0.0f,  0.0f, -1.0f,
@@ -731,37 +700,28 @@ int main(int argc, char *argv[])
         -0.5f,  0.5f,  0.5f,  0.0f, 0.0f, 0.0f,  1.0f,  0.0f
     };
     unsigned int indices[] = {
-        0, 1, 3, // first triangle
-        1, 2, 3  // second triangle
+        0, 1, 2, // first triangle
+        1, 0, 6  // second triangle
     };
 
-    // Binding buffers and copying data
-    glUseProgram(shaderProgram);
+    // Bind data to buffers
 
     // Cubes
     glBindVertexArray(VAO);
 
-    // Bindings buffers
+    // Give data to buffers
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
     
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 
-    // Copying data to shader
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
     glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
     glEnableVertexAttribArray(1);
     glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(5 * sizeof(float)));
     glEnableVertexAttribArray(2);
-
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, brickwall.id);
-    glUniform1i(glGetUniformLocation(shaderProgram, "textureSampler"), 0);
-    glActiveTexture(GL_TEXTURE1);
-    glBindTexture(GL_TEXTURE_CUBE_MAP, depthCubemap);
-    glUniform1i(glGetUniformLocation(shaderProgram, "depthCubemap"), 1);
 
 
     // Light
@@ -793,6 +753,7 @@ int main(int argc, char *argv[])
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
 
+
     // Unbinding buffers
     glBindVertexArray(0);
 
@@ -812,13 +773,14 @@ int main(int argc, char *argv[])
         // Timing
         now = SDL_GetTicks64();
         dt_ms = now - last_frame;
-        // Don't run the game faster than 333 FPS
+        // Don't run the game faster than 500 FPS
         // This limit will be removed when SDL3 is released
-        if (dt_ms < 3) {SDL_Delay(3-dt_ms); continue;}
-        dt = dt_ms / 1000.0;
+        if (dt_ms < 2) {SDL_Delay(2-dt_ms); continue;}
+        dt = dt_ms / (double)1000.0;
         last_frame = now;
-        if (PRINT_FPS) printf("FPS : %lf\n", 1.0 / dt);
+        if (PRINT_FPS) printf("FPS : %lf\n", 1.0 / dt);  // Find a better way to print FPS
 
+        // Handle events
         while (SDL_PollEvent(&e))
         {
             switch (e.type)
@@ -827,7 +789,7 @@ int main(int argc, char *argv[])
                 case SDL_QUIT:
                     quit = 1;
                     break;
-                // Handle key presses
+                // Handle key presses not related to camera
                 case SDL_KEYDOWN:
                     switch (e.key.keysym.scancode)
                     {

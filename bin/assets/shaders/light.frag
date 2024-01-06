@@ -7,10 +7,8 @@ uniform vec3 lightColor;
 
 void main()
 {
-    vec4 color = vec4(lightColor, 1.0);
-
     // Drawing crosshair
     float distance = length(gl_FragCoord.xy-windowSize/2);
-    if (distance <= pointerRadius) FragColor = vec4(1-color.rgb, color.a);
-    else FragColor = color;
+    if (distance <= pointerRadius) FragColor = vec4(1-lightColor, 1.0);
+    else FragColor = vec4(lightColor, 1.0);
 }

@@ -58,6 +58,13 @@ void translateCamera(Camera *camera, const Uint8* keyboardState, double dt)
     glm_vec3_scale(translation, camera->speed * dt, translation);
 
     // Up vector (gravity and jumping)
+    
+    // static vec3 upmov;
+    // glm_vec3_scale(camera->up, 5.0f*dt, upmov);
+    // if (keyboardState[SDL_SCANCODE_DOWN])
+    //     glm_vec3_sub(translation, upmov, translation);
+    // if (keyboardState[SDL_SCANCODE_UP])
+    //     glm_vec3_add(translation, upmov, translation);
 
     // Jumping
     if (keyboardState[camera->bindings.jump] && camera->onGround)

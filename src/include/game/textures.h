@@ -43,30 +43,4 @@ int loadTexture(Texture *tex, const char* path, int numMipmaps, bool repeat);
 void destroyTexture(Texture tex);
 
 
-/**
- * @brief Create a depth map
- * 
- * @param depthMap Pointer to the depth map
- * @param width Width of the depth map
- * @param height Height of the depth map
- * @return int 0 if success, -1 if error
-*/
-int createDepthCubemap(GLuint *depthMap, unsigned int resolution);
-
-/**
- * @brief Bind a depth map
- * 
- * @param depthMapFBO Depth map FBO
- * @param depthMap Depth map to bind
-*/
-void bindDepthCubemapToFBO(GLuint depthMapFBO, GLuint depthMap);
-
-/**
- * @brief Destroy a depth map
- * 
- * @param depthMap Depth map to destroy
-*/
-void destroyDepthCubemap(GLuint depthMap);
-
-
 #endif
