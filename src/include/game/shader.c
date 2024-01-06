@@ -66,3 +66,34 @@ void destroyShader(Shader* shader)
     glDeleteShader(shader->id);
     free(shader->source);
 }
+
+
+int initShaderProgram(GLuint *prog, uint8_t shaderCount, ...)
+{
+    static int success;
+    static char infolog[512];
+    va_list args;
+    va_start(args, shaderCount);
+
+    *prog = glCreateProgram();
+    Shader *shader = NULL;
+    for (uint8_t i = 0; i < shaderCount; i++) {
+        shader = va_arg(args, Shader*);
+        glAttachShader(*prog, shader->id);
+    }
+    va_end(args);
+
+    glLinkProgram(*prog);
+
+    // Check for errors during linking
+    glGetProgramiv(*prog, GL_LINK_STATUS, &success);
+    if (!success) {
+        glGetProgramInfoLog(*prog, 512, NULL, infolog);
+        fprintf(stderr, "Failed to link shader program: %s\n", infolog);
+        glDeleteProgram(*prog);
+        *prog = 0;
+        return -1;
+    }
+
+    return 0;
+}

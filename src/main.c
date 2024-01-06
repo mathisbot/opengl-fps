@@ -47,6 +47,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <ctype.h>
+#include <stdarg.h>
 #include <string.h>
 
 #include <SDL2/SDL.h>
@@ -74,6 +75,10 @@
 #define VSYNC 1
 #define FULLSCREEN 0
 #define MSAADEPTH 4
+
+#define SHADOWMAP_RES 1024
+#define SHADOWMAP_ZNEAR 1.0f
+#define SHADOWMAP_ZFAR 10.0f
 
 // View options
 #define FOV 70.0f
@@ -106,14 +111,22 @@ static GLuint VBO = 0;  // Vertices
 static GLuint uiVBO = 0;  // Vertices for UI
 static GLuint EBO = 0;  // Indices
 
+static GLuint depthMapFBO = 0;  // Depth map framebuffer
+static GLuint depthCubemap = 0;  // Depth map texture
+
 static Shader vertexShader = {0};  // Vertex shader
 static Shader vertexShaderUI = {0};  // Vertex shader for UI
+static Shader vertexShaderDepth = {0};  // Vertex shader for depth map
+static Shader geometryShaderDepth = {0};  // Geometry shader for depth map
 static Shader fragmentShader = {0};  // Fragment shader for scene objects
 static Shader fragmentShaderUI = {0};  // Fragment shader for UI
 static Shader fragmentShaderLight = {0};  // Fragment shader for light
+static Shader fragmentShaderDepth = {0};  // Fragment shader for depth map
+
 static unsigned int shaderProgram = 0;  // Shader program for scene objects
 static unsigned int shaderProgramUI = 0;  // Shader program for UI
 static unsigned int shaderProgramLight = 0;  // Shader program for light
+static unsigned int shaderProgramDepth = 0;  // Shader program for depth map
 
 
 /**
@@ -132,15 +145,26 @@ static void cleanUp()
     if (uiVBO) {glDeleteBuffers(1, &uiVBO); uiVBO = 0;}
     if (EBO) {glDeleteBuffers(1, &EBO); EBO = 0;}
     if (VAO) {glDeleteVertexArrays(1, &VAO); VAO = 0;}
+
+    if (depthMapFBO) {glDeleteFramebuffers(1, &depthMapFBO); depthMapFBO = 0;}
+    if (depthCubemap) {destroyDepthCubemap(depthCubemap); depthCubemap = 0;}
+
     if (lightVAO) {glDeleteVertexArrays(1, &lightVAO); lightVAO = 0;}
+    if (uiVAO) {glDeleteVertexArrays(1, &uiVAO); uiVAO = 0;}
+
     if (vertexShader.id) {destroyShader(&vertexShader); memset(&vertexShader, 0, sizeof(Shader));}
     if (vertexShaderUI.id) {destroyShader(&vertexShaderUI); memset(&vertexShaderUI, 0, sizeof(Shader));}
+    if (vertexShaderDepth.id) {destroyShader(&vertexShaderDepth); memset(&vertexShaderDepth, 0, sizeof(Shader));}
+    if (geometryShaderDepth.id) {destroyShader(&geometryShaderDepth); memset(&geometryShaderDepth, 0, sizeof(Shader));}
     if (fragmentShader.id) {destroyShader(&fragmentShader); memset(&fragmentShader, 0, sizeof(Shader));}
     if (fragmentShaderUI.id) {destroyShader(&fragmentShaderUI); memset(&fragmentShaderUI, 0, sizeof(Shader));}
     if (fragmentShaderLight.id) {destroyShader(&fragmentShaderLight); memset(&fragmentShaderLight, 0, sizeof(Shader));}
+    if (fragmentShaderDepth.id) {destroyShader(&fragmentShaderDepth); memset(&fragmentShaderDepth, 0, sizeof(Shader));}
+
     if (shaderProgram) {glDeleteProgram(shaderProgram); shaderProgram = 0;}
     if (shaderProgramUI) {glDeleteProgram(shaderProgramUI); shaderProgramUI = 0;}
     if (shaderProgramLight) {glDeleteProgram(shaderProgramLight); shaderProgramLight = 0;}
+    if (shaderProgramDepth) {glDeleteProgram(shaderProgramDepth); shaderProgramDepth = 0;}
 }
 
 /**
@@ -156,6 +180,7 @@ static void cleanUpAndExit(bool exitCode, const char* log, ...)
     va_start(args, log);
     if (log)
         vfprintf(stderr, log, args);
+    va_end(args);
     cleanUp();
     exit(exitCode);
 }
@@ -248,8 +273,111 @@ void updateGame()
 */
 static void render(GLuint width, GLuint height)
 {
-    // Clear buffers
+    // Light colors
+    static vec3 lightColor[] = {
+        {1.0f, 1.0f, 1.0f},
+        {1.0f, 0.0f, 0.0f},
+        {0.0f, 1.0f, 0.0f},
+        {0.0f, 0.0f, 1.0f}
+    };
+
+    // Lights positions
+    static vec3 lightPos[] = {
+        {0.0f, 1.0f, 2.0f},
+        {2.3f, -3.3f, -4.0f},
+        {-4.0f, 2.0f, -12.0f},
+        {0.0f, 0.0f, -3.0f}
+    };
+
+    // Cubes positions
+    vec3 cubePositions[13];
+    float positions[13][3] = {
+        { 0.0f,  1.0f,  0.0f},
+        { 2.0f,  5.0f, -15.0f},
+        {-1.5f, -2.2f, -2.5f},
+        {-3.8f, -2.0f, -12.3f},
+        { 2.4f, -0.4f, -3.5f},
+        {-1.7f,  3.0f, -7.5f},
+        { 1.3f, -2.0f, -2.5f},
+        { 1.5f,  2.0f, -2.5f},
+        { 1.5f,  0.2f, -1.5f},
+        {-1.3f,  1.0f, -1.5f},
+        { 0.0f,  1.0f,  5.0f},
+        {-0.5f,  2.0f,  7.5f},
+        { 1.0f, -0.5f,  7.5f},
+    };
+    for (int i = 0; i < 13; ++i) {
+        for (int j = 0; j < 3; ++j) {
+            cubePositions[i][j] = positions[i][j];
+        }
+    }
+
+
+    /* --- RENDER ON DEPTH MAP --- */
+
+    glUseProgram(shaderProgramDepth);
+    glBindVertexArray(VAO);
+
+    // Shaders and matrices
+    mat4 lightProjection;
+    glm_perspective(glm_rad(90.0f), 1.0f, SHADOWMAP_ZNEAR, SHADOWMAP_ZFAR, lightProjection);
+
+    mat4 lightView[6];  // 6 faces of the cubemap
+    vec3 lightTargets[6];
+    glm_vec3_add(lightPos[0], (vec3){1.0f, 0.0f, 0.0f}, lightTargets[0]);
+    glm_lookat(lightPos[0], lightTargets[0], (vec3){0.0f, -1.0f, 0.0f}, lightView[0]);
+    glm_vec3_add(lightPos[0], (vec3){-1.0f, 0.0f, 0.0f}, lightTargets[1]);
+    glm_lookat(lightPos[0], lightTargets[1], (vec3){0.0f, -1.0f, 0.0f}, lightView[1]);
+    glm_vec3_add(lightPos[0], (vec3){0.0f, 1.0f, 0.0f}, lightTargets[2]);
+    glm_lookat(lightPos[0], lightTargets[2], (vec3){0.0f, 0.0f, 1.0f}, lightView[2]);
+    glm_vec3_add(lightPos[0], (vec3){0.0f, -1.0f, 0.0f}, lightTargets[3]);
+    glm_lookat(lightPos[0], lightTargets[3], (vec3){0.0f, 0.0f, -1.0f}, lightView[3]);
+    glm_vec3_add(lightPos[0], (vec3){0.0f, 0.0f, 1.0f}, lightTargets[4]);
+    glm_lookat(lightPos[0], lightTargets[4], (vec3){0.0f, -1.0f, 0.0f}, lightView[4]);
+    glm_vec3_add(lightPos[0], (vec3){0.0f, 0.0f, -1.0f}, lightTargets[5]);
+    glm_lookat(lightPos[0], lightTargets[5], (vec3){0.0f, -1.0f, 0.0f}, lightView[5]);
+
+    mat4 shadowMatrices[6];
+    glm_mat4_mul(lightProjection, lightView[0], shadowMatrices[0]);
+    glm_mat4_mul(lightProjection, lightView[1], shadowMatrices[1]);
+    glm_mat4_mul(lightProjection, lightView[2], shadowMatrices[2]);
+    glm_mat4_mul(lightProjection, lightView[3], shadowMatrices[3]);
+    glm_mat4_mul(lightProjection, lightView[4], shadowMatrices[4]);
+    glm_mat4_mul(lightProjection, lightView[5], shadowMatrices[5]);
+
+    // Send to shader
+    glUniformMatrix4fv(glGetUniformLocation(shaderProgramDepth, "shadowMatrices"), 6, GL_FALSE, (float*)(shadowMatrices));
+    glUniform1f(glGetUniformLocation(shaderProgramDepth, "farPlane"), SHADOWMAP_ZFAR);
+    glUniform3f(glGetUniformLocation(shaderProgramDepth, "lightPos"), lightPos[0][0], lightPos[0][1], lightPos[0][2]);
+
+    // Rendering
+    glViewport(0, 0, SHADOWMAP_RES, SHADOWMAP_RES);
+    glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
+    glClear(GL_DEPTH_BUFFER_BIT);
+    glCullFace(GL_FRONT);  // To avoid Peter Panning
+
+    for (uint8_t i=0; i<13; i++)
+    {
+        // Model matrix
+        static mat4 model = GLM_MAT4_IDENTITY_INIT;
+        glm_mat4_identity(model);
+        glm_translate(model, cubePositions[i]);
+        glm_rotate(model, glm_rad(20.0f*i), (vec3){0.5f, 1.0f, 0.0f});
+
+        // Send to shader
+        glUniformMatrix4fv(glGetUniformLocation(shaderProgramDepth, "model"), 1, GL_FALSE, (float*)model);
+
+        glDrawArrays(GL_TRIANGLES, 0, 36);
+    }
+    glBindVertexArray(0);
+
+
+    /* --- RENDER ON SCREEN --- */
+
+    glViewport(0, 0, width, height);
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glCullFace(GL_BACK);
 
     // Order : UI, Light, Objects
 
@@ -262,27 +390,11 @@ static void render(GLuint width, GLuint height)
     glUniform1f(glGetUniformLocation(shaderProgramUI, "pointerRadius"), 2.0f);
 
     glBindVertexArray(uiVAO);
-    // Draw UI
+
     glDrawArrays(GL_TRIANGLES, 0, 6);
-    glBindVertexArray(0);
 
 
     /* --- Light sources --- */
-
-    static vec3 lightColor[] = {
-        {1.0f, 1.0f, 1.0f},
-        {1.0f, 0.0f, 0.0f},
-        {0.0f, 1.0f, 0.0f},
-        {0.0f, 0.0f, 1.0f}
-    };
-
-    // Lights positions
-    static vec3 lightPos[] = {
-        {1.2f, 1.0f, 2.0f},
-        {2.3f, -3.3f, -4.0f},
-        {-4.0f, 2.0f, -12.0f},
-        {0.0f, 0.0f, -3.0f}
-    };
 
     // Use light shader
     glUseProgram(shaderProgramLight);
@@ -328,28 +440,10 @@ static void render(GLuint width, GLuint height)
 
     /* --- Objects --- */
 
-    // Cubes positions
-    vec3 cubePositions[10];
-    float positions[10][3] = {
-        { 0.0f,  1.0f,  0.0f},
-        { 2.0f,  5.0f, -15.0f},
-        {-1.5f, -2.2f, -2.5f},
-        {-3.8f, -2.0f, -12.3f},
-        { 2.4f, -0.4f, -3.5f},
-        {-1.7f,  3.0f, -7.5f},
-        { 1.3f, -2.0f, -2.5f},
-        { 1.5f,  2.0f, -2.5f},
-        { 1.5f,  0.2f, -1.5f},
-        {-1.3f,  1.0f, -1.5f}
-    };
-
-    for (int i = 0; i < 10; ++i) {
-        for (int j = 0; j < 3; ++j) {
-            cubePositions[i][j] = positions[i][j];
-        }
-    }
-
     glUseProgram(shaderProgram);
+
+    glBindTexture(GL_TEXTURE_CUBE_MAP, depthCubemap);
+    glUniform1i(glGetUniformLocation(shaderProgram, "depthCubemap"), 1);
 
     // View matrix
     static mat4 view = GLM_MAT4_IDENTITY_INIT;
@@ -366,7 +460,7 @@ static void render(GLuint width, GLuint height)
 
     // Light
     glUniform3f(glGetUniformLocation(shaderProgram, "viewPos"), camera.pos[0], camera.pos[1], camera.pos[2]);
-    
+    glUniform1f(glGetUniformLocation(shaderProgram, "farPlane"), SHADOWMAP_ZFAR);
     char locate[32];
     for (uint8_t i=0; i<4; i++)
     {
@@ -398,8 +492,10 @@ static void render(GLuint width, GLuint height)
 
     // Rendering
     glBindVertexArray(VAO);
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, depthCubemap);
     // glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
-    for (uint8_t i=0; i<10; i++)
+    for (uint8_t i=0; i<13; i++)
     {
         // Model matrix
         static mat4 model = GLM_MAT4_IDENTITY_INIT;
@@ -466,6 +562,7 @@ int main(int argc, char *argv[])
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 6);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_FORWARD_COMPATIBLE_FLAG);  // Performance improvement
     if (DEBUG) SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_DEBUG_FLAG);
     // MSAA
     SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 1);
@@ -524,55 +621,44 @@ int main(int argc, char *argv[])
     glGenBuffers(1, &VBO);
     glGenBuffers(1, &uiVBO);
     glGenBuffers(1, &EBO);
+
+    glGenFramebuffers(1, &depthMapFBO);
+    if (createDepthCubemap(&depthCubemap, SHADOWMAP_RES)<0) cleanUpAndExit(EXIT_FAILURE, "Error creating texture depth map");
+    bindDepthCubemapToFBO(depthMapFBO, depthCubemap);
+    
     glGenVertexArrays(1, &VAO);
     glGenVertexArrays(1, &lightVAO);
     glGenVertexArrays(1, &uiVAO);
+
     if (loadShader(&vertexShader, "vertex.vert", GL_VERTEX_SHADER) < 0) cleanUpAndExit(EXIT_FAILURE, "Error creating vertex shader");
     if (loadShader(&vertexShaderUI, "ui.vert", GL_VERTEX_SHADER) < 0) cleanUpAndExit(EXIT_FAILURE, "Error creating vertex shader for UI");
+    if (loadShader(&vertexShaderDepth, "depth.vert", GL_VERTEX_SHADER) < 0) cleanUpAndExit(EXIT_FAILURE, "Error creating vertex shader for depth map");
+    if (loadShader(&geometryShaderDepth, "depth.geom", GL_GEOMETRY_SHADER) < 0) cleanUpAndExit(EXIT_FAILURE, "Error creating geometry shader for depth map");
     if (loadShader(&fragmentShader, "fragment.frag", GL_FRAGMENT_SHADER) < 0) cleanUpAndExit(EXIT_FAILURE, "Error creating fragment shader");
     if (loadShader(&fragmentShaderUI, "ui.frag", GL_FRAGMENT_SHADER) < 0) cleanUpAndExit(EXIT_FAILURE, "Error creating fragment shader for UI");
     if (loadShader(&fragmentShaderLight, "light.frag", GL_FRAGMENT_SHADER) < 0) cleanUpAndExit(EXIT_FAILURE, "Error creating fragment shader for light");
+    if (loadShader(&fragmentShaderDepth, "depth.frag", GL_FRAGMENT_SHADER) < 0) cleanUpAndExit(EXIT_FAILURE, "Error creating fragment shader for depth map");
 
-    // Program Shader creation
-    int success;
-    char infoLog[512];
-    shaderProgram = glCreateProgram();
-    glAttachShader(shaderProgram, vertexShader.id);
-    glAttachShader(shaderProgram, fragmentShader.id);
-    glLinkProgram(shaderProgram);
-    // Check for shader linking errors
-    glGetProgramiv(shaderProgram, GL_LINK_STATUS, &success);
-    if(!success) { glGetProgramInfoLog(shaderProgram, 512, NULL, infoLog); cleanUpAndExit(EXIT_FAILURE, "Error linking shaders : %s", infoLog);}
-    
-    // Light Program Shader creation
-    shaderProgramLight = glCreateProgram();
-    glAttachShader(shaderProgramLight, vertexShader.id);
-    glAttachShader(shaderProgramLight, fragmentShaderLight.id);
-    glLinkProgram(shaderProgramLight);
-    // Check for shader linking errors
-    glGetProgramiv(shaderProgramLight, GL_LINK_STATUS, &success);
-    if(!success) { glGetProgramInfoLog(shaderProgramLight, 512, NULL, infoLog); cleanUpAndExit(EXIT_FAILURE, "Error linking shaders : %s", infoLog);}
-
-    // UI Program Shader creation
-    shaderProgramUI = glCreateProgram();
-    glAttachShader(shaderProgramUI, vertexShaderUI.id);
-    glAttachShader(shaderProgramUI, fragmentShaderUI.id);
-    glLinkProgram(shaderProgramUI);
-    // Check for shader linking errors
-    glGetProgramiv(shaderProgramUI, GL_LINK_STATUS, &success);
-    if(!success) { glGetProgramInfoLog(shaderProgramUI, 512, NULL, infoLog); cleanUpAndExit(EXIT_FAILURE, "Error linking shaders : %s", infoLog);}
+    if (initShaderProgram(&shaderProgram, 2, vertexShader, fragmentShader) < 0) cleanUpAndExit(EXIT_FAILURE, "Error creating shader program");
+    if (initShaderProgram(&shaderProgramLight, 2, vertexShader, fragmentShaderLight) < 0) cleanUpAndExit(EXIT_FAILURE, "Error creating shader program for light");
+    if (initShaderProgram(&shaderProgramUI, 2, vertexShaderUI, fragmentShaderUI) < 0) cleanUpAndExit(EXIT_FAILURE, "Error creating shader program for UI");
+    if (initShaderProgram(&shaderProgramDepth, 3, vertexShaderDepth, geometryShaderDepth, fragmentShaderDepth) < 0) cleanUpAndExit(EXIT_FAILURE, "Error creating shader program for depth map");
     
     // Delete now useless shaders
     destroyShader(&vertexShader);
     memset(&vertexShader, 0, sizeof(Shader));
     destroyShader(&vertexShaderUI);
     memset(&vertexShaderUI, 0, sizeof(Shader));
+    destroyShader(&vertexShaderDepth);
+    memset(&vertexShaderDepth, 0, sizeof(Shader));
     destroyShader(&fragmentShader);
     memset(&fragmentShader, 0, sizeof(Shader));
     destroyShader(&fragmentShaderUI);
     memset(&fragmentShaderUI, 0, sizeof(Shader));
     destroyShader(&fragmentShaderLight);
     memset(&fragmentShaderLight, 0, sizeof(Shader));
+    destroyShader(&fragmentShaderDepth);
+    memset(&fragmentShaderDepth, 0, sizeof(Shader));
 
 
     // Load Mixer
@@ -598,7 +684,7 @@ int main(int argc, char *argv[])
 
     // Load textures
     Texture brickwall;
-    loadTexture(&brickwall, "brickwall.bmp", 4, TEXTURE_REPEAT);
+    loadTexture(&brickwall, "brickwall/baseColor.bmp", 4, TEXTURE_REPEAT);
 
     // Vertices and indices
     float vertices[] = {
@@ -673,6 +759,9 @@ int main(int argc, char *argv[])
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, brickwall.id);
     glUniform1i(glGetUniformLocation(shaderProgram, "textureSampler"), 0);
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, depthCubemap);
+    glUniform1i(glGetUniformLocation(shaderProgram, "depthCubemap"), 1);
 
 
     // Light

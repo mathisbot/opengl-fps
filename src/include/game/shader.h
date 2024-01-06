@@ -4,6 +4,7 @@
 
 #include <string.h>
 #include <stdio.h>
+#include <stdarg.h>
 #include <stdlib.h>
 
 #include <GL/glew.h>
@@ -35,5 +36,15 @@ int loadShader(Shader *shader, const char *sourcePath, GLenum type);
  * @param shader Pointer to the shader object
 */
 void destroyShader(Shader* shader);
+
+/**
+ * @brief Create a shader program
+ * 
+ * @param prog Pointer to the program object
+ * @param shaderCount Number of shaders
+ * @param ... Pointers to shaders
+ * @return int 0 if success, -1 if error
+*/
+int initShaderProgram(GLuint *prog, uint8_t shaderCount, ...);
 
 #endif // SHADER_H
