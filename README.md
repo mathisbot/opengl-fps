@@ -2,7 +2,7 @@
 
 <br />
 <div align="center">
-    <img src="bin/assets/images/icon.webp" alt="Logo" width="128" height="128">
+    <img src="build/assets/images/icon.webp" alt="Logo" width="128" height="128">
 
   <h3 align="center">Retro FPS</h3>
 
@@ -181,7 +181,7 @@ Inside the zip file are the 32- and 64-bit SDL library files. Choose the one tha
   ```
     gcc -Wall -I src/include -L src/lib -o build/retro_fps src/main.c $(find src/include -name "*.c") -lmingw32 -lSDL2main -lSDL2 -lSDL2_mixer -lopengl32 -lglew32 -lassimp
   ```
-  A compiled file will then be generated as `bin/retro_fps` or `bin/retro_fps.exe`, depending on your OS.
+  A compiled file will then be generated as `build/retro_fps` or `build/retro_fps.exe`, depending on your OS.
 
 
 <p align="right">(<a href="#readme-top">Up</a>)</p>
