@@ -28,6 +28,7 @@
     -> https://learnopengl.com/Advanced-Lighting/Bloom
 - Find other ways to load sounds (WAV is too big)
     -> OGG ?
+- SDL_image for other formats than BMP ?
 */
 
 
@@ -51,8 +52,8 @@
 
 #include "include/game/audio.h"
 #include "include/game/camera.h"
-#include "include/game/collision.h"
 #include "include/game/light.h"
+#include "include/game/model.h"
 #include "include/game/shader.h"
 #include "include/game/textures.h"
 
@@ -60,13 +61,13 @@
 /* --- MACROS --- */
 
 // Debug mode
-#define DEBUG 1
+#define DEBUG 0
 #define PRINT_FPS 0
 #define WIREFRAME 0
 
 // Graphic options
 #define VSYNC 1
-#define FULLSCREEN 0
+#define FULLSCREEN 1
 #define MSAADEPTH 4
 
 // View options
@@ -81,6 +82,7 @@
 // Game
 Camera camera;
 PointLight pointLights[4];  // 4 point lights
+Model guitar = {0};  // Temporary guitar model
 // Level level;
 // ...
 
@@ -157,6 +159,7 @@ static void cleanUp()
 
     // Freeing other components
     for (uint8_t i=0; i<sizeof(pointLights)/sizeof(PointLight); i++) destroyPointLight(&pointLights[i]);
+    if (guitar.meshes) freeModel(&guitar);
 }
 
 /**
@@ -644,10 +647,13 @@ int main(int argc, char *argv[])
     if (initPointLight(&pointLights[2], (vec3){-4.0f, 2.0f, -12.0f}, (vec3){0.0f, 0.85f, 0.15f})<0) cleanUpAndExit(EXIT_FAILURE, "Error creating point light");
     if (initPointLight(&pointLights[3], (vec3){3.3f, 4.0f, -1.5f}, (vec3){0.1f, 0.0f, 0.95f})<0) cleanUpAndExit(EXIT_FAILURE, "Error creating point light");
 
+    // Load models
+    if (loadModel(&guitar, "guitar/backpack.obj") < 0) cleanUpAndExit(EXIT_FAILURE, "Error loading guitar model");
+
     // Load textures
     // Temporary way to load textures
     Texture brickwall;
-    loadTexture(&brickwall, "brickwall/baseColor.bmp", 4, TEXTURE_REPEAT, TEXTURE_BASECOLOR);
+    loadTexture(&brickwall, "brickwall/diffuse.bmp", 4, TEXTURE_REPEAT, TEXTURE_DIFFUSE);
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, brickwall.id);
     glUseProgram(shaderProgram);
