@@ -1,7 +1,7 @@
 #include "textures.h"
 
 
-int loadTexture(Texture* tex, const char* path, int numMipmaps, bool repeat)
+int loadTexture(Texture* tex, const char* path, int numMipmaps, bool repeat, uint8_t type)
 {
     // Loading SDL surface
     char new_path[512];
@@ -50,6 +50,7 @@ int loadTexture(Texture* tex, const char* path, int numMipmaps, bool repeat)
     tex->id = textureID;
     tex->width = surface->w;
     tex->height = surface->h;
+    tex->type = type;
 
     // Freeing SDL surface
     SDL_FreeSurface(surface);

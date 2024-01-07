@@ -123,7 +123,7 @@ on *glew.curseforge.net*
 #### Try the game
 If you just want to try out the game, simply download the `release.zip` file.
 
-Please note that the game files given in this zip file are only compatible with 64-bit Windows systems. In the future, I plan to compile the project for other widespread systems : 32-bit and Linux, maybe macOS.
+Please note that the game files given in this zip file are only compatible with 64-bit Windows systems. Pre-compiled versions of the game may be available in the future for Linux, macOS and Windows 32-bit, but nothing is guaranteed.
 
 For the moment, no interface or menu has been implemented, so that there's no way to change  key bindings from within the game.
 
@@ -254,8 +254,8 @@ This roadmap helps organizing development and may be subject to change.
 - [ ] Health packs and ammo
 - [ ] Enemies
 - [ ] MVP
-- [ ] Level editor
 - [ ] Better lights
+- [ ] Level editor
 - [ ] New functionalities
 
 <p align="right">(<a href="#readme-top">Up</a>)</p>

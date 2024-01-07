@@ -647,7 +647,7 @@ int main(int argc, char *argv[])
     // Load textures
     // Temporary way to load textures
     Texture brickwall;
-    loadTexture(&brickwall, "brickwall/baseColor.bmp", 4, TEXTURE_REPEAT);
+    loadTexture(&brickwall, "brickwall/baseColor.bmp", 4, TEXTURE_REPEAT, TEXTURE_BASECOLOR);
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, brickwall.id);
     glUseProgram(shaderProgram);

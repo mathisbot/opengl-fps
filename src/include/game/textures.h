@@ -16,11 +16,17 @@
 #define TEXTURE_REPEAT 1
 #define TEXTURE_CLAMP 0
 
+#define TEXTURE_BASECOLOR 0
+#define TEXTURE_NORMAL 1
+#define TEXTURE_DIFFUSE 2
+#define TEXTURE_SPECULAR 3
+#define TEXTURE_HEIGHT 4
 
 typedef struct {
     GLuint id;
     int width;
     int height;
+    uint8_t type;
 } Texture;
 
 
@@ -31,9 +37,10 @@ typedef struct {
  * @param path Path to the texture, must be relative to the TEXTUREPATH
  * @param numMipmaps Number of mipmaps to generate
  * @param repeat Repeat the texture
+ * @param type Type of the texture
  * @return int 0 if success, -1 if error
 */
-int loadTexture(Texture *tex, const char* path, int numMipmaps, bool repeat);
+int loadTexture(Texture *tex, const char* path, int numMipmaps, bool repeat, uint8_t type);
 
 /**
  * @brief Destroy a texture
