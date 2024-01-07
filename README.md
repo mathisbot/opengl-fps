@@ -55,7 +55,7 @@ The aim of this project is to create a simple FPS game, using no game engine. Th
 In this case, I chose the C language along with only one very low-level library: SDL2 (in order to use OpenGL).
 This means that rendering methods are close to nil, and that I had to start from scratch (although SDL and OpenGL can take some of the work out of the equation).
 
-Although the context of the project resembles that of the 1990s, the game's content should resemble a modern FPS with simplified graphics. The game should therefore include familiar mechanics.
+Although the context of the project resembles that of the 1990s, the game's content should resemble a modern FPS. The game should therefore include familiar mechanics (this won't be 1993's Doom).
 
 <p align="right">(<a href="#readme-top">Up</a>)</p>
 
@@ -95,6 +95,7 @@ Overall, I think SDL2 is best suited to video game design.
 <a name="built-with"></a>
 
 * [C][c-url]
+* [Assimp][assimp-url] (5.3.1)
 * [cglm][cglm-url] (0.9.2)
 * [GLEW][glew-url] (2.1.0)
 * [SDL2][sdl-url] (2.28.5)
@@ -102,7 +103,9 @@ Overall, I think SDL2 is best suited to video game design.
 
 #### Quick note
 
-cglm stands for OpenGL Mathematics (glm) for C. Its is a highly optimized 2D/3D math library. cglm provides lot of utils to help math operations to be fast and quick to write. The functions implemented take advantage of SSE2 and vectorization.
+Assimp stands for Asset Importer Library. It's a library that makes it extremely easy to import 3D files, such as models or animations. I chose to use it because it allows you to import a wide variety of formats, but ESPECIALLY because the output format is standardized, and import is fast and optimized.
+
+cglm stands for OpenGL Mathematics (glm) for C. It is a highly optimized 2D/3D math library. cglm provides lot of utils to help math operations to be fast and quick to write. The functions implemented take advantage of SSE2 and vectorization.
 
 SDL_mixer is not part of the default SDL library. However, it is an official SDL extension promoted on the SDL website.
 It is also practically indispensable when developing a game, as it allows several sounds to be played at the same time, which is impossible with SDL alone.
@@ -139,12 +142,13 @@ Otherwise, follow these steps:
 <a name="prerequisites"></a>
 
 * C : Any compiler will do. I personally used GCC 13.2.0 through [WinLibs][winlibs-url].
+* Assimp : Assimp doesn't provide binaries, this means you need to download their source code and build them yourself. See their [website](https://assimp-docs.readthedocs.io/en/latest/about/quickstart.html#building-the-library-from-scratch) for more information.
+* cglm : Download latest release on GitHub. cglm doesn't provide binaries either, but I'm only using the header files, which contain the `inline` functions
+* GLEW : Download GLEW binaries on their website.
 * SDL2 : Download the development (`devel`) version of SDL2. I chose the `mingw` one.
 Inside the zip file are the 32- and 64-bit SDL library files. Choose the one that suits your system.
 * SDL_mixer : As with SDL, download the development (`devel`) version of SDL_mixer. I chose the `mingw` one.
 Inside the zip file are the 32- and 64-bit SDL library files. Choose the one that suits your system.
-* GLEW : Download GLEW binaries on their website.
-* cglm : Download latest release on GitHub (it is a source code).
 
 ### Installation
 <a name="installation"></a>
@@ -162,11 +166,9 @@ Inside the zip file are the 32- and 64-bit SDL library files. Choose the one tha
   - `src/lib/*.a`
   - `bin/SDL2.dll`
 
-    Follow the same procedure for SDL_mixer and GLEW.
+    Follow the same procedure for SDL_mixer, GLEW and Assimp.
 
-    As for cglm, cglm provides different ways of including it. The easiest one, and the one I chose, is to use inline functions. This means that all you have to do is add `cglm/*.h` to `include/cglm` and just include the header.
-
-    I didn't include these files in the repository because I didn't write them myself. Besides, the repository would be unnecessarily heavier.
+    As for cglm, all you have to do is add `cglm/*.h` to `include/cglm` and just include the header `<cglm/cglm.h>` (and nothing else !).
 3. WINDOWS - Compile the project with :
   ```sh
     gcc -Wall -I src/include -L src/lib -o bin/retro_fps src/main.c $(Get-ChildItem -Recurse -Path src/include -Filter \"*.c\").FullName -lmingw32 -lSDL2main -lSDL2 -lSDL2_mixer -lopengl32 -lglew32
@@ -228,9 +230,8 @@ This section organizes the development process, defining a minimal viable produc
 
 Achieving the Minimum Viable Product would already be a success. Further development is not guaranteed and may depend on factors such as development time, will or other external factors (free time, ...).
 
-MVP should be a classic, straightforward FPS with a retro feel:
+MVP should be a classic, straightforward FPS in the spirit of Doom :
 - First-person camera
-- Retro 3D rendering
 - Guns
 - Enemies
 - Sound effects
@@ -270,6 +271,7 @@ Some bugs appear during development, but no direct solution is found. Here is a 
 
 
 [c-url]: https://fr.wikipedia.org/wiki/C_(langage)
+[assimp-url]: https://assimp.org/
 [cglm-url]: https://github.com/recp/cglm
 [glew-url]: https://glew.sourceforge.net/
 [sdl-url]: https://www.libsdl.org/
