@@ -40,7 +40,7 @@
       <ul>
         <li><a href="#mvp">MVP</a></li>
         <li><a href="#roadmap">Roadmap</a></li>
-        <li><a href="#known-bugs">Known bugs</a></li>
+        <li><a href="#known-issues">Known issues</a></li>
       </ul>
     </li>
   </ol>
@@ -261,10 +261,11 @@ This roadmap helps organizing development and may be subject to change.
 
 <p align="right">(<a href="#readme-top">Up</a>)</p>
 
-### Known Bugs
-<a name="known-bugs"></a>
+### Known Issues
+<a name="known-issues"></a>
 
-Some bugs appear during development, but no direct solution is found. Here is a list of known bugs for which no solution has yet been found. By the way, if you manage to find a bug during a game, don't hesitate to share it in Issues.
+Various bugs and issues may appear during development, but no direct solution is found. Here is a list of known issues for which no solution has yet been found. By the way, if you manage to find a bug during a game, don't hesitate to share it in Issues.
+- The game may take a few seconds to launch, due to a line in the code which is still being used as a test. Everything will be optimized very soon, and the slowdown will no longer be noticeable.
 
 <p align="right">(<a href="#readme-top">Up</a>)</p>
 
