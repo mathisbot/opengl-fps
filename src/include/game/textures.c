@@ -22,8 +22,10 @@ int loadTextureFullPath(Texture *tex, const char* path, int numMipmaps, bool rep
     GLuint textureID;
     glGenTextures(1, &textureID);
 
-    // Binding texture
+    // Binding texture properly
+    static int lastBoundTexture = -1;
     glActiveTexture(GL_TEXTURE0);
+    glGetIntegerv(GL_TEXTURE_BINDING_2D, &lastBoundTexture);
     glBindTexture(GL_TEXTURE_2D, textureID);
 
     // Setting texture parameters
@@ -50,6 +52,9 @@ int loadTextureFullPath(Texture *tex, const char* path, int numMipmaps, bool rep
     if (type==TEXTURE_NORMAL) glTexSubImage2D( GL_TEXTURE_2D, 0, 0, 0, surface->w, surface->h, GL_BGR, GL_UNSIGNED_BYTE, surface->pixels);
     if (type==TEXTURE_HEIGHT) glTexSubImage2D( GL_TEXTURE_2D, 0, 0, 0, surface->w, surface->h, GL_RED, GL_UNSIGNED_BYTE, surface->pixels);
     glGenerateMipmap(GL_TEXTURE_2D);
+
+    // Unbinding texture
+    glBindTexture(GL_TEXTURE_2D, lastBoundTexture);
 
     // Setting texture properties
     tex->id = textureID;

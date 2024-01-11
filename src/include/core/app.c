@@ -91,7 +91,6 @@ static void appCleanUp(Application* app)
     // Freeing other components
     for (uint8_t i=0; i<sizeof(app->pointLights)/sizeof(PointLight); i++) destroyPointLight(&app->pointLights[i]);
     if (app->scene.loaded) destroyScene(&app->scene);
-    if (app->guitar.meshes) freeModel(&app->guitar);
 
     LOG_INFO("Application cleaned up\n");
 }
@@ -145,9 +144,9 @@ static void appInitScene(Application *app)
     if (initPointLight(&app->pointLights[3], (vec3){3.3f, 4.0f, -1.5f}, (vec3){0.1f, 0.0f, 0.95f})<0) appCleanUpAndExit(app, EXIT_FAILURE, "Error creating point light");
 
     // Load models
-    // app->scene.modelCount = 1;
-    // app->scene.models = malloc(sizeof(Model) * app->scene.modelCount);
-    // if (loadModel(&app->scene.models[0], "guitar/backpack.obj") < 0) appCleanUpAndExit(app, EXIT_FAILURE, "Error loading guitar model");
+    app->scene.modelCount = 1;
+    app->scene.models = malloc(sizeof(Model) * app->scene.modelCount);
+    if (loadModel(&app->scene.models[0], "guitar/backpack.obj") < 0) appCleanUpAndExit(app, EXIT_FAILURE, "Error loading guitar model");
 
 
     // Vertices for a cube
@@ -274,7 +273,7 @@ static void appInit(Application* app)
     SDL_DisplayMode displayMode;
     if (SDL_GetCurrentDisplayMode(0, &displayMode))
         appCleanUpAndExit(app, EXIT_FAILURE, "Error getting display mode : %s", SDL_GetError());
-    app->windowSize = displayMode.w;
+    app->windowWidth = displayMode.w;
     app->windowHeight = displayMode.h;
     #else
     app->windowWidth = 1280; app->windowHeight = 720;
@@ -297,7 +296,7 @@ static void appInit(Application* app)
 
 
     // Window creation
-    app->window = SDL_CreateWindow("Retro FPS", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, app->windowWidth, app->windowHeight, SDL_WINDOW_OPENGL);
+    app->window = SDL_CreateWindow("FPS", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, app->windowWidth, app->windowHeight, SDL_WINDOW_OPENGL);
     if (!app->window) appCleanUpAndExit(app, EXIT_FAILURE, "Window could not be created! SDL_Error: %s\n", SDL_GetError());
     SDL_ShowCursor(SDL_DISABLE);
     // Handling fullscreen

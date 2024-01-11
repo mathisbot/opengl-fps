@@ -78,7 +78,6 @@ typedef struct {
     Camera camera;
     Scene scene;
     PointLight pointLights[4];  // 4 point lights
-    Model guitar;  // Temporary guitar model
 
 } Application;
 

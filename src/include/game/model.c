@@ -85,8 +85,8 @@ static inline void loadMeshTexture(Model* model, unsigned int count, struct aiMa
 static int processMesh(Model* model, Mesh* mesh, const struct aiMesh *aiMesh, const struct aiScene *scene)
 {
     // Process vertices
-    mesh->vertices = (Vertex*)malloc(aiMesh->mNumVertices * sizeof(Vertex));
     mesh->vertexCount = aiMesh->mNumVertices;
+    mesh->vertices = (Vertex*)malloc(mesh->vertexCount * sizeof(Vertex));
     for (unsigned int i=0; i<aiMesh->mNumVertices; i++)
     {
         // Position
@@ -225,7 +225,8 @@ static void processNode(Model *model, const struct aiNode *node, const struct ai
 
 static int loadFileIntoModel(Model *model, char *path)
 {
-    const struct aiScene *scene = aiImportFile(path, aiProcess_FlipUVs | aiProcessPreset_TargetRealtime_MaxQuality);
+    // const struct aiScene *scene = aiImportFile(path, aiProcess_FlipUVs | aiProcessPreset_TargetRealtime_MaxQuality);
+    const struct aiScene *scene = aiImportFile(path, aiProcess_Triangulate | aiProcess_FlipUVs);
 
     if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode)
     {
@@ -258,7 +259,7 @@ int loadModelFullPath(Model *model, char *path)
     getDirectory(path, model->dir);
     loadFileIntoModel(model, path);
 
-    LOG_DEBUG("Loaded model\n");
+    LOG_DEBUG("Loaded model %s\n", path);
 
     return 0;
 }
