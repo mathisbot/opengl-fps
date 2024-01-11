@@ -6,7 +6,7 @@ in vec3 FragPos;
 in vec3 Normal;
 
 uniform vec3 viewPos;
-uniform float farPlane;
+uniform float FarPlaneShadow;
 
 uniform uvec2 windowSize;
 uniform float pointerRadius;
@@ -51,7 +51,7 @@ float computeShadow(vec3 lightPos, samplerCube depthCubemap, vec3 lightDir, vec3
     float shadow = 0.0;
     // float bias = max(0.05 * (1.0 - dot(normal, lightDir)), 0.005);
     const float bias = 0.005;
-    float currentDepth = (length(fragToLight)-bias) / farPlane;
+    float currentDepth = (length(fragToLight)-bias) / FarPlaneShadow;
     for (int i=0; i<20; i++)
     {
         float closestDepth = texture(depthCubemap, fragToLight + sampleOffsetDirections[i]*diskRadius).r;
@@ -90,7 +90,7 @@ void main()
     vec3 norm = normalize(Normal);
     vec3 FragToView = viewPos - FragPos;
     vec3 viewDir = normalize(FragToView);
-    float diskRadius = (1.0 + (length(FragToView) / farPlane)) / 25.0;
+    float diskRadius = (1.0 + (length(FragToView) / FarPlaneShadow)) / 25.0;
     for (int i = 0; i < NR_POINT_LIGHTS; i++) outputColor += computePointLight(pointLights[i], norm, viewDir, diskRadius);
 
     vec4 result = texture(textureSampler, TexCoords) * vec4(outputColor, 1.0);

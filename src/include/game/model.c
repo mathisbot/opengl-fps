@@ -151,13 +151,12 @@ void drawMesh(Mesh *mesh, unsigned int programShader)
     unsigned int normalNr = 0;
     unsigned int heightNr = 0;
     
-    int textureUnits = 0;
+    static int textureUnits = 0;
     if (!textureUnits) glGetIntegerv(GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS, &textureUnits);
-    int textureStart = 1;  // Save GL_TEXTURE0 just in case
+    static const int textureStart = 1;  // Save GL_TEXTURE0 just in case
 
     // Bind appropriate textures
     int maxLoop = glm_min(textureUnits, mesh->textureCount);
-    glUseProgram(programShader);
     for (unsigned int i=0; i<maxLoop; i++)
     {
         glActiveTexture(GL_TEXTURE0 + i+textureStart);
@@ -198,7 +197,6 @@ void drawMesh(Mesh *mesh, unsigned int programShader)
     // Set everything back to defaults once configured
     glActiveTexture(GL_TEXTURE0);
     glBindVertexArray(0);
-    glUseProgram(0);
 }
 
 void freeMesh(Mesh *mesh)
@@ -267,7 +265,16 @@ int loadModelFullPath(Model *model, char *path)
 
 void drawModel(Model *model, unsigned int programShader)
 {
+    glUseProgram(programShader);
+
+    static mat4 modelMat = GLM_MAT4_IDENTITY_INIT;
+    glm_mat4_identity(modelMat);
+    glm_translate(modelMat, (vec3){model->x, model->y, model->z});
+    glm_scale(modelMat, (vec3){model->w, model->h, model->d});
+    glUniformMatrix4fv(glGetUniformLocation(programShader, "model"), 1, GL_FALSE, (float*)model);
+
     for (unsigned int i=0; i<model->meshCount; i++) drawMesh(&model->meshes[i], programShader);
+    glUseProgram(0);
 }
 
 void freeModel(Model *model)

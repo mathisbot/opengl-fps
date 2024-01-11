@@ -83,15 +83,6 @@ static void appCleanUp(Application* app)
     if (app->lightVAO) {glDeleteVertexArrays(1, &app->lightVAO); app->lightVAO = 0;}
     if (app->uiVAO) {glDeleteVertexArrays(1, &app->uiVAO); app->uiVAO = 0;}
 
-    if (app->vertexShader.id) {destroyShader(&app->vertexShader); memset(&app->vertexShader, 0, sizeof(Shader));}
-    if (app->vertexShaderUI.id) {destroyShader(&app->vertexShaderUI); memset(&app->vertexShaderUI, 0, sizeof(Shader));}
-    if (app->vertexShaderDepth.id) {destroyShader(&app->vertexShaderDepth); memset(&app->vertexShaderDepth, 0, sizeof(Shader));}
-    if (app->geometryShaderDepth.id) {destroyShader(&app->geometryShaderDepth); memset(&app->geometryShaderDepth, 0, sizeof(Shader));}
-    if (app->fragmentShader.id) {destroyShader(&app->fragmentShader); memset(&app->fragmentShader, 0, sizeof(Shader));}
-    if (app->fragmentShaderUI.id) {destroyShader(&app->fragmentShaderUI); memset(&app->fragmentShaderUI, 0, sizeof(Shader));}
-    if (app->fragmentShaderLight.id) {destroyShader(&app->fragmentShaderLight); memset(&app->fragmentShaderLight, 0, sizeof(Shader));}
-    if (app->fragmentShaderDepth.id) {destroyShader(&app->fragmentShaderDepth); memset(&app->fragmentShaderDepth, 0, sizeof(Shader));}
-
     if (app->shaderProgram) {glDeleteProgram(app->shaderProgram); app->shaderProgram = 0;}
     if (app->shaderProgramUI) {glDeleteProgram(app->shaderProgramUI); app->shaderProgramUI = 0;}
     if (app->shaderProgramLight) {glDeleteProgram(app->shaderProgramLight); app->shaderProgramLight = 0;}
@@ -99,6 +90,7 @@ static void appCleanUp(Application* app)
 
     // Freeing other components
     for (uint8_t i=0; i<sizeof(app->pointLights)/sizeof(PointLight); i++) destroyPointLight(&app->pointLights[i]);
+    if (app->scene.loaded) destroyScene(&app->scene);
     if (app->guitar.meshes) freeModel(&app->guitar);
 
     LOG_INFO("Application cleaned up\n");
@@ -118,17 +110,25 @@ static void appCleanUpAndExit(Application* app, bool exitCode, const char* log, 
 
 static void appInitScene(Application *app)
 {
-    // Point lights
-    if (initPointLight(&app->pointLights[0], (vec3){0.0f, 2.0f, 2.0f}, (vec3){0.9f, 0.9f, 0.9f})<0) appCleanUpAndExit(app, EXIT_FAILURE, "Error creating point light");
-    if (initPointLight(&app->pointLights[1], (vec3){2.3f, 3.3f, -4.0f}, (vec3){0.8f, 0.1f, 0.1f})<0) appCleanUpAndExit(app, EXIT_FAILURE, "Error creating point light");
-    if (initPointLight(&app->pointLights[2], (vec3){-4.0f, 2.0f, -12.0f}, (vec3){0.0f, 0.85f, 0.15f})<0) appCleanUpAndExit(app, EXIT_FAILURE, "Error creating point light");
-    if (initPointLight(&app->pointLights[3], (vec3){3.3f, 4.0f, -1.5f}, (vec3){0.1f, 0.0f, 0.95f})<0) appCleanUpAndExit(app, EXIT_FAILURE, "Error creating point light");
+    //Temporary
 
-    // Load models
-    if (loadModel(&app->guitar, "guitar/backpack.obj") < 0) appCleanUpAndExit(app, EXIT_FAILURE, "Error loading guitar model");
+    // Cubes positions
+    float cubePositions[10][3] =
+    {
+        { 0.0f,  0.0f,  0.0f},
+        { 2.0f,  5.0f, -9.0f},
+        { 2.4f,  0.4f, -3.5f},
+        {-1.7f,  3.0f, -7.5f},
+        { 1.5f,  2.0f, -2.5f},
+        { 1.5f,  0.2f, -1.5f},
+        {-1.3f,  1.0f, -1.5f},
+        { 0.0f,  1.0f,  5.0f},
+        {-0.5f,  2.0f,  7.5f},
+        { 1.0f,  0.5f,  7.5f},
+    };
+    memcpy(app->scene.cubePositions, cubePositions, sizeof(cubePositions));
 
     // Load textures
-    // Temporary way to load textures
     Texture brickwall;
     loadTexture(&brickwall, "brickwall/diffuse.bmp", 4, TEXTURE_REPEAT, TEXTURE_DIFFUSE);
     glActiveTexture(GL_TEXTURE0);
@@ -137,6 +137,18 @@ static void appInitScene(Application *app)
     glUniform1i(glGetUniformLocation(app->shaderProgram, "textureSampler"), 0);
     glUseProgram(0);
     glActiveTexture(GL_TEXTURE1);
+
+    // Point lights
+    if (initPointLight(&app->pointLights[0], (vec3){0.0f, 2.0f, 2.0f}, (vec3){0.9f, 0.9f, 0.9f})<0) appCleanUpAndExit(app, EXIT_FAILURE, "Error creating point light");
+    if (initPointLight(&app->pointLights[1], (vec3){2.3f, 3.3f, -4.0f}, (vec3){0.8f, 0.1f, 0.1f})<0) appCleanUpAndExit(app, EXIT_FAILURE, "Error creating point light");
+    if (initPointLight(&app->pointLights[2], (vec3){-4.0f, 2.0f, -12.0f}, (vec3){0.0f, 0.85f, 0.15f})<0) appCleanUpAndExit(app, EXIT_FAILURE, "Error creating point light");
+    if (initPointLight(&app->pointLights[3], (vec3){3.3f, 4.0f, -1.5f}, (vec3){0.1f, 0.0f, 0.95f})<0) appCleanUpAndExit(app, EXIT_FAILURE, "Error creating point light");
+
+    // Load models
+    // app->scene.modelCount = 1;
+    // app->scene.models = malloc(sizeof(Model) * app->scene.modelCount);
+    // if (loadModel(&app->scene.models[0], "guitar/backpack.obj") < 0) appCleanUpAndExit(app, EXIT_FAILURE, "Error loading guitar model");
+
 
     // Vertices for a cube
     float vertices[] = {
@@ -240,6 +252,7 @@ static void appInitScene(Application *app)
     // Unbinding buffers
     glBindVertexArray(0);
 
+    app->scene.loaded = 1;
 }
 
 static void appInit(Application* app)
@@ -349,36 +362,33 @@ static void appInit(Application* app)
     glGenVertexArrays(1, &app->uiVAO);
 
     // OpenGL Shader creation
-    if (loadShader(&app->vertexShader, "vertex.vert", GL_VERTEX_SHADER) < 0) appCleanUpAndExit(app, EXIT_FAILURE, "Error creating vertex shader");
-    if (loadShader(&app->vertexShaderUI, "ui.vert", GL_VERTEX_SHADER) < 0) appCleanUpAndExit(app, EXIT_FAILURE, "Error creating vertex shader for UI");
-    if (loadShader(&app->vertexShaderDepth, "depth.vert", GL_VERTEX_SHADER) < 0) appCleanUpAndExit(app, EXIT_FAILURE, "Error creating vertex shader for depth map");
-    if (loadShader(&app->geometryShaderDepth, "depth.geom", GL_GEOMETRY_SHADER) < 0) appCleanUpAndExit(app, EXIT_FAILURE, "Error creating geometry shader for depth map");
-    if (loadShader(&app->fragmentShader, "fragment.frag", GL_FRAGMENT_SHADER) < 0) appCleanUpAndExit(app, EXIT_FAILURE, "Error creating fragment shader");
-    if (loadShader(&app->fragmentShaderUI, "ui.frag", GL_FRAGMENT_SHADER) < 0) appCleanUpAndExit(app, EXIT_FAILURE, "Error creating fragment shader for UI");
-    if (loadShader(&app->fragmentShaderLight, "light.frag", GL_FRAGMENT_SHADER) < 0) appCleanUpAndExit(app, EXIT_FAILURE, "Error creating fragment shader for light");
-    if (loadShader(&app->fragmentShaderDepth, "depth.frag", GL_FRAGMENT_SHADER) < 0) appCleanUpAndExit(app, EXIT_FAILURE, "Error creating fragment shader for depth map");
+    Shader vertexShader, vertexShaderUI, vertexShaderDepth, geometryShaderDepth, fragmentShader, fragmentShaderUI, fragmentShaderLight, fragmentShaderDepth;
+    if (loadShader(&vertexShader, "vertex.vert", GL_VERTEX_SHADER) < 0) appCleanUpAndExit(app, EXIT_FAILURE, "Error creating vertex shader");
+    if (loadShader(&vertexShaderUI, "ui.vert", GL_VERTEX_SHADER) < 0) appCleanUpAndExit(app, EXIT_FAILURE, "Error creating vertex shader for UI");
+    if (loadShader(&vertexShaderDepth, "depth.vert", GL_VERTEX_SHADER) < 0) appCleanUpAndExit(app, EXIT_FAILURE, "Error creating vertex shader for depth map");
+    if (loadShader(&geometryShaderDepth, "depth.geom", GL_GEOMETRY_SHADER) < 0) appCleanUpAndExit(app, EXIT_FAILURE, "Error creating geometry shader for depth map");
+    if (loadShader(&fragmentShader, "fragment.frag", GL_FRAGMENT_SHADER) < 0) appCleanUpAndExit(app, EXIT_FAILURE, "Error creating fragment shader");
+    if (loadShader(&fragmentShaderUI, "ui.frag", GL_FRAGMENT_SHADER) < 0) appCleanUpAndExit(app, EXIT_FAILURE, "Error creating fragment shader for UI");
+    if (loadShader(&fragmentShaderLight, "light.frag", GL_FRAGMENT_SHADER) < 0) appCleanUpAndExit(app, EXIT_FAILURE, "Error creating fragment shader for light");
+    if (loadShader(&fragmentShaderDepth, "depth.frag", GL_FRAGMENT_SHADER) < 0) appCleanUpAndExit(app, EXIT_FAILURE, "Error creating fragment shader for depth map");
+
+    // If program crashes here, there's a memory leak (shaders are not freed)
+    // This is done on purpose as they are only used for the next few lines
 
     // Shader programs
-    if (initShaderProgram(&app->shaderProgram, 2, app->vertexShader, app->fragmentShader) < 0) appCleanUpAndExit(app, EXIT_FAILURE, "Error creating shader program");
-    if (initShaderProgram(&app->shaderProgramLight, 2, app->vertexShader, app->fragmentShaderLight) < 0) appCleanUpAndExit(app, EXIT_FAILURE, "Error creating shader program for light");
-    if (initShaderProgram(&app->shaderProgramUI, 2, app->vertexShaderUI, app->fragmentShaderUI) < 0) appCleanUpAndExit(app, EXIT_FAILURE, "Error creating shader program for UI");
-    if (initShaderProgram(&app->shaderProgramDepth, 3, app->vertexShaderDepth, app->geometryShaderDepth, app->fragmentShaderDepth) < 0) appCleanUpAndExit(app, EXIT_FAILURE, "Error creating shader program for depth map");
+    if (initShaderProgram(&app->shaderProgram, 2, vertexShader, fragmentShader) < 0) appCleanUpAndExit(app, EXIT_FAILURE, "Error creating shader program");
+    if (initShaderProgram(&app->shaderProgramLight, 2, vertexShader, fragmentShaderLight) < 0) appCleanUpAndExit(app, EXIT_FAILURE, "Error creating shader program for light");
+    if (initShaderProgram(&app->shaderProgramUI, 2, vertexShaderUI, fragmentShaderUI) < 0) appCleanUpAndExit(app, EXIT_FAILURE, "Error creating shader program for UI");
+    if (initShaderProgram(&app->shaderProgramDepth, 3, vertexShaderDepth, geometryShaderDepth, fragmentShaderDepth) < 0) appCleanUpAndExit(app, EXIT_FAILURE, "Error creating shader program for depth map");
     
     // Delete now useless shaders
-    destroyShader(&app->vertexShader);
-    memset(&app->vertexShader, 0, sizeof(Shader));
-    destroyShader(&app->vertexShaderUI);
-    memset(&app->vertexShaderUI, 0, sizeof(Shader));
-    destroyShader(&app->vertexShaderDepth);
-    memset(&app->vertexShaderDepth, 0, sizeof(Shader));
-    destroyShader(&app->fragmentShader);
-    memset(&app->fragmentShader, 0, sizeof(Shader));
-    destroyShader(&app->fragmentShaderUI);
-    memset(&app->fragmentShaderUI, 0, sizeof(Shader));
-    destroyShader(&app->fragmentShaderLight);
-    memset(&app->fragmentShaderLight, 0, sizeof(Shader));
-    destroyShader(&app->fragmentShaderDepth);
-    memset(&app->fragmentShaderDepth, 0, sizeof(Shader));
+    destroyShader(&vertexShader);
+    destroyShader(&vertexShaderUI);
+    destroyShader(&vertexShaderDepth);
+    destroyShader(&fragmentShader);
+    destroyShader(&fragmentShaderUI);
+    destroyShader(&fragmentShaderLight);
+    destroyShader(&fragmentShaderDepth);
 
 
     /* --- Load game objects --- */
@@ -483,65 +493,12 @@ static bool appUpdate(Application* app)
 
 static void appRender(Application* app)
 {
-    // Cubes positions
-    float cubePositions[10][3] =
-    {
-        { 0.0f,  0.0f,  0.0f},
-        { 2.0f,  5.0f, -9.0f},
-        { 2.4f,  0.4f, -3.5f},
-        {-1.7f,  3.0f, -7.5f},
-        { 1.5f,  2.0f, -2.5f},
-        { 1.5f,  0.2f, -1.5f},
-        {-1.3f,  1.0f, -1.5f},
-        { 0.0f,  1.0f,  5.0f},
-        {-0.5f,  2.0f,  7.5f},
-        { 1.0f,  0.5f,  7.5f},
-    };
+    static bool firstTime = 1;  // Do not perform some operations every frame
 
 
     /* --- RENDER ON DEPTH MAP --- */
 
-    glViewport(0, 0, SHADOWMAP_RES, SHADOWMAP_RES);
-    glUseProgram(app->shaderProgramDepth);
-    glBindVertexArray(app->VAO);
-
-    glUniform1f(glGetUniformLocation(app->shaderProgramDepth, "farPlane"), SHADOWMAP_ZFAR);
-
-    // Shaders and matrices
-    static mat4 lightProjection;
-    glm_perspective(glm_rad(90.0f), 1.0f, SHADOWMAP_ZNEAR, SHADOWMAP_ZFAR, lightProjection);
-
-    // Compute depth map for each light
-    static mat4 shadowMatrices[6];
-    for (uint8_t i=0; i<4; i++)
-    {
-        // Each light has its own depth cubemap
-        bindPointLightToFBO(app->depthMapFBO, &(app->pointLights[i]));
-
-        glUniform3f(glGetUniformLocation(app->shaderProgramDepth, "lightPos"), app->pointLights[i].position[0], app->pointLights[i].position[1], app->pointLights[i].position[2]);
-
-        pointLightGetProjMatrices(&(app->pointLights[i]), &lightProjection, &shadowMatrices);
-        glUniformMatrix4fv(glGetUniformLocation(app->shaderProgramDepth, "shadowMatrices"), 6, GL_FALSE, (float*)(shadowMatrices));
-
-        // Rendering
-        glBindFramebuffer(GL_FRAMEBUFFER, app->depthMapFBO);
-        glClear(GL_DEPTH_BUFFER_BIT);
-
-        for (uint8_t i=0; i<10; i++)
-        {
-            // Model matrix
-            static mat4 model = GLM_MAT4_IDENTITY_INIT;
-            glm_mat4_identity(model);
-
-            glm_translate(model, cubePositions[i]);
-            if (i==0) glm_scale(model, (vec3){30.0f, 0.01f, 30.0f});
-            glm_rotate(model, glm_rad(20.0f*i), (vec3){0.5f, 1.0f, 0.0f});
-
-            glUniformMatrix4fv(glGetUniformLocation(app->shaderProgramDepth, "model"), 1, GL_FALSE, (float*)model);
-
-            glDrawArrays(GL_TRIANGLES, 0, 36);
-        }
-    }
+    renderPointLightsShadowMap(&app->scene, app->shaderProgramDepth, app->lightVAO, app->depthMapFBO, app->pointLights);
 
 
     /* --- RENDER ON SCREEN --- */
@@ -550,44 +507,50 @@ static void appRender(Application* app)
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-
-    // Order : UI, Light, Objects
-
-
-    /* --- UI --- */
-
-    glUseProgram(app->shaderProgramUI);
-
-    glUniform2ui(glGetUniformLocation(app->shaderProgramUI, "windowSize"), app->windowWidth, app->windowHeight);
-    glUniform1f(glGetUniformLocation(app->shaderProgramUI, "pointerRadius"), 2.0f);
-
-    glBindVertexArray(app->uiVAO);
-
-    // Simple overlay
-    glDrawArrays(GL_TRIANGLES, 0, 6);
-
-
-    /* --- Light sources --- */
-
-    // Use light shader
-    glUseProgram(app->shaderProgramLight);
-
     // View matrix
     static mat4 view = GLM_MAT4_IDENTITY_INIT;
     glm_lookat(app->camera.pos, app->camera.target, app->camera.up, view);
 
     // Projection matrix
     static mat4 projection = GLM_MAT4_IDENTITY_INIT;
-    glm_mat4_identity(projection);
-    glm_perspective(glm_rad(FOV), (float)app->windowWidth / (float)app->windowHeight, ZNEAR, ZFAR, projection);
+    if (firstTime) glm_perspective(glm_rad(FOV), (float)app->windowWidth / (float)app->windowHeight, ZNEAR, ZFAR, projection);
+
+
+    // Order : UI, Light, Objects
+
+
+    /* --- User Interface --- */
+
+    glUseProgram(app->shaderProgramUI);
+    glBindVertexArray(app->uiVAO);
+
+    // Simple overlay
+    glDrawArrays(GL_TRIANGLES, 0, 6);
+
+    if (firstTime)
+    {
+        glUniform2ui(glGetUniformLocation(app->shaderProgramUI, "windowSize"), app->windowWidth, app->windowHeight);
+        glUniform1f(glGetUniformLocation(app->shaderProgramUI, "pointerRadius"), 2.0f);
+    }
+
+
+    /* --- Light sources --- */
+
+    // These are cubes that use a different shader so they are not affected by lighting and are always visible
+
+    // Use light shader
+    glUseProgram(app->shaderProgramLight);
 
     // Send to shader
     glUniformMatrix4fv(glGetUniformLocation(app->shaderProgramLight, "view"), 1, GL_FALSE, (float*)view);
-    glUniformMatrix4fv(glGetUniformLocation(app->shaderProgramLight, "projection"), 1, GL_FALSE, (float*)projection);
+    if (firstTime) glUniformMatrix4fv(glGetUniformLocation(app->shaderProgramLight, "projection"), 1, GL_FALSE, (float*)projection);
     
     // Used to draw pointer
-    glUniform2ui(glGetUniformLocation(app->shaderProgramLight, "windowSize"), app->windowWidth, app->windowHeight);
-    glUniform1f(glGetUniformLocation(app->shaderProgramLight, "pointerRadius"), 2.0f);
+    if (firstTime)
+    {
+        glUniform2ui(glGetUniformLocation(app->shaderProgramLight, "windowSize"), app->windowWidth, app->windowHeight);
+        glUniform1f(glGetUniformLocation(app->shaderProgramLight, "pointerRadius"), 2.0f);
+    }
 
     // Rendering
     glBindVertexArray(app->lightVAO);
@@ -620,70 +583,60 @@ static void appRender(Application* app)
     glUniformMatrix4fv(glGetUniformLocation(app->shaderProgram, "projection"), 1, GL_FALSE, (float*)projection);
 
     glUniform3f(glGetUniformLocation(app->shaderProgram, "viewPos"), app->camera.pos[0], app->camera.pos[1], app->camera.pos[2]);
-    glUniform1f(glGetUniformLocation(app->shaderProgram, "farPlane"), SHADOWMAP_ZFAR);
-
-    // Will be useful later to avoid binding too many textures
-    static int textureUnits = 0;
-    if (!textureUnits) glGetIntegerv(GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS, &textureUnits);
-    static const int textureStart = 1;  // 0 is reserved for face texture
-
-    char locate[32];
-    for (uint8_t i=0; i<4; i++)
+    if (firstTime)
     {
-        sprintf(locate, "pointLights[%d].position", i);
-        glUniform3f(glGetUniformLocation(app->shaderProgram, locate), app->pointLights[i].position[0], app->pointLights[i].position[1], app->pointLights[i].position[2]);
-        sprintf(locate, "pointLights[%d].ambiant", i);
-        glUniform3f(glGetUniformLocation(app->shaderProgram, locate), 0.2f, 0.2f, 0.2f);
-        sprintf(locate, "pointLights[%d].diffuse", i);
-        glUniform3f(glGetUniformLocation(app->shaderProgram, locate), 0.5f, 0.5f, 0.5f);
-        sprintf(locate, "pointLights[%d].specular", i);
-        glUniform3f(glGetUniformLocation(app->shaderProgram, locate), 1.0f, 1.0f, 1.0f);
-        sprintf(locate, "pointLights[%d].linear", i);
-        glUniform1f(glGetUniformLocation(app->shaderProgram, locate), 0.01f);
-        sprintf(locate, "pointLights[%d].quadratic", i);
-        glUniform1f(glGetUniformLocation(app->shaderProgram, locate), 0.02f);
-        sprintf(locate, "pointLights[%d].color", i);
-        glUniform3f(glGetUniformLocation(app->shaderProgram, locate), app->pointLights[i].color[0], app->pointLights[i].color[1], app->pointLights[i].color[2]);
-        sprintf(locate, "pointLights[%d].depthCubemap", i);
-        glActiveTexture(GL_TEXTURE0+i+textureStart);
-        glBindTexture(GL_TEXTURE_CUBE_MAP, app->pointLights[i].depthCubemap);
-        glUniform1i(glGetUniformLocation(app->shaderProgram, locate), i+textureStart);
+        glUniform1f(glGetUniformLocation(app->shaderProgram, "FarPlaneShadow"), SHADOWMAP_ZFAR);
+
+        static const int textureStart = 1;  // 0 is reserved for face texture
+        char locate[32];
+        for (uint8_t i=0; i<4; i++)
+        {
+            sprintf(locate, "pointLights[%d].position", i);
+            glUniform3f(glGetUniformLocation(app->shaderProgram, locate), app->pointLights[i].position[0], app->pointLights[i].position[1], app->pointLights[i].position[2]);
+            sprintf(locate, "pointLights[%d].ambiant", i);
+            glUniform3f(glGetUniformLocation(app->shaderProgram, locate), 0.2f, 0.2f, 0.2f);
+            sprintf(locate, "pointLights[%d].diffuse", i);
+            glUniform3f(glGetUniformLocation(app->shaderProgram, locate), 0.5f, 0.5f, 0.5f);
+            sprintf(locate, "pointLights[%d].specular", i);
+            glUniform3f(glGetUniformLocation(app->shaderProgram, locate), 1.0f, 1.0f, 1.0f);
+            sprintf(locate, "pointLights[%d].linear", i);
+            glUniform1f(glGetUniformLocation(app->shaderProgram, locate), 0.01f);
+            sprintf(locate, "pointLights[%d].quadratic", i);
+            glUniform1f(glGetUniformLocation(app->shaderProgram, locate), 0.02f);
+            sprintf(locate, "pointLights[%d].color", i);
+            glUniform3f(glGetUniformLocation(app->shaderProgram, locate), app->pointLights[i].color[0], app->pointLights[i].color[1], app->pointLights[i].color[2]);
+            sprintf(locate, "pointLights[%d].depthCubemap", i);
+            glActiveTexture(GL_TEXTURE0+i+textureStart);
+            glBindTexture(GL_TEXTURE_CUBE_MAP, app->pointLights[i].depthCubemap);
+            glUniform1i(glGetUniformLocation(app->shaderProgram, locate), i+textureStart);
+        }
+
+        glUniform2ui(glGetUniformLocation(app->shaderProgram, "windowSize"), app->windowWidth, app->windowHeight);
+        glUniform1f(glGetUniformLocation(app->shaderProgram, "pointerRadius"), 2.0f);
+
+        glUniform3f(glGetUniformLocation(app->shaderProgram, "material.ambient"), 1.0f, 0.5f, 0.31f);
+        glUniform3f(glGetUniformLocation(app->shaderProgram, "material.diffuse"), 1.0f, 0.5f, 0.31f);
+        glUniform3f(glGetUniformLocation(app->shaderProgram, "material.specular"), 0.5f, 0.5f, 0.5f);
+        glUniform1f(glGetUniformLocation(app->shaderProgram, "material.shininess"), 64.0f);
     }
-
-    glUniform2ui(glGetUniformLocation(app->shaderProgram, "windowSize"), app->windowWidth, app->windowHeight);
-    glUniform1f(glGetUniformLocation(app->shaderProgram, "pointerRadius"), 2.0f);
-
-    glUniform3f(glGetUniformLocation(app->shaderProgram, "material.ambient"), 1.0f, 0.5f, 0.31f);
-    glUniform3f(glGetUniformLocation(app->shaderProgram, "material.diffuse"), 1.0f, 0.5f, 0.31f);
-    glUniform3f(glGetUniformLocation(app->shaderProgram, "material.specular"), 0.5f, 0.5f, 0.5f);
-    glUniform1f(glGetUniformLocation(app->shaderProgram, "material.shininess"), 64.0f);
 
     // Rendering
     glBindVertexArray(app->VAO);
-    for (uint8_t i=0; i<10; i++)
-    {
-        // Model matrix
-        static mat4 model = GLM_MAT4_IDENTITY_INIT;
-        glm_mat4_identity(model);
-
-        glm_translate(model, cubePositions[i]);
-        if (i==0) glm_scale(model, (vec3){30.0f, 0.01f, 30.0f});
-        glm_rotate(model, glm_rad(20.0f*i), (vec3){0.5f, 1.0f, 0.0f});
-
-        glUniformMatrix4fv(glGetUniformLocation(app->shaderProgram, "model"), 1, GL_FALSE, (float*)model);
-
-        // glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
-        glDrawArrays(GL_TRIANGLES, 0, 36);
-    }
+    
+    renderScene(&app->scene, app->shaderProgram);
 
 
-    // Unbind everything
+    /* --- Unbind everything --- */
+
     glBindVertexArray(0);
     glUseProgram(0);
 
-
     // Swap buffers
     SDL_GL_SwapWindow(app->window);
+
+
+    // First time is over
+    if (firstTime) firstTime = 0;
 }
 
 

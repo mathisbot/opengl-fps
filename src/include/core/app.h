@@ -65,15 +65,6 @@ typedef struct {
 
     GLuint depthMapFBO;  // Depth map framebuffer
 
-    Shader vertexShader;  // Vertex shader
-    Shader vertexShaderUI;  // Vertex shader for UI
-    Shader vertexShaderDepth;  // Vertex shader for depth map
-    Shader geometryShaderDepth;  // Geometry shader for depth map
-    Shader fragmentShader;  // Fragment shader for scene objects
-    Shader fragmentShaderUI;  // Fragment shader for UI
-    Shader fragmentShaderLight;  // Fragment shader for light
-    Shader fragmentShaderDepth;  // Fragment shader for depth map
-
     GLuint shaderProgram;  // Shader program for scene objects
     GLuint shaderProgramUI;  // Shader program for UI
     GLuint shaderProgramLight;  // Shader program for light
@@ -85,6 +76,7 @@ typedef struct {
 
     // Game objects
     Camera camera;
+    Scene scene;
     PointLight pointLights[4];  // 4 point lights
     Model guitar;  // Temporary guitar model
 

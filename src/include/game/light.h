@@ -16,6 +16,7 @@
 #include <SDL2/SDL_opengl.h>
 
 #include "logs.h"
+#include "scene.h"
 
 
 typedef struct {
@@ -85,6 +86,19 @@ void bindPointLightToFBO(GLuint depthMapFBO, PointLight *light);
  * @note The destination array must be of size 6
 */
 void pointLightGetProjMatrices(PointLight *pointLight, mat4 *lightProjection, mat4 (*dest)[6]);
+
+/**
+ * @brief Render the depth cubemap of a point light
+ * 
+ * @param shaderProgramDepth Shader program to use
+ * @param VAO VAO to use
+ * @param depthMapFBO FBO to use
+ * @param pointLights Point lights to render
+ * @param cubePositions Positions of the cubes to render
+ * 
+ * @note Viewport is modified, and VAO and shader program are binded to 0 after the function call
+*/
+void renderPointLightsShadowMap(const Scene *scene, GLuint shaderProgramDepth, GLuint VAO, GLuint depthMapFBO, PointLight *pointLights);
 
 /**
  * @brief Destroy a depth map

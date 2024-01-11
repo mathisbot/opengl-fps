@@ -65,6 +65,8 @@ typedef struct {
 
 
 typedef struct {
+    float x, y, z;  // position
+    float w, h, d;  // width, height, depth
     Mesh *meshes;
     unsigned int meshCount;
     char dir[64];

@@ -45,10 +45,40 @@ int initPointLight(PointLight *light, vec3 position, vec3 color)
     return 0;
 }
 
-void bindPointLightToFBO(GLuint depthMapFBO, PointLight *light)
+
+void renderPointLightsShadowMap(const Scene *scene, GLuint shaderProgramDepth, GLuint VAO, GLuint depthMapFBO, PointLight *pointLights)
 {
-    bindDepthCubemapToFBO(depthMapFBO, light->depthCubemap);
+    glViewport(0, 0, SHADOWMAP_RES, SHADOWMAP_RES);
+    glUseProgram(shaderProgramDepth);
+    glBindVertexArray(VAO);
+
+    glUniform1f(glGetUniformLocation(shaderProgramDepth, "farPlane"), SHADOWMAP_ZFAR);
+
+    // We don't want to compute tan each tick
+    static bool firstTime = true;
+    static mat4 lightProjection = {0};
+    if (firstTime) {glm_perspective(glm_rad(90.0f), 1.0f, SHADOWMAP_ZNEAR, SHADOWMAP_ZFAR, lightProjection); firstTime=false;}
+
+    // Compute depth map for each light
+    static mat4 shadowMatrices[6];
+    for (uint8_t i=0; i<4; i++)
+    {
+        // Each light has its own depth cubemap
+        bindDepthCubemapToFBO(depthMapFBO, pointLights[i].depthCubemap);
+
+        glUniform3f(glGetUniformLocation(shaderProgramDepth, "lightPos"), pointLights[i].position[0], pointLights[i].position[1], pointLights[i].position[2]);
+
+        pointLightGetProjMatrices(&(pointLights[i]), &lightProjection, &shadowMatrices);
+        glUniformMatrix4fv(glGetUniformLocation(shaderProgramDepth, "shadowMatrices"), 6, GL_FALSE, (float*)(shadowMatrices));
+
+        // Rendering
+        glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
+        glClear(GL_DEPTH_BUFFER_BIT);
+
+        renderScene(scene, shaderProgramDepth);
+    }
 }
+
 
 void pointLightGetProjMatrices(PointLight *pointLight, mat4 *lightProjection, mat4 (*dest)[6])
 {
