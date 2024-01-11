@@ -10,10 +10,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include <SDL2/SDL.h>
 #include <cglm/cglm.h>
+#include <SDL2/SDL.h>
+#include <GL/glew.h>
+#include <SDL2/SDL_opengl.h>
 
-#include "textures.h"  // For the cubemap texture
+#include "logs.h"
 
 
 typedef struct {

@@ -17,7 +17,7 @@
 #define JUMPSPEED 7.5f
 #define SPEED 7.5f
 #define SPRINTBOOST 1.75f
-#define SENSITIVITY 0.13f
+#define SENSITIVITY 0.07f
 #define TERMINALVELOCITY 50.0f
 
 
@@ -131,4 +131,4 @@ void rotateCamera(Camera *camera, int dx, int dy);
 void updateCamera(Camera *camera);
 
 
-#endif // CAMERA_H
+#endif

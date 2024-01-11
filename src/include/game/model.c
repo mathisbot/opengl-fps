@@ -151,7 +151,7 @@ void drawMesh(Mesh *mesh, unsigned int programShader)
     unsigned int normalNr = 0;
     unsigned int heightNr = 0;
     
-    static int textureUnits = 0;
+    int textureUnits = 0;
     if (!textureUnits) glGetIntegerv(GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS, &textureUnits);
     int textureStart = 1;  // Save GL_TEXTURE0 just in case
 
@@ -231,7 +231,7 @@ static int loadFileIntoModel(Model *model, char *path)
 
     if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode)
     {
-        fprintf(stderr, "Error from Assimp when loading %s : %s\n", path, aiGetErrorString());
+        LOG_ERROR("Error from Assimp when loading %s : %s\n", path, aiGetErrorString());
         aiReleaseImport(scene);
         return -1;
     }
@@ -243,6 +243,7 @@ static int loadFileIntoModel(Model *model, char *path)
     unsigned int index = 0;
     processNode(model, scene->mRootNode, scene, &index);
 
+    LOG_TRACE("Loaded file into model\n");
     return 0;
 }
 
@@ -258,6 +259,8 @@ int loadModelFullPath(Model *model, char *path)
 {
     getDirectory(path, model->dir);
     loadFileIntoModel(model, path);
+
+    LOG_DEBUG("Loaded model\n");
 
     return 0;
 }

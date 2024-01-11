@@ -13,6 +13,7 @@ int createDepthCubemap(GLuint *depthCubemap, unsigned int resolution)
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
     glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
+    LOG_TRACE("Created depth cubemap with resolution %d\n", resolution);
     return 0;
 }
 
@@ -36,7 +37,11 @@ int initPointLight(PointLight *light, vec3 position, vec3 color)
     glm_vec3_copy(position, light->position);
     glm_vec3_copy(color, light->color);
     if (createDepthCubemap(&(light->depthCubemap), SHADOWMAP_RES)<0)
+    {
+        LOG_ERROR("Could not create depth cubemap for point light\n");
         return -1;
+    }
+    LOG_TRACE("Initialized point light\n");
     return 0;
 }
 
@@ -47,8 +52,8 @@ void bindPointLightToFBO(GLuint depthMapFBO, PointLight *light)
 
 void pointLightGetProjMatrices(PointLight *pointLight, mat4 *lightProjection, mat4 (*dest)[6])
 {
-    static mat4 lightView[6];  // 6 faces of the cubemap
-    static vec3 lightTargets[6];
+    mat4 lightView[6];  // 6 faces of the cubemap
+    vec3 lightTargets[6];
     glm_vec3_add(pointLight->position, (vec3){1.0f, 0.0f, 0.0f}, lightTargets[0]);
     glm_lookat(pointLight->position, lightTargets[0], (vec3){0.0f, -1.0f, 0.0f}, lightView[0]);
     glm_vec3_add(pointLight->position, (vec3){-1.0f, 0.0f, 0.0f}, lightTargets[1]);

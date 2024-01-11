@@ -10,6 +10,8 @@
 
 #include <SDL2/SDL_mixer.h>
 
+#include "logs.h"
+
 
 #define AUDIO_SAMPLERATE 96000  // Sample frequency in Hz
 #define AUDIO_CHUNKSIZE 2048  // Buffer size

@@ -4,10 +4,10 @@
 <div align="center">
     <img src="build/assets/images/icon.webp" alt="Logo" width="128" height="128">
 
-  <h3 align="center">Retro FPS</h3>
+  <h3 align="center">OpenGL FPS</h3>
 
   <p align="center">
-    This project aims to recreate a simple FPS in C using only one low-level library.
+    This project aims to recreate a simple FPS in C using OpenGL and SDL2.
   </p>
 </div>
 
@@ -52,10 +52,9 @@
 
 The aim of this project is to create a simple FPS game, using no game engine. This allows for a low-level approach to game design, and therefore very thorough optimization.
 
-In this case, I chose the C language along with only one very low-level library: SDL2 (in order to use OpenGL).
-This means that rendering methods are close to nil, and that I had to start from scratch (although SDL and OpenGL can take some of the work out of the equation).
+In this case, I chose the C language along with only one (relatively) low-level library: SDL2 (in order to use OpenGL without platform considerations). This means that rendering methods are close to nil, and that I had to start from scratch (although SDL can take some of the work out of the equation).
 
-Although the context of the project resembles that of the 1990s, the game's content should resemble a modern FPS. The game should therefore include familiar mechanics (this won't be 1993's Doom).
+Even if I impose firm rules on myself that don't resemble those standardized today (use of a pre-made game engine), the game should look like a modern FPS. The game should therefore include familiar mechanics (it won't be 1993's Doom).
 
 <p align="right">(<a href="#readme-top">Up</a>)</p>
 
@@ -63,10 +62,12 @@ Although the context of the project resembles that of the 1990s, the game's cont
 <a name="about-sdl2"></a>
 
 #### Context
-The first question to ask is: how do you display elements on screen? As the display is connected directly to the GPU, you need to ask the graphics drivers politely.
-This is usually done via standardized languages called specifications. Their implementation is the responsibility of the card manufacturer.
 
-The best-known are DirectX, Vulkan and OpenGL. Although Vulkan is the most recent and was specifically designed for optimization, taking into account recent technological advances, OpenGL remains the most widely used, open-source and, above all, the easiest to learn.
+The best-known are DirectX, Vulkan and OpenGL. Although OpenGL is the most widely-used and is the easiest to learn, it was created in 1992 and has not been designed for the capabilities of today's graphics cards. Vulkan is the successor to OpenGL, more powerful and better suited to today's machines.
+
+The first question to ask is: how do you display elements on screen? As the display is connected directly to the GPU, you need to ask the graphics drivers politely. This is usually done via standardized languages called specifications. Their implementation is the responsibility of the card manufacturer.
+
+The best-known are DirectX, Vulkan and OpenGL. Even though Vulkan is the most recent, the most optimized and the most adapted to current technologies, it requires a great deal of time and energy to operate. OpenGL is much easier to learn and use, making it suitable for a development team consisting of one person developing in their spare time. And OpenGL is still sufficiently well optimized.
 
 > OpenGL® is the most widely adopted 2D and 3D graphics API in the industry, bringing thousands of applications to a wide variety of computer platforms. It is window-system and operating-system independent as well as network-transparent. OpenGL enables developers of software for PC, workstation, and supercomputing hardware to create high-performance, visually compelling graphics software application
 
@@ -78,8 +79,10 @@ on *khronos.org*
 
 on *libsdl.org*
 
-As OpenGL is a set of specifications and not a library, I had to choose a library that would allow me to create a context around it, like opening a window.
-Among the many choices available (GLFW, GLUT, SFML, ...), one stood out for its characteristics:
+To interact with the rest of the computer, i.e. the screen, a window, user inputs, audio peripherals and so on, you need to use the APIs offered by the OS. As these are highly OS-dependent, the same code must be replicated for each targeted OS.
+
+I want to make a game that's as cross-platform as possible. To avoid the pain of using Win32, or to avoid rewriting code 3 times for Linux and macOS, I chose to use an external library. In any case, the library is surely much more optimized than it would have been if I'd done it myself.
+Among the various choices available for these libraries (GLFW, GLUT, SFML, ...), one stands out:
 
 - SDL2 is renowned for its lightweight design, which ensures efficient resource utilization without compromising performance.
 
@@ -94,7 +97,7 @@ Overall, I think SDL2 is best suited to video game design.
 ### Built with
 <a name="built-with"></a>
 
-* [C][c-url]
+* [C][c-url] (Standard C17)
 * [Assimp][assimp-url] (5.3.1)
 * [cglm][cglm-url] (0.9.2)
 * [GLEW][glew-url] (2.1.0)
@@ -105,10 +108,7 @@ Overall, I think SDL2 is best suited to video game design.
 
 Assimp stands for Asset Importer Library. It's a library that makes it extremely easy to import 3D files, such as models or animations. I chose to use it because it allows you to import a wide variety of formats, but ESPECIALLY because the output format is standardized, and import is fast and optimized.
 
-cglm stands for OpenGL Mathematics (glm) for C. It is a highly optimized 2D/3D math library. cglm provides lot of utils to help math operations to be fast and quick to write. The functions implemented take advantage of SSE2 and vectorization.
-
-SDL_mixer is not part of the default SDL library. However, it is an official SDL extension promoted on the SDL website.
-It is also practically indispensable when developing a game, as it allows several sounds to be played at the same time, which is impossible with SDL alone.
+cglm stands for OpenGL Mathematics (glm) for C. It is a highly optimized 2D/3D math library. It offers a wide range of functions that make it quick and easy to use mathematics in an OpenGL/Vulkan context. The library takes advantage of SIMD operations when supported by the processor (SSE and SSE2 are supported by all modern x86 processors anyway).
 
 GLEW stands for OpenGL Extension Wrangler. It is an extension that loads OpenGL function headers :
 as stated before, OpenGL's implementation is the responsibility of the card manufacturer. GLEW takes care of retrieving and normalizing function names.
@@ -116,6 +116,10 @@ as stated before, OpenGL's implementation is the responsibility of the card manu
 > GLEW provides efficient run-time mechanisms for determining which OpenGL extensions are supported on the target platform. OpenGL core and extension functionality is exposed in a single header file.
 
 on *glew.curseforge.net*
+
+SDL_mixer is not part of the default SDL library. However, it is an official SDL extension promoted on the SDL website.
+It is also practically indispensable when developing a game, as it allows several sounds to be played at the same time, which is impossible with SDL alone.
+Once again, it would have been possible to do without, but it would have required extra time to reimplement what someone has already done, and better than me!
 
 <p align="right">(<a href="#readme-top">Up</a>)</p>
 
@@ -127,6 +131,8 @@ on *glew.curseforge.net*
 If you just want to try out the game, simply download the `release.zip` file.
 
 Please note that the game files given in this zip file are only compatible with 64-bit Windows systems. Pre-compiled versions of the game may be available in the future for Linux, macOS and Windows 32-bit, but nothing is guaranteed.
+In addition, some binary files (.dll) may not be included in the zip file. This is due to copyrights on the libraries I use. Here's a list of binaries to add :
+- Assimp
 
 For the moment, no interface or menu has been implemented, so that there's no way to change  key bindings from within the game.
 
@@ -143,12 +149,10 @@ Otherwise, follow these steps:
 
 * C : Any compiler will do. I personally used GCC 13.2.0 through [WinLibs][winlibs-url].
 * Assimp : Assimp doesn't provide binaries, this means you need to download their source code and build them yourself. See their [website](https://assimp-docs.readthedocs.io/en/latest/about/quickstart.html#building-the-library-from-scratch) for more information.
-* cglm : Download latest release on GitHub. cglm doesn't provide binaries either, but I'm only using the header files, which contain the `inline` functions
+* cglm : Download latest release on GitHub. Please note that cglm is a header-only library (at least, I'll only be using inline functions).
 * GLEW : Download GLEW binaries on their website.
-* SDL2 : Download the development (`devel`) version of SDL2. I chose the `mingw` one.
-Inside the zip file are the 32- and 64-bit SDL library files. Choose the one that suits your system.
-* SDL_mixer : As with SDL, download the development (`devel`) version of SDL_mixer. I chose the `mingw` one.
-Inside the zip file are the 32- and 64-bit SDL library files. Choose the one that suits your system.
+* SDL2 : Download the development (`devel`) version of SDL2.
+* SDL_mixer : As with SDL, download the development (`devel`) version of SDL_mixer.
 
 ### Installation
 <a name="installation"></a>
@@ -160,26 +164,26 @@ Inside the zip file are the 32- and 64-bit SDL library files. Choose the one tha
 
   or download code as Zip.
 
-2. Add the `include` and `lib` directories of the SDL library files you downloaded earlier to `src`. Also put the content of the `bin` folder (`bin/SDL2.dll` for Windows) inside of `bin`
+2. Add the `include` and `lib` directories of the SDL library files you downloaded earlier to `src`. Also put the content of the `bin` folder (`build/SDL2.dll` for Windows or `build/SDL2.so` for Linux) inside of `build`
   The project tree should then contain :
   - `src/include/SDL2/*.h`
   - `src/lib/*.a`
-  - `bin/SDL2.dll`
+  - `build/SDL2.dll`
 
     Follow the same procedure for SDL_mixer, GLEW and Assimp.
 
     As for cglm, all you have to do is add `cglm/*.h` to `include/cglm` and just include the header `<cglm/cglm.h>` (and nothing else !).
 3. WINDOWS - Compile the project with :
   ```sh
-    gcc -Wall -I src/include -L src/lib -o build/retro_fps src/main.c $(Get-ChildItem -Recurse -Path src/include -Filter \"*.c\").FullName -lmingw32 -lSDL2main -lSDL2 -lSDL2_mixer -lopengl32 -lglew32 -lassimp
+    gcc -Wall -std=c17 -I src/include -L src/lib -o build/fps src/main.c $(Get-ChildItem -Recurse -Path src/include -Filter \"*.c\").FullName -lmingw32 -lSDL2main -lSDL2 -lSDL2_mixer -lopengl32 -lglew32 -lassimp
   ```
-  If you don't want the program to open the terminal, add `-mwindows`.
+  If you don't want the program to open a console, add `-mwindows`.
 
 
   UNIX - A Makefile is available. Alternatively, compile the project with :
 
   ```
-    gcc -Wall -I src/include -L src/lib -o build/retro_fps src/main.c $(find src/include -name "*.c") -lmingw32 -lSDL2main -lSDL2 -lSDL2_mixer -lopengl32 -lglew32 -lassimp
+    gcc -Wall -std=c17 -I src/include -L src/lib -o build/fps src/main.c $(find src/include -name "*.c") -lmingw32 -lSDL2main -lSDL2 -lSDL2_mixer -lopengl32 -lglew32 -lassimp
   ```
   A compiled file will then be generated as `build/retro_fps` or `build/retro_fps.exe`, depending on your OS.
 
@@ -193,7 +197,7 @@ Inside the zip file are the 32- and 64-bit SDL library files. Choose the one tha
 <a name="gameplay"></a>
 
 In its current state, the game only allows you to move freely in a black space. The player can run and look around.
-The stage also contains brick cubes and a movable light source.
+The stage also contains brick cubes and a light sources.
 
 This is a placeholder for the level.
 

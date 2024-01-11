@@ -13,6 +13,7 @@
 #include <SDL2/SDL.h>
 
 #include "textures.h"
+#include "logs.h"
 
 
 #define MODELPATH "assets/models/"

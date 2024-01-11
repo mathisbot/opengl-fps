@@ -4,8 +4,9 @@
 static char* readSource(const char* filename)
 {
     FILE* file = fopen(filename, "r");
-    if (file == NULL) {
-        fprintf(stderr, "Failed to open file: %s\n", filename);
+    if (file == NULL)
+    {
+        LOG_ERROR("Failed to open file: %s\n", filename);
         return NULL;
     }
 
@@ -14,9 +15,10 @@ static char* readSource(const char* filename)
     fseek(file, 0, SEEK_SET);
 
     char* buffer = (char*)malloc(file_size + 1);
-    if (buffer == NULL) {
+    if (buffer == NULL)
+    {
         fclose(file);
-        fprintf(stderr, "Failed to allocate memory for file: %s\n", filename);
+        LOG_ERROR("Failed to allocate memory for file: %s\n", filename);
         return NULL;
     }
 
@@ -24,13 +26,14 @@ static char* readSource(const char* filename)
     if (new_length == 0) {
         fclose(file);
         free(buffer);
-        fprintf(stderr, "Failed to read file: %s\n", filename);
+        LOG_ERROR("Failed to read file: %s\n", filename);
         return NULL;
     }
 
     buffer[new_length] = '\0';
     fclose(file);
     return buffer;
+    LOG_TRACE("Loaded shader source file %s\n", filename);
 }
 
 
@@ -52,9 +55,10 @@ int loadShader(Shader *shader, const char *sourcePath, GLenum type)
 
     // Check for errors during compilation
     glGetShaderiv(shader->id, GL_COMPILE_STATUS, &success);
-    if (!success) {
+    if (!success)
+    {
         glGetShaderInfoLog(shader->id, 512, NULL, infolog);
-        fprintf(stderr, "Failed to compile shader %s: %s\n", path, infolog);
+        LOG_ERROR("Failed to compile shader %s: %s\n", path, infolog);
         destroyShader(shader);
         return -1;
     }
@@ -70,8 +74,8 @@ void destroyShader(Shader* shader)
 
 int initShaderProgram(GLuint *prog, uint8_t shaderCount, ...)
 {
-    static int success;
-    static char infolog[512];
+    int success;
+    char infolog[512];
     va_list args;
     va_start(args, shaderCount);
 
@@ -89,11 +93,13 @@ int initShaderProgram(GLuint *prog, uint8_t shaderCount, ...)
     glGetProgramiv(*prog, GL_LINK_STATUS, &success);
     if (!success) {
         glGetProgramInfoLog(*prog, 512, NULL, infolog);
-        fprintf(stderr, "Failed to link shader program: %s\n", infolog);
+        LOG_ERROR("Failed to link shader program: %s\n", infolog);
         glDeleteProgram(*prog);
         *prog = 0;
         return -1;
     }
+
+    LOG_DEBUG("Initialized shader program succesfully\n");
 
     return 0;
 }

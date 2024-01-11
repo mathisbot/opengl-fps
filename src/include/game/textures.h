@@ -11,6 +11,8 @@
 #include <GL/glew.h>
 #include <SDL2/SDL_opengl.h>
 
+#include "logs.h"
+
 
 #define TEXTUREPATH "assets/textures/"
 #define TEXTURE_REPEAT 1

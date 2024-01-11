@@ -59,7 +59,8 @@ void translateCamera(Camera *camera, const Uint8* keyboardState, double dt)
 
     // Up vector (gravity and jumping)
     
-    // static vec3 upmov;
+    // Moving up and down
+    // vec3 upmov;
     // glm_vec3_scale(camera->up, 5.0f*dt, upmov);
     // if (keyboardState[SDL_SCANCODE_DOWN])
     //     glm_vec3_sub(translation, upmov, translation);
@@ -69,7 +70,7 @@ void translateCamera(Camera *camera, const Uint8* keyboardState, double dt)
     // Jumping
     if (keyboardState[camera->bindings.jump] && camera->onGround)
     {
-        static vec3 jump;
+        vec3 jump;
         glm_vec3_scale(camera->up, camera->jumpSpeed, jump);
         glm_vec3_copy(jump, camera->upVelocity);
         camera->onGround = 0;
@@ -77,8 +78,8 @@ void translateCamera(Camera *camera, const Uint8* keyboardState, double dt)
     // Falling
     else if (!camera->onGround)
     {
-        static vec3 gravity;
-        static vec3 yTranslation;
+        vec3 gravity;
+        vec3 yTranslation;
 
         // Gravity
         glm_vec3_scale(camera->up, -GRAVITY * dt, gravity);
@@ -113,7 +114,7 @@ void rotateCamera(Camera *camera, int dx, int dy)
 {
     static float yaw = 0.0f;
     static float pitch = 0;
-    static vec3 addTarget = {0.0f, 0.0f, 0.0f};
+    vec3 addTarget = {0.0f, 0.0f, 0.0f};
 
     // fmod is used to prevent yaw from getting too large
     // thus keeping precision in the float

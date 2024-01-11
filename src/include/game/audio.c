@@ -3,16 +3,17 @@
 
 int loadSound(Sound *sound, char* filename, int volume)
 {
-    static char path[256];
+    char path[256];
     sprintf(path, "%s%s", AUDIOPATH, filename);
     sound->chunk = Mix_LoadWAV(path);
     if (sound->chunk == NULL)
     {
-        fprintf(stderr, "Error: Could not load sound file %s\n", path);
+        LOG_ERROR("Could not load sound file %s\n", path);
         return -1;
     }
     sound->volume = volume;
     Mix_VolumeChunk(sound->chunk, volume);
+    LOG_TRACE("Loaded sound file %s\n", path);
     return 0;
 }
 
@@ -28,7 +29,13 @@ void playSound(Sound sound, unsigned int loops)
 
 int initMixer(int numchans)
 {
-    if (Mix_OpenAudio(AUDIO_SAMPLERATE, MIX_DEFAULT_FORMAT, MIX_DEFAULT_CHANNELS, AUDIO_CHUNKSIZE) < 0) return -1;
-    else return 0;
+    if (Mix_OpenAudio(AUDIO_SAMPLERATE, MIX_DEFAULT_FORMAT, MIX_DEFAULT_CHANNELS, AUDIO_CHUNKSIZE) < 0)
+    {
+        LOG_ERROR("Could not initialize audio: %s\n", Mix_GetError());
+        return -1;
+    }
     Mix_AllocateChannels(numchans);
+    LOG_INFO("Initialized audio\n");
+
+    return 0;
 }

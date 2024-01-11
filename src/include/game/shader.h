@@ -9,6 +9,8 @@
 
 #include <GL/glew.h>
 
+#include "logs.h"
+
 
 #define SHADERPATH "assets/shaders/"
 

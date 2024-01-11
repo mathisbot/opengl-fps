@@ -14,7 +14,7 @@ int loadTextureFullPath(Texture *tex, const char* path, int numMipmaps, bool rep
     SDL_Surface* surface = SDL_LoadBMP(path);
     if (!surface)
     {
-        fprintf(stderr, "Error loading texture %s : %s\n", path, SDL_GetError());
+        LOG_ERROR("Error loading texture %s : %s\n", path, SDL_GetError());
         return -1;
     }
 
@@ -39,7 +39,7 @@ int loadTextureFullPath(Texture *tex, const char* path, int numMipmaps, bool rep
         // Clamp texture
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
-        static float borderColor[] = { 0.2f, 0.2f, 0.2f, 1.0f };
+        const float borderColor[] = { 0.2f, 0.2f, 0.2f, 1.0f };
         glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
     }
 
@@ -60,6 +60,8 @@ int loadTextureFullPath(Texture *tex, const char* path, int numMipmaps, bool rep
 
     // Freeing SDL surface
     SDL_FreeSurface(surface);
+
+    LOG_DEBUG("Loaded texture %s\n", path);
 
     return 0;
 }
