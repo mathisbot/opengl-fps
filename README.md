@@ -63,8 +63,6 @@ Even if I impose firm rules on myself that don't resemble those standardized tod
 
 #### Context
 
-The best-known are DirectX, Vulkan and OpenGL. Although OpenGL is the most widely-used and is the easiest to learn, it was created in 1992 and has not been designed for the capabilities of today's graphics cards. Vulkan is the successor to OpenGL, more powerful and better suited to today's machines.
-
 The first question to ask is: how do you display elements on screen? As the display is connected directly to the GPU, you need to ask the graphics drivers politely. This is usually done via standardized languages called specifications. Their implementation is the responsibility of the card manufacturer.
 
 The best-known are DirectX, Vulkan and OpenGL. Even though Vulkan is the most recent, the most optimized and the most adapted to current technologies, it requires a great deal of time and energy to operate. OpenGL is much easier to learn and use, making it suitable for a development team consisting of one person developing in their spare time. And OpenGL is still sufficiently well optimized.
