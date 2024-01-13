@@ -251,6 +251,8 @@ static int loadFileIntoModel(Model *model, char *path)
 
     processNode(model, scene->mRootNode, scene, &index);
 
+    aiReleaseImport(scene);
+
     Uint64 importEnd = SDL_GetTicks64();
     LOG_DEBUG("Imported model %s in %llu ms\n", path, importEnd-importStart);
 

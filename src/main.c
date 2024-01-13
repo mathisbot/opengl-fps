@@ -21,13 +21,16 @@
 /* --- TODO --- */
 
 /*
-- Lighten app.c (move some functions to other files)
-    -> Cube rendering, light depthCubemap rendering, ...
-- Better textures
-    -> https://learnopengl.com/Advanced-Lighting/Normal-Mapping
-    -> https://learnopengl.com/Advanced-Lighting/Parallax-Mapping
-    -> https://learnopengl.com/Advanced-Lighting/HDR
-    -> https://learnopengl.com/Advanced-Lighting/Bloom
+- Better import
+    -> model.textureLoaded dynamic size needs to be O(1)
+        -> rellaoc to 2*size when full
+        -> Keep track of the last index !!!
+- Rework lighting
+    -> Specular mapping
+    -> Material properties
+    -> Normal mapping
+    -> Parallax mapping
+- Stencil test for UI ?
 - Find other ways to load sounds (WAV is too big)
     -> OGG ?
 - SDL_image for other formats than BMP ?

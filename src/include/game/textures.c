@@ -61,7 +61,7 @@ int loadTextureFullPath(Texture *tex, const char* path, int numMipmaps, bool rep
     tex->width = surface->w;
     tex->height = surface->h;
     tex->type = type;
-    strncpy(tex->path, path, 256);
+    strncpy(tex->path, path, 255);
 
     // Freeing SDL surface
     SDL_FreeSurface(surface);

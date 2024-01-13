@@ -29,7 +29,7 @@
 /* --- MACROS --- */
 
 // Debug mode
-#define DEBUG 1
+#define DEBUG 0
 #define PRINT_FPS 0
 #define WIREFRAME 0
 
