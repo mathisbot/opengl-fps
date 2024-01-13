@@ -97,11 +97,12 @@ void freeMesh(Mesh *mesh);
  * @param filename The name of the file to load
  * @param position Position of the model
  * @param scale Scale of the model
+ * @param flipUVs Whether to flip the UVs or not
  * @return 0 on success, -1 on failure
  * 
  * @note The filename must be relative to the MODELPATH
 */
-int loadModel(Model *model, char *filename, vec3 position, vec3 scale);
+int loadModel(Model *model, char *filename, vec3 position, vec3 scale, bool flipUVs);
 
 /**
  * @brief Load a model from a file
@@ -110,11 +111,12 @@ int loadModel(Model *model, char *filename, vec3 position, vec3 scale);
  * @param filename The name of the file to load
  * @param position Position of the model
  * @param scale Scale of the model
+ * @param flipUVs Whether to flip the UVs or not
  * @return 0 on success, -1 on failure
  * 
  * @note The filename must be absolute
 */
-int loadModelFullPath(Model *model, char *filename, vec3 position, vec3 scale);
+int loadModelFullPath(Model *model, char *filename, vec3 position, vec3 scale, bool flipUVs);
 
 /**
  * @brief Draw a model

@@ -144,10 +144,11 @@ static void appInitScene(Application *app)
     if (initPointLight(&app->pointLights[3], (vec3){3.3f, 4.0f, -1.5f}, (vec3){0.1f, 0.0f, 0.95f})<0) appCleanUpAndExit(app, EXIT_FAILURE, "Error creating point light");
 
     // Load models
-    app->scene.modelCount = 1;
+    app->scene.modelCount = 2;
     app->scene.models = malloc(sizeof(Model) * app->scene.modelCount);
-    if (loadModel(&app->scene.models[0], "guitar/backpack.obj", (vec3){3.0, 1.0, 3.0}, (vec3){1.0, 1.0, 1.0}) < 0) appCleanUpAndExit(app, EXIT_FAILURE, "Error loading guitar model");
-    // if (loadModel(&app->scene.models[1], "house/Cottage_FREE.obj", (vec3){15.0, 0.0, 15.0}, (vec3){2.0, 2.0, 2.0}) < 0) appCleanUpAndExit(app, EXIT_FAILURE, "Error loading guitar model");
+    if (loadModel(&app->scene.models[0], "guitar/backpack.obj", (vec3){3.0, 1.0, 3.0}, (vec3){1.0, 1.0, 1.0}, false) < 0) appCleanUpAndExit(app, EXIT_FAILURE, "Error loading guitar model");
+    if (loadModel(&app->scene.models[1], "shotgun/shotgun.obj", (vec3){2.0, 1.5, 2.0}, (vec3){2.0, 2.0, 2.0}, true) < 0) appCleanUpAndExit(app, EXIT_FAILURE, "Error loading shotgun model");
+    // if (loadModel(&app->scene.models[2], "medievalhouse/house.obj", (vec3){15.0, 0.0, 15.0}, (vec3){2.0, 2.0, 2.0}, true) < 0) appCleanUpAndExit(app, EXIT_FAILURE, "Error loading house model");
 
     // Vertices for a cube
     float vertices[] = {

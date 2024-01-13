@@ -251,11 +251,12 @@ static void processNode(Model *model, const struct aiNode *node, const struct ai
     for (unsigned int i=0; i<node->mNumChildren; i++) processNode(model, node->mChildren[i], scene, index);
 }
 
-static int loadFileIntoModel(Model *model, char *path)
+static int loadFileIntoModel(Model *model, char *path, bool flipUVs)
 {
     Uint64 importStart = SDL_GetTicks64();
-    const struct aiScene *scene = aiImportFile(path, aiProcess_OptimizeGraph | aiProcessPreset_TargetRealtime_MaxQuality);
-
+    enum aiPostProcessSteps steps = aiProcess_OptimizeGraph | aiProcessPreset_TargetRealtime_MaxQuality;
+    if (flipUVs) steps |= aiProcess_FlipUVs;
+    const struct aiScene *scene = aiImportFile(path, steps);
     if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE)
     {
         LOG_ERROR("Error from Assimp when loading %s : %s\n", path, aiGetErrorString());
@@ -282,18 +283,18 @@ static int loadFileIntoModel(Model *model, char *path)
     return 0;
 }
 
-int loadModel(Model *model, char *filename, vec3 position, vec3 scale)
+int loadModel(Model *model, char *filename, vec3 position, vec3 scale, bool flipUVs)
 {
     char path[128];
     sprintf(path, "%s%s", MODELPATH, filename);
 
-    return loadModelFullPath(model, path, position, scale);
+    return loadModelFullPath(model, path, position, scale, flipUVs);
 }
 
-int loadModelFullPath(Model *model, char *path, vec3 position, vec3 scale)
+int loadModelFullPath(Model *model, char *path, vec3 position, vec3 scale, bool flipUVs)
 {
     getDirectory(path, model->dir);
-    loadFileIntoModel(model, path);
+    loadFileIntoModel(model, path, flipUVs);
 
     model->position[0] = position[0];
     model->position[1] = position[1];
