@@ -7,7 +7,7 @@
   <h3 align="center">OpenGL FPS</h3>
 
   <p align="center">
-    This project aims to recreate a simple FPS in C using OpenGL and SDL2.
+    This repository is a simple FPS game made in C using OpenGL and SDL2.
   </p>
 </div>
 
@@ -50,11 +50,11 @@
 ## About
 <a name="about"></a>
 
-The aim of this project is to create a simple FPS game, using no game engine. This allows for a low-level approach to game design, and therefore very thorough optimization.
+The idea behind this project is to play with 3D graphics in a low-level approach. This is an FPS game, built without a game engine. This also allows for extensive optimization.
 
-In this case, I chose the C language along with only one (relatively) low-level library: SDL2 (in order to use OpenGL without platform considerations). This means that rendering methods are close to nil, and that I had to start from scratch (although SDL can take some of the work out of the equation).
+So I chose the C language, which I like, along with a library: SDL2, to use OpenGL in a platform-independent context. With this, rendering methods are almost non-existent, and I have to start from scratch (although SDL can take some of the work out of the equation).
 
-Even if I impose firm rules on myself that don't resemble those standardized today (use of a pre-made game engine), the game should look like a modern FPS. The game should therefore include familiar mechanics (it won't be 1993's Doom).
+The primitive rules imposed here shouldn't affect the quality of the game, which I hope will resemble a modern FPS rather than the first Doom. The game should include mechanics familiar from today's FPS.
 
 <p align="right">(<a href="#readme-top">Up</a>)</p>
 
@@ -63,9 +63,7 @@ Even if I impose firm rules on myself that don't resemble those standardized tod
 
 #### Context
 
-The first question to ask is: how do you display elements on screen? As the display is connected directly to the GPU, you need to ask the graphics drivers politely. This is usually done via standardized languages called specifications. Their implementation is the responsibility of the card manufacturer.
-
-The best-known are DirectX, Vulkan and OpenGL. Even though Vulkan is the most recent, the most optimized and the most adapted to current technologies, it requires a great deal of time and energy to operate. OpenGL is much easier to learn and use, making it suitable for a development team consisting of one person developing in their spare time. And OpenGL is still sufficiently well optimized.
+In order to display elements on the screen, modern computer architecture requires a polite request to the graphics drivers. This is usually done via standardized languages called specifications. The best-known are DirectX, Vulkan and OpenGL. Even though Vulkan is the most recent, the most optimized and the most adapted to current technologies, it requires a great deal of time and energy to operate. OpenGL is much easier to learn and use, making it suitable for a development team consisting of one person developing in their spare time. Please note that OpenGL still allowd for a sufficient level of optimisation.
 
 > OpenGL® is the most widely adopted 2D and 3D graphics API in the industry, bringing thousands of applications to a wide variety of computer platforms. It is window-system and operating-system independent as well as network-transparent. OpenGL enables developers of software for PC, workstation, and supercomputing hardware to create high-performance, visually compelling graphics software application
 
@@ -77,16 +75,16 @@ on *khronos.org*
 
 on *libsdl.org*
 
-To interact with the rest of the computer, i.e. the screen, a window, user inputs, audio peripherals and so on, you need to use the APIs offered by the OS. As these are highly OS-dependent, the same code must be replicated for each targeted OS.
+To interact with the rest of the computer, you need to use the API provided by the OS developers. As these are highly OS-dependent, the same code must be replicated for each targeted OS.
 
-I want to make a game that's as cross-platform as possible. To avoid the pain of using Win32, or to avoid rewriting code 3 times for Linux and macOS, I chose to use an external library. In any case, the library is surely much more optimized than it would have been if I'd done it myself.
+In order to make the game as cross-platform as possible, to avoid the pain of using Win32, or to avoid rewriting code 3 times for Linux and macOS, I chose to use an external library. In any case, the library is surely much more optimized than it would have been if I'd done it myself.
 Among the various choices available for these libraries (GLFW, GLUT, SFML, ...), one stands out:
 
 - SDL2 is renowned for its lightweight design, which ensures efficient resource utilization without compromising performance.
 
-- One of the key advantages of SDL2 is its provision of low-level access to graphics, but also audio drivers, and input devices.
+- One of the key advantages of SDL2 is its provision of low-level access to audio drivers, and input devices.
 
-- SDL2's cross-platform compatibility makes it easy to seamlessly operate on various operating systems, including Windows, macOS, and Linux.
+- SDL2's cross-platform compatibility makes it easy to seamlessly operate on various operating systems, including Windows, macOS, Linux, iOS and Android.
 
 Overall, I think SDL2 is best suited to video game design.
 
@@ -104,7 +102,7 @@ Overall, I think SDL2 is best suited to video game design.
 
 #### Quick note
 
-Assimp stands for Asset Importer Library. It's a library that makes it extremely easy to import 3D files, such as models or animations. I chose to use it because it allows you to import a wide variety of formats, but ESPECIALLY because the output format is standardized, and import is fast and optimized.
+Assimp stands for Asset Importer Library. It's a library that makes it extremely easy to import 3D files, such as models or animations. Even if the import itself isn't among the fastest, I chose this library because it also offers post-processing operations, such as optimizing models for lighter real-time rendering.
 
 cglm stands for OpenGL Mathematics (glm) for C. It is a highly optimized 2D/3D math library. It offers a wide range of functions that make it quick and easy to use mathematics in an OpenGL/Vulkan context. The library takes advantage of SIMD operations when supported by the processor (SSE and SSE2 are supported by all modern x86 processors anyway).
 
@@ -126,7 +124,10 @@ Once again, it would have been possible to do without, but it would have require
 <a name="getting-started"></a>
 
 #### Try the game
-If you just want to try out the game, simply download the `release.zip` file.
+
+**In the near future, the game files will no longer be available on Github, due to the sheer size of the assets.**
+
+For now, if you just want to try out the game, simply download the `release.zip` file.
 
 Please note that the game files given in this zip file are only compatible with 64-bit Windows systems (probably only for AMD CPUs). Pre-compiled versions of the game may be available in the future for Linux, macOS and Windows 32-bit, but nothing is guaranteed.
 
@@ -151,7 +152,7 @@ Otherwise, follow these steps:
 * cglm : Download latest release on GitHub. Please note that cglm is a header-only library (at least, I'll only be using inline functions).
 * GLEW : Download GLEW binaries on their website.
 * SDL2 : Download the development (`devel`) version of SDL2.
-* SDL_mixer : As with SDL, download the development (`devel`) version of SDL_mixer.
+* SDL_mixer : Download the development (`devel`) version of SDL_mixer.
 
 ### Installation
 <a name="installation"></a>
@@ -195,10 +196,7 @@ Otherwise, follow these steps:
 ### Gameplay
 <a name="gameplay"></a>
 
-In its current state, the game only allows you to move freely in a black space. The player can run and look around.
-The stage also contains brick cubes and a light sources.
-
-This is a placeholder for the level.
+In its current state, the game only allows you to move freely in a placeholder level, containing various elements.
 
 <p align="right">(<a href="#readme-top">Up</a>)</p>
 
@@ -267,8 +265,8 @@ This roadmap helps organizing development and may be subject to change.
 ### Known Issues
 <a name="known-issues"></a>
 
-Various bugs and issues may appear during development, but no direct solution is found. Here is a list of known issues for which no solution has yet been found. By the way, if you manage to find a bug during a game, don't hesitate to share it in Issues.
-- Light is temporarily broken, it will be repaired very soon.
+Various problems and bugs may arise during development. If no obvious solution is found, they are listed here. If you come across another bug not listed, please report it using the Issues tab.
+- Light is temporarily ugly, it will be repaired very soon.
 
 <p align="right">(<a href="#readme-top">Up</a>)</p>
 
