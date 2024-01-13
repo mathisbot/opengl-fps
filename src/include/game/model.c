@@ -43,6 +43,14 @@ static void setupMesh(Mesh *mesh)
     glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, normal));
     glEnableVertexAttribArray(2);
 
+    // Vertex tangents
+    glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, tangent));
+    glEnableVertexAttribArray(3);
+
+    // Vertex bitangents
+    glVertexAttribPointer(4, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, bitangent));
+    glEnableVertexAttribArray(4);
+
     glBindVertexArray(0);
 }
 
@@ -107,6 +115,16 @@ static int processMesh(Model* model, Mesh* mesh, const struct aiMesh *aiMesh, co
             mesh->vertices[i].textureCoords[0] = 0.0f;
             mesh->vertices[i].textureCoords[1] = 0.0f;
         }
+
+        // Tangent
+        mesh->vertices[i].tangent[0] = aiMesh->mTangents[i].x;
+        mesh->vertices[i].tangent[1] = aiMesh->mTangents[i].y;
+        mesh->vertices[i].tangent[2] = aiMesh->mTangents[i].z;
+
+        // Bitangent
+        mesh->vertices[i].bitangent[0] = aiMesh->mBitangents[i].x;
+        mesh->vertices[i].bitangent[1] = aiMesh->mBitangents[i].y;
+        mesh->vertices[i].bitangent[2] = aiMesh->mBitangents[i].z;
     }
 
     // Process indices
@@ -130,11 +148,17 @@ static int processMesh(Model* model, Mesh* mesh, const struct aiMesh *aiMesh, co
         mesh->textureCount = normalCount + diffuseCount + specularCount + heightCount;
         mesh->textures = (Texture*)malloc(mesh->textureCount * sizeof(Texture));
 
+        LOG_TRACE("Mesh has %d textures\n", mesh->textureCount);
+        LOG_TRACE("Mesh has %d normal textures\n", normalCount);
+        LOG_TRACE("Mesh has %d diffuse textures\n", diffuseCount);
+        LOG_TRACE("Mesh has %d specular textures\n", specularCount);
+        LOG_TRACE("Mesh has %d height textures\n", heightCount);
+
         unsigned int index = 0;
         loadMeshTexture(model, normalCount, material, mesh, aiTextureType_NORMAL_CAMERA, TEXTURE_NORMAL, &index);
         loadMeshTexture(model, diffuseCount, material, mesh, aiTextureType_DIFFUSE, TEXTURE_DIFFUSE, &index);
         loadMeshTexture(model, specularCount, material, mesh, aiTextureType_SPECULAR, TEXTURE_SPECULAR, &index);
-        loadMeshTexture(model, heightCount, material, mesh, aiTextureType_HEIGHT, TEXTURE_HEIGHT, &index);
+        loadMeshTexture(model, heightCount, material, mesh, aiTextureType_HEIGHT, TEXTURE_NORMAL, &index);
     }
 
     LOG_TRACE("Mesh has %d vertices, %d indices and %d textures.\n", mesh->vertexCount, mesh->indexCount, mesh->textureCount);

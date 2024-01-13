@@ -1,9 +1,14 @@
 #version 460 core
+
+#define NR_POINT_LIGHTS 4
+
 out vec4 FragColor;
 
 in vec2 TexCoords;
 in vec3 FragPos;
-in vec3 Normal;
+in vec3 TangentLightPos[NR_POINT_LIGHTS];
+in vec3 TangentViewPos;
+in vec3 TangentFragPos;
 
 uniform vec3 viewPos;
 uniform float FarPlaneShadow;
@@ -15,8 +20,8 @@ struct Material {
     vec3 ambient;
     sampler2D diffuseMap;
     sampler2D specularMap;
-    vec3 specular;  // TODO: remove
     float shininess;
+    sampler2D normalMap;
 };
 uniform Material material;
 
@@ -30,7 +35,6 @@ struct PointLight {
     float quadratic;
     samplerCube depthCubemap;
 };
-#define NR_POINT_LIGHTS 4
 uniform PointLight pointLights[NR_POINT_LIGHTS];
 
 const vec3 sampleOffsetDirections[20] = vec3[]
@@ -63,11 +67,11 @@ float computeShadow(vec3 lightPos, samplerCube depthCubemap, vec3 lightDir, vec3
     return shadow;
 }
 
-vec3 computePointLight(PointLight light, vec3 normal, vec3 viewDir, float diskRadius)
+vec3 computePointLight(PointLight light, vec3 normal, vec3 viewDir, float diskRadius, vec3 tangentLightPos)
 {
     vec3 ambient = light.ambient * texture(material.diffuseMap, TexCoords).rgb;
 
-    vec3 lightDir = normalize(light.position - FragPos);
+    vec3 lightDir = normalize(tangentLightPos - TangentFragPos);
     float diff = max(dot(normal, lightDir), 0.0);
     vec3 diffuse = diff * light.diffuse * texture(material.diffuseMap, TexCoords).rgb;
 
@@ -88,11 +92,11 @@ void main()
 {
     vec3 outputColor = vec3(0.0);
 
-    vec3 norm = normalize(Normal);
-    vec3 FragToView = viewPos - FragPos;
+    vec3 norm = normalize(texture(material.normalMap, TexCoords).rgb * 2.0 - 1.0);
+    vec3 FragToView = TangentViewPos - TangentFragPos;
     vec3 viewDir = normalize(FragToView);
     float diskRadius = (1.0 + (length(FragToView) / FarPlaneShadow)) / 25.0;
-    for (int i = 0; i < NR_POINT_LIGHTS; i++) outputColor += computePointLight(pointLights[i], norm, viewDir, diskRadius);
+    for (int i = 0; i < NR_POINT_LIGHTS; i++) outputColor += computePointLight(pointLights[i], norm, viewDir, diskRadius, TangentLightPos[i]);
 
     // Draw pointer circle
     float distanceCenter = length(gl_FragCoord.xy-windowSize/2);
