@@ -146,8 +146,8 @@ static void appInitScene(Application *app)
     // Load models
     app->scene.modelCount = 1;
     app->scene.models = malloc(sizeof(Model) * app->scene.modelCount);
-    if (loadModel(&app->scene.models[0], "guitar/backpack.obj") < 0) appCleanUpAndExit(app, EXIT_FAILURE, "Error loading guitar model");
-
+    if (loadModel(&app->scene.models[0], "guitar/backpack.obj", (vec3){3.0, 1.0, 3.0}, (vec3){1.0, 1.0, 1.0}) < 0) appCleanUpAndExit(app, EXIT_FAILURE, "Error loading guitar model");
+    // if (loadModel(&app->scene.models[1], "house/Cottage_FREE.obj", (vec3){15.0, 0.0, 15.0}, (vec3){2.0, 2.0, 2.0}) < 0) appCleanUpAndExit(app, EXIT_FAILURE, "Error loading guitar model");
 
     // Vertices for a cube
     float vertices[] = {

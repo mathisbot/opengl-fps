@@ -29,13 +29,13 @@
 /* --- MACROS --- */
 
 // Debug mode
-#define DEBUG 0
+#define DEBUG 1
 #define PRINT_FPS 0
 #define WIREFRAME 0
 
 // Graphic options
 #define VSYNC 0
-#define FULLSCREEN 1
+#define FULLSCREEN 0
 #define MSAADEPTH 4
 
 // View options

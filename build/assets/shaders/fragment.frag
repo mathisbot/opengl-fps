@@ -14,7 +14,8 @@ uniform float pointerRadius;
 struct Material {
     vec3 ambient;
     sampler2D diffuseMap;
-    vec3 specular;
+    sampler2D specularMap;
+    vec3 specular;  // TODO: remove
     float shininess;
 };
 uniform Material material;
@@ -72,7 +73,8 @@ vec3 computePointLight(PointLight light, vec3 normal, vec3 viewDir, float diskRa
 
     vec3 halfwayDir = normalize(lightDir + viewDir);
     float spec = pow(max(dot(normal, halfwayDir), 0.0), material.shininess);
-    vec3 specular = spec * light.specular * material.specular;
+    // vec3 specular = spec * light.specular * material.specular;
+    vec3 specular = spec * light.specular * vec3(texture(material.specularMap, TexCoords).r);
 
     float distance = length(light.position - FragPos);
     float attenuation = 1.0 / (1.0 + light.linear * distance + light.quadratic * (distance * distance));

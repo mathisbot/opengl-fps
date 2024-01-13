@@ -230,8 +230,7 @@ static void processNode(Model *model, const struct aiNode *node, const struct ai
 static int loadFileIntoModel(Model *model, char *path)
 {
     Uint64 importStart = SDL_GetTicks64();
-    const struct aiScene *scene = aiImportFile(path, aiProcess_OptimizeGraph | aiProcess_FlipUVs | aiProcessPreset_TargetRealtime_MaxQuality);
-    // const struct aiScene *scene = aiImportFile(path, aiProcess_Triangulate | aiProcess_FlipUVs);
+    const struct aiScene *scene = aiImportFile(path, aiProcess_OptimizeGraph | aiProcessPreset_TargetRealtime_MaxQuality);
 
     if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE)
     {
@@ -256,31 +255,28 @@ static int loadFileIntoModel(Model *model, char *path)
     Uint64 importEnd = SDL_GetTicks64();
     LOG_DEBUG("Imported model %s in %llu ms\n", path, importEnd-importStart);
 
-    // TODO: Dynamic
-    model->x = 3.0f;
-    model->y = 1.0f;
-    model->z = 3.0f;
-    model->w = 0.5f;
-    model->h = 0.5f;
-    model->d = 0.5f;
-
     return 0;
 }
 
-int loadModel(Model *model, char *filename)
+int loadModel(Model *model, char *filename, vec3 position, vec3 scale)
 {
     char path[128];
     sprintf(path, "%s%s", MODELPATH, filename);
 
-    return loadModelFullPath(model, path);
+    return loadModelFullPath(model, path, position, scale);
 }
 
-int loadModelFullPath(Model *model, char *path)
+int loadModelFullPath(Model *model, char *path, vec3 position, vec3 scale)
 {
     getDirectory(path, model->dir);
     loadFileIntoModel(model, path);
 
-    LOG_DEBUG("Loaded model %s\n", path);
+    model->position[0] = position[0];
+    model->position[1] = position[1];
+    model->position[2] = position[2];
+    model->scale[0] = scale[0];
+    model->scale[1] = scale[1];
+    model->scale[2] = scale[2];
 
     return 0;
 }
@@ -289,8 +285,9 @@ void drawModel(Model *model, unsigned int programShader)
 {
     static mat4 modelMat = GLM_MAT4_IDENTITY_INIT;
     glm_mat4_identity(modelMat);
-    glm_translate(modelMat, (vec3){model->x, model->y, model->z});
-    glm_scale(modelMat, (vec3){model->w, model->h, model->d});
+    glm_translate(modelMat, model->position);
+    glm_scale(modelMat, model->scale);
+    // TODO: Change this
     glm_rotate(modelMat, glm_rad(-90.0f), (vec3){0.0f, 1.0f, 0.0f});
     glUniformMatrix4fv(glGetUniformLocation(programShader, "model"), 1, GL_FALSE, (float*)modelMat);
 

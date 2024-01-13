@@ -125,14 +125,9 @@ Once again, it would have been possible to do without, but it would have require
 
 #### Try the game
 
-**In the near future, the game files will no longer be available on Github, due to the sheer size of the assets.**
+Game files are no longer hosted on Github, due to the sheer size of the assets. You can download them here : **Not available for now**.
 
-For now, if you just want to try out the game, simply download the `release.zip` file.
-
-Please note that the game files given in this zip file are only compatible with 64-bit Windows systems (probably only for AMD CPUs). Pre-compiled versions of the game may be available in the future for Linux, macOS and Windows 32-bit, but nothing is guaranteed.
-
-In addition, some binary files (.dll) may not be included in the zip file due to copyrights. Here's a list of binaries to add :
-- None
+Please note that, for now, game files are only compatible with 64-bit Windows systems (probably only for AMD CPUs). Pre-compiled versions of the game will be available in the future for Linux and macOS.
 
 For the moment, no interface or menu has been implemented, so that there's no way to change  key bindings from within the game.
 

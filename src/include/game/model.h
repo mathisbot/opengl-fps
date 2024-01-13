@@ -61,8 +61,8 @@ typedef struct {
 
 
 typedef struct {
-    float x, y, z;  // position
-    float w, h, d;  // width, height, depth
+    vec3 position;
+    vec3 scale;
     unsigned int meshCount;
     Mesh *meshes;
     char dir[64];
@@ -93,22 +93,26 @@ void freeMesh(Mesh *mesh);
  * 
  * @param model Pointer to the model to load
  * @param filename The name of the file to load
+ * @param position Position of the model
+ * @param scale Scale of the model
  * @return 0 on success, -1 on failure
  * 
  * @note The filename must be relative to the MODELPATH
 */
-int loadModel(Model *model, char *filename);
+int loadModel(Model *model, char *filename, vec3 position, vec3 scale);
 
 /**
  * @brief Load a model from a file
  * 
  * @param model Pointer to the model to load
  * @param filename The name of the file to load
+ * @param position Position of the model
+ * @param scale Scale of the model
  * @return 0 on success, -1 on failure
  * 
  * @note The filename must be absolute
 */
-int loadModelFullPath(Model *model, char *filename);
+int loadModelFullPath(Model *model, char *filename, vec3 position, vec3 scale);
 
 /**
  * @brief Draw a model

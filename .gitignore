@@ -48,6 +48,7 @@ dkms.conf
 # Folders
 .vscode/
 .git/
+build/
 src/include/assimp/
 src/include/cglm/
 src/include/GL/
