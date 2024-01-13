@@ -48,7 +48,11 @@ dkms.conf
 # Folders
 .vscode/
 .git/
-build/
+build/assets/images/
+
+build/assets/models/
+build/assets/sounds/
+build/assets/textures/
 src/include/assimp/
 src/include/cglm/
 src/include/GL/
