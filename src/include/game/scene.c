@@ -4,7 +4,7 @@
 void renderScene(const Scene *scene, GLuint programShader)
 {
     // TODO: Draw models
-    // for (unsigned int i=0; i<scene->modelCount; i++) drawModel(&scene->models[i], programShader);
+    for (unsigned int i=0; i<scene->modelCount; i++) drawModel(&scene->models[i], programShader);
 
     // Temporary
      for (uint8_t i=0; i<10; i++)

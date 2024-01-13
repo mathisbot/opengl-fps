@@ -13,12 +13,11 @@ uniform float pointerRadius;
 
 struct Material {
     vec3 ambient;
-    vec3 diffuse;
+    sampler2D diffuseMap;
     vec3 specular;
     float shininess;
 };
 uniform Material material;
-uniform sampler2D textureSampler;
 
 struct PointLight {
     vec3 color;
@@ -65,11 +64,11 @@ float computeShadow(vec3 lightPos, samplerCube depthCubemap, vec3 lightDir, vec3
 
 vec3 computePointLight(PointLight light, vec3 normal, vec3 viewDir, float diskRadius)
 {
-    vec3 ambient = light.ambient * material.ambient;
+    vec3 ambient = light.ambient * texture(material.diffuseMap, TexCoords).rgb;
 
     vec3 lightDir = normalize(light.position - FragPos);
     float diff = max(dot(normal, lightDir), 0.0);
-    vec3 diffuse = diff * light.diffuse * material.diffuse;
+    vec3 diffuse = diff * light.diffuse * texture(material.diffuseMap, TexCoords).rgb;
 
     vec3 halfwayDir = normalize(lightDir + viewDir);
     float spec = pow(max(dot(normal, halfwayDir), 0.0), material.shininess);
@@ -93,10 +92,8 @@ void main()
     float diskRadius = (1.0 + (length(FragToView) / FarPlaneShadow)) / 25.0;
     for (int i = 0; i < NR_POINT_LIGHTS; i++) outputColor += computePointLight(pointLights[i], norm, viewDir, diskRadius);
 
-    vec4 result = texture(textureSampler, TexCoords) * vec4(outputColor, 1.0);
-
     // Draw pointer circle
     float distanceCenter = length(gl_FragCoord.xy-windowSize/2);
-    if (distanceCenter <= pointerRadius) FragColor = vec4(1-result.rgb, 1.0);
-    else FragColor = result;
+    if (distanceCenter <= pointerRadius) FragColor = vec4(1-outputColor, 1.0);
+    else FragColor = vec4(outputColor, 1.0);
 }

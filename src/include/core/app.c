@@ -133,7 +133,7 @@ static void appInitScene(Application *app)
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, brickwall.id);
     glUseProgram(app->shaderProgram);
-    glUniform1i(glGetUniformLocation(app->shaderProgram, "textureSampler"), 0);
+    glUniform1i(glGetUniformLocation(app->shaderProgram, "material.diffuseMap"), 0);
     glUseProgram(0);
     glActiveTexture(GL_TEXTURE1);
 

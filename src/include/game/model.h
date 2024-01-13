@@ -48,27 +48,23 @@ typedef struct {
  * @param EBO Element Buffer Object
  * 
  * @note The VAO, VBO and EBO are used to draw the mesh and shouldn't be modified
- * @note The textures are loaded from the textures.h file
+ * @note Textures are loaded with the textures.h
 */
 typedef struct {
+    unsigned int vertexCount, indexCount, textureCount;
     Vertex *vertices;
-    unsigned int vertexCount;
     unsigned int *indices;
-    unsigned int indexCount;
     Texture *textures;
-    unsigned int textureCount;
 
-    unsigned int VAO;
-    unsigned int VBO;
-    unsigned int EBO;
+    unsigned int VAO, VBO, EBO;
 } Mesh;
 
 
 typedef struct {
     float x, y, z;  // position
     float w, h, d;  // width, height, depth
-    Mesh *meshes;
     unsigned int meshCount;
+    Mesh *meshes;
     char dir[64];
     Texture *texturesLoaded;
     unsigned int texturesLoadedCount;

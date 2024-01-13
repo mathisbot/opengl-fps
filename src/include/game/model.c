@@ -56,15 +56,11 @@ static inline void loadMeshTexture(Model* model, unsigned int count, struct aiMa
         char path[1087];  // Avoid compiler warning
         sprintf(path, "%s%s", model->dir, str.data);
         bool skip = 0;
-        mesh->textureCount++;
-        mesh->textures = (Texture*)realloc(mesh->textures, mesh->textureCount * sizeof(Texture));
         // Check if texture was loaded before and if so, continue to next iteration: skip loading a new texture
         for (unsigned int j=0; j<model->texturesLoadedCount; j++)
         {
             if (!strcmp(model->texturesLoaded[j].path, path))
             {
-                mesh->textureCount++;
-                mesh->textures = (Texture*)realloc(mesh->textures, mesh->textureCount * sizeof(Texture));
                 mesh->textures[*index] = model->texturesLoaded[j];
                 skip = 1;
                 break;
@@ -73,10 +69,10 @@ static inline void loadMeshTexture(Model* model, unsigned int count, struct aiMa
         // If texture hasn't been loaded already, load it
         if (!skip)
         {
-            loadTextureFullPath(&mesh->textures[mesh->textureCount-1], path, 1, 0, type);  // From textures.h
+            loadTextureFullPath(&mesh->textures[*index], path, 1, 0, type);  // From textures.h
             model->texturesLoadedCount++;
             model->texturesLoaded = (Texture*)realloc(model->texturesLoaded, model->texturesLoadedCount * sizeof(Texture));
-            model->texturesLoaded[*index] = mesh->textures[mesh->textureCount-1];
+            model->texturesLoaded[model->texturesLoadedCount-1] = mesh->textures[*index];
         }
         *index += 1;
     }
@@ -113,8 +109,9 @@ static int processMesh(Model* model, Mesh* mesh, const struct aiMesh *aiMesh, co
     }
 
     // Process indices
-    mesh->indexCount = aiMesh->mNumFaces * 3;
-    mesh->indices = (unsigned int*)malloc(aiMesh->mNumFaces * 3 * sizeof(unsigned int));
+    mesh->indexCount = 0;
+    for (unsigned int i=0; i<aiMesh->mNumFaces; i++) mesh->indexCount += aiMesh->mFaces[i].mNumIndices;
+    mesh->indices = (unsigned int*)malloc(mesh->indexCount * sizeof(unsigned int));
     for (unsigned int i=0; i<aiMesh->mNumFaces; i++)
     {
         struct aiFace face = aiMesh->mFaces[i];
@@ -151,36 +148,43 @@ void drawMesh(Mesh *mesh, unsigned int programShader)
     unsigned int normalNr = 0;
     unsigned int heightNr = 0;
     
+    // Program shader is bound before calling this function
+    // glUseProgram(programShader);
+
     static int textureUnits = 0;
-    if (!textureUnits) glGetIntegerv(GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS, &textureUnits);
+    static unsigned int maxLoop = 0;
+    if (!textureUnits)
+    {
+        glGetIntegerv(GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS, &textureUnits);
+        maxLoop = glm_min(textureUnits, mesh->textureCount);
+    }
     static const int textureStart = 1;  // Save GL_TEXTURE0 just in case
 
     // Bind appropriate textures
-    int maxLoop = glm_min(textureUnits, mesh->textureCount);
     for (unsigned int i=0; i<maxLoop; i++)
     {
         glActiveTexture(GL_TEXTURE0 + i+textureStart);
-        char number[8];
-        char name[32];
+        char number[3];
+        char name[52];
         char longName[64];
         if (mesh->textures[i].type == TEXTURE_DIFFUSE)
         {
-            sprintf(name, "textureDiffuse%d", diffuseNr++);
+            sprintf(name, "diffuseMap%d", diffuseNr++);
             sprintf(number, "%d", diffuseNr++);
         }
         else if (mesh->textures[i].type == TEXTURE_SPECULAR)
         {
-            sprintf(name, "textureSpecular%d", specularNr++);
+            sprintf(name, "specularMap%d", specularNr++);
             sprintf(number, "%d", specularNr++);
         }
         else if (mesh->textures[i].type == TEXTURE_NORMAL)
         {
-            sprintf(name, "textureNormal%d", normalNr++);
+            sprintf(name, "normalMap%d", normalNr++);
             sprintf(number, "%d", normalNr++);
         }
         else if (mesh->textures[i].type == TEXTURE_HEIGHT)
         {
-            sprintf(name, "textureHeight%d", heightNr++);
+            sprintf(name, "heightMap%d", heightNr++);
             sprintf(number, "%d", heightNr++);
         
         }
@@ -193,9 +197,6 @@ void drawMesh(Mesh *mesh, unsigned int programShader)
     // Draw mesh
     glBindVertexArray(mesh->VAO);
     glDrawElements(GL_TRIANGLES, mesh->indexCount, GL_UNSIGNED_INT, 0);
-
-    // Set everything back to defaults once configured
-    glActiveTexture(GL_TEXTURE0);
     glBindVertexArray(0);
 }
 
@@ -212,7 +213,7 @@ void freeMesh(Mesh *mesh)
 
 static void processNode(Model *model, const struct aiNode *node, const struct aiScene *scene, unsigned int *index)
 {
-    // Process all the node's meshes (if any)
+    // Process all the node's meshes
     for (unsigned int i=0; i<node->mNumMeshes; i++)
     {
         const struct aiMesh *mesh = scene->mMeshes[node->mMeshes[i]];
@@ -225,10 +226,10 @@ static void processNode(Model *model, const struct aiNode *node, const struct ai
 
 static int loadFileIntoModel(Model *model, char *path)
 {
-    // const struct aiScene *scene = aiImportFile(path, aiProcess_FlipUVs | aiProcessPreset_TargetRealtime_MaxQuality);
-    const struct aiScene *scene = aiImportFile(path, aiProcess_Triangulate | aiProcess_FlipUVs);
+    Uint64 importStart = SDL_GetTicks64();
+    const struct aiScene *scene = aiImportFile(path, aiProcess_OptimizeGraph | aiProcess_FlipUVs | aiProcessPreset_TargetRealtime_MaxQuality);
 
-    if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode)
+    if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE)
     {
         LOG_ERROR("Error from Assimp when loading %s : %s\n", path, aiGetErrorString());
         aiReleaseImport(scene);
@@ -243,6 +244,8 @@ static int loadFileIntoModel(Model *model, char *path)
     processNode(model, scene->mRootNode, scene, &index);
 
     LOG_TRACE("Loaded file into model\n");
+    Uint64 importEnd = SDL_GetTicks64();
+    LOG_TRACE("Imported file in %llu ms\n", importEnd-importStart);
     return 0;
 }
 
