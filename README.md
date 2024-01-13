@@ -129,7 +129,7 @@ Game files are no longer hosted on Github, due to the sheer size of the assets. 
 
 Please note that, for now, game files are only compatible with 64-bit Windows systems (probably only for AMD CPUs). Pre-compiled versions of the game will be available in the future for Linux and macOS.
 
-For the moment, no interface or menu has been implemented, so that there's no way to change  key bindings from within the game.
+For the moment, no interface or menu has been implemented, so that there's no way to change key bindings from within the game.
 
 Current bindings are detailed in <a href="#usage">Usage</a>.
 
@@ -181,6 +181,8 @@ Otherwise, follow these steps:
     gcc -Wall -std=c17 -I src/include -L src/lib -o build/fps src/main.c $(find src/include -name "*.c") -lmingw32 -lSDL2main -lSDL2 -lSDL2_mixer -lopengl32 -lglew32 -lassimp
   ```
   A compiled file will then be generated as `build/retro_fps` or `build/retro_fps.exe`, depending on your OS.
+
+4. Please note that game assets are no longer hosted on Github, due to their sheer size. You can download them here : **Not available for now**.
 
 
 <p align="right">(<a href="#readme-top">Up</a>)</p>
@@ -243,7 +245,7 @@ This roadmap helps organizing development and may be subject to change.
 
 - [X] Opening a window
 - [X] First Person Camera
-- [ ] Import models
+- [X] Import models
 - [ ] Gun
 - [ ] Level rendering
 - [ ] Audio
