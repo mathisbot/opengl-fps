@@ -17,7 +17,7 @@
 
 
 #define MODELPATH "assets/models/"
-#define MAXVERTICES 1000000
+#define MAXVERTICES 10000000
 
 
 /**

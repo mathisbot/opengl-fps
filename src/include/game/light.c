@@ -50,7 +50,6 @@ void renderPointLightsShadowMap(const Scene *scene, GLuint shaderProgramDepth, G
 {
     glViewport(0, 0, SHADOWMAP_RES, SHADOWMAP_RES);
     glUseProgram(shaderProgramDepth);
-    glBindVertexArray(VAO);
 
     glUniform1f(glGetUniformLocation(shaderProgramDepth, "farPlane"), SHADOWMAP_ZFAR);
 
@@ -75,7 +74,7 @@ void renderPointLightsShadowMap(const Scene *scene, GLuint shaderProgramDepth, G
         glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
         glClear(GL_DEPTH_BUFFER_BIT);
 
-        renderScene(scene, shaderProgramDepth);
+        renderScene(scene, shaderProgramDepth, VAO);
     }
 }
 

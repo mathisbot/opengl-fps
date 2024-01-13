@@ -622,7 +622,7 @@ static void appRender(Application* app)
     // Rendering
     glBindVertexArray(app->VAO);
     
-    renderScene(&app->scene, app->shaderProgram);
+    renderScene(&app->scene, app->shaderProgram, app->VAO);
 
 
     /* --- Unbind everything --- */

@@ -34,8 +34,8 @@
 #define WIREFRAME 0
 
 // Graphic options
-#define VSYNC 1
-#define FULLSCREEN 0
+#define VSYNC 0
+#define FULLSCREEN 1
 #define MSAADEPTH 4
 
 // View options

@@ -63,6 +63,7 @@ static inline void loadMeshTexture(Model* model, unsigned int count, struct aiMa
             {
                 mesh->textures[*index] = model->texturesLoaded[j];
                 skip = 1;
+                LOG_TRACE("Texture %s already loaded\n", path);
                 break;
             }
         }
@@ -136,6 +137,8 @@ static int processMesh(Model* model, Mesh* mesh, const struct aiMesh *aiMesh, co
         loadMeshTexture(model, heightCount, material, mesh, aiTextureType_HEIGHT, TEXTURE_HEIGHT, &index);
     }
 
+    LOG_TRACE("Mesh has %d vertices, %d indices and %d textures.\n", mesh->vertexCount, mesh->indexCount, mesh->textureCount);
+
     setupMesh(mesh);
 
     return 0;
@@ -169,27 +172,26 @@ void drawMesh(Mesh *mesh, unsigned int programShader)
         char longName[64];
         if (mesh->textures[i].type == TEXTURE_DIFFUSE)
         {
-            sprintf(name, "diffuseMap%d", diffuseNr++);
+            sprintf(name, "diffuseMap");
             sprintf(number, "%d", diffuseNr++);
         }
         else if (mesh->textures[i].type == TEXTURE_SPECULAR)
         {
-            sprintf(name, "specularMap%d", specularNr++);
+            sprintf(name, "specularMap");
             sprintf(number, "%d", specularNr++);
         }
         else if (mesh->textures[i].type == TEXTURE_NORMAL)
         {
-            sprintf(name, "normalMap%d", normalNr++);
+            sprintf(name, "normalMap");
             sprintf(number, "%d", normalNr++);
         }
         else if (mesh->textures[i].type == TEXTURE_HEIGHT)
         {
-            sprintf(name, "heightMap%d", heightNr++);
+            sprintf(name, "heightMap");
             sprintf(number, "%d", heightNr++);
-        
         }
-        sprintf(longName, "material.%s%s", name, number);
-        glUniform1i(glGetUniformLocation(programShader, name), i+textureStart);
+        sprintf(longName, "material.%s", name);
+        glUniform1i(glGetUniformLocation(programShader, longName), i+textureStart);
         glBindTexture(GL_TEXTURE_2D, mesh->textures[i].id);
     }
     glActiveTexture(GL_TEXTURE0);
@@ -217,6 +219,7 @@ static void processNode(Model *model, const struct aiNode *node, const struct ai
     for (unsigned int i=0; i<node->mNumMeshes; i++)
     {
         const struct aiMesh *mesh = scene->mMeshes[node->mMeshes[i]];
+        LOG_TRACE("Processing mesh %d\n", *index + i, mesh->mName.data);
         processMesh(model, &model->meshes[*index + i], mesh, scene);
     }
     *index += node->mNumMeshes;
@@ -228,6 +231,7 @@ static int loadFileIntoModel(Model *model, char *path)
 {
     Uint64 importStart = SDL_GetTicks64();
     const struct aiScene *scene = aiImportFile(path, aiProcess_OptimizeGraph | aiProcess_FlipUVs | aiProcessPreset_TargetRealtime_MaxQuality);
+    // const struct aiScene *scene = aiImportFile(path, aiProcess_Triangulate | aiProcess_FlipUVs);
 
     if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE)
     {
@@ -235,17 +239,29 @@ static int loadFileIntoModel(Model *model, char *path)
         aiReleaseImport(scene);
         return -1;
     }
+    LOG_TRACE("Loaded file %s into scene\n", path);
 
     model->meshCount = scene->mNumMeshes;
     model->meshes = (Mesh*)malloc(model->meshCount * sizeof(Mesh));
     model->texturesLoaded = NULL;  // Will be allocated via realloc for dynamic size
     model->texturesLoadedCount = 0;
     unsigned int index = 0;
+
+    LOG_TRACE("Ready to process %d meshes\n", model->meshCount);
+
     processNode(model, scene->mRootNode, scene, &index);
 
-    LOG_TRACE("Loaded file into model\n");
     Uint64 importEnd = SDL_GetTicks64();
-    LOG_TRACE("Imported file in %llu ms\n", importEnd-importStart);
+    LOG_DEBUG("Imported model %s in %llu ms\n", path, importEnd-importStart);
+
+    // TODO: Dynamic
+    model->x = 3.0f;
+    model->y = 1.0f;
+    model->z = 3.0f;
+    model->w = 0.5f;
+    model->h = 0.5f;
+    model->d = 0.5f;
+
     return 0;
 }
 
@@ -269,16 +285,14 @@ int loadModelFullPath(Model *model, char *path)
 
 void drawModel(Model *model, unsigned int programShader)
 {
-    glUseProgram(programShader);
-
     static mat4 modelMat = GLM_MAT4_IDENTITY_INIT;
     glm_mat4_identity(modelMat);
     glm_translate(modelMat, (vec3){model->x, model->y, model->z});
     glm_scale(modelMat, (vec3){model->w, model->h, model->d});
-    glUniformMatrix4fv(glGetUniformLocation(programShader, "model"), 1, GL_FALSE, (float*)model);
+    glm_rotate(modelMat, glm_rad(-90.0f), (vec3){0.0f, 1.0f, 0.0f});
+    glUniformMatrix4fv(glGetUniformLocation(programShader, "model"), 1, GL_FALSE, (float*)modelMat);
 
     for (unsigned int i=0; i<model->meshCount; i++) drawMesh(&model->meshes[i], programShader);
-    glUseProgram(0);
 }
 
 void freeModel(Model *model)
