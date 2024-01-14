@@ -21,6 +21,7 @@
 /* --- TODO --- */
 
 /*
+- Use Forward+ rendering
 - Stencil test for UI ?
 - Find other ways to load sounds (WAV is too big)
     -> OGG ?

@@ -39,14 +39,15 @@ void main()
     // Expensive, should be done only once per model
     mat3 normalMatrix = transpose(inverse(mat3(model)));
 
-    vec3 N = normalize(normalMatrix * aNormal);
     vec3 T = normalize(normalMatrix * aTangent);
+    vec3 N = normalize(normalMatrix * aNormal);
     T = normalize(T - dot(T, N) * N);
     vec3 B = cross(N, T);
+    // vec3 B = normalize(normalMatrix * aBitangent);
 
     mat3 TBN = transpose(mat3(T, B, N));
 
-    for(int i = 0; i < NR_POINT_LIGHTS; ++i)
+    for (int i = 0; i < NR_POINT_LIGHTS; i++)
     {
         TangentLightPos[i] = TBN * pointLights[i].position;
     }

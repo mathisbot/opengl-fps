@@ -41,7 +41,7 @@
 // View options
 #define FOV 70.0f
 #define ZNEAR 0.1f
-#define ZFAR  32.0f
+#define ZFAR  64.0f
 
 
 /* --- TYPEDEFS --- */

@@ -97,55 +97,23 @@ int loadCubemapFullPath(Cubemap *cubemap, char *fullpath, char* extension)
 
     strncpy(cubemap->path, fullpath, 511);
 
-    // for (unsigned int i=0; i<6; i++)
-    // {
-    //     char *CUBEMAP_SIDES[6] = {"right", "left", "top", "bottom", "front", "back"};
-    //     char path[512];
-    //     sprintf(path, "%s%s.%s", fullpath, CUBEMAP_SIDES[i], extension);
-    //     SDL_Surface* surface = SDL_LoadBMP(path);
-    //     if (!surface)
-    //     {
-    //         LOG_ERROR("Error loading cubemap %s : %s\n", path, SDL_GetError());
-    //         return -1;
-    //     }
-    //     glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_SRGB, surface->w, surface->h, 0, GL_BGR, GL_UNSIGNED_BYTE, surface->pixels);
-    //     SDL_FreeSurface(surface);
-
-    //     cubemap->width = surface->w;
-    //     cubemap->height = surface->h;
-    // }
-
-    char temp[1024];
-    sprintf(temp, "%sskybox.%s", fullpath, extension);
-    SDL_Surface* unfoldedSurface = SDL_LoadBMP(temp);
-    if (!unfoldedSurface)
+    for (unsigned int i=0; i<6; i++)
     {
-        LOG_ERROR("Error loading unfolded skybox %s : %s\n", temp, SDL_GetError());
-        return -1;
+        char *CUBEMAP_SIDES[6] = {"right", "left", "top", "bottom", "front", "back"};
+        char path[512];
+        sprintf(path, "%s%s.%s", fullpath, CUBEMAP_SIDES[i], extension);
+        SDL_Surface* surface = SDL_LoadBMP(path);
+        if (!surface)
+        {
+            LOG_ERROR("Error loading cubemap %s : %s\n", path, SDL_GetError());
+            return -1;
+        }
+        glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_SRGB, surface->w, surface->h, 0, GL_BGR, GL_UNSIGNED_BYTE, surface->pixels);
+        SDL_FreeSurface(surface);
+
+        cubemap->width = surface->w;
+        cubemap->height = surface->h;
     }
-
-    int faceWidth = unfoldedSurface->w / 4; // Assuming a horizontal strip with 4 faces (right, left, top, bottom)
-    int faceHeight = unfoldedSurface->h / 3; // Assuming a vertical strip with 3 faces (front, back)
-
-    for (unsigned int i = 0; i < 6; i++)
-    {
-        SDL_Surface* faceSurface = SDL_CreateRGBSurface(0, faceWidth, faceHeight, 24, 0, 0, 0, 0);
-
-        int xOffset = (i % 4) * faceWidth;
-        int yOffset = (i / 4) * faceHeight;
-
-        SDL_Rect rect = { xOffset, yOffset, faceWidth, faceHeight };
-        SDL_BlitSurface(unfoldedSurface, &rect, faceSurface, NULL);
-
-        glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_SRGB, faceSurface->w, faceSurface->h, 0, GL_BGR, GL_UNSIGNED_BYTE, faceSurface->pixels);
-
-        SDL_FreeSurface(faceSurface);
-    }
-
-    SDL_FreeSurface(unfoldedSurface);
-
-    cubemap->width = faceWidth;
-    cubemap->height = faceHeight;
 
     return 0;
 }

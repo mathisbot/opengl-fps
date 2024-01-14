@@ -50,7 +50,6 @@ float computeShadow(vec3 lightPos, samplerCube depthCubemap, vec3 lightDir, vec3
 {
     vec3 fragToLight = FragPos - lightPos;
 
-
     float shadow = 0.0;
     // float bias = max(0.05 * (1.0 - dot(normal, lightDir)), 0.005);
     const float bias = 0.005;
@@ -100,9 +99,6 @@ void main()
 
     // Draw circle crosshair
     float distanceCenter = length(gl_FragCoord.xy-windowSize/2);
-    if (distanceCenter <= pointerRadius) FragColor = vec4(1-outputColor, 1.0);
+    if (distanceCenter <= pointerRadius) FragColor = vec4(1.0-outputColor, 1.0);
     else FragColor = vec4(outputColor, 1.0);
-
-    // FragColor = texture(material.specularMap, TexCoords);  // Debug
-    // FragColor = texture(material.normalMap, TexCoords);  // Debug
 }

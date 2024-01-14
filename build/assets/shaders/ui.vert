@@ -1,7 +1,16 @@
 #version 460 core
 layout (location = 0) in vec3 aPos;
 
+out vec3 TexCoords;
+
+uniform mat4 projection;
+uniform mat4 view;
+
 void main()
 {
-    gl_Position = vec4(aPos, 1.0);
+    mat4 viewFixed = mat4(mat3(view)); // remove translation from the view matrix
+    // mat4 viewFixed = view; // remove translation from the view matrix
+    TexCoords = aPos;
+    vec4 pos = projection * viewFixed * vec4(aPos, 1.0);
+    gl_Position = pos.xyww;
 }

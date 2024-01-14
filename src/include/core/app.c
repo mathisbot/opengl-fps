@@ -492,16 +492,6 @@ static void appRender(Application* app)
     glm_lookat(app->camera.pos, app->camera.target, app->camera.up, view);
 
 
-    /* --- User Interface --- */
-
-    // TODO: Optimize UI rendering
-    glUseProgram(app->shaderProgramUI);
-    glBindVertexArray(app->uiVAO);
-
-    // Simple quad for now
-    glDrawArrays(GL_TRIANGLES, 0, 6);
-
-
     /* --- Light sources --- */
 
     // TODO: Replace cubes by models (e.g. lamps)
@@ -544,6 +534,27 @@ static void appRender(Application* app)
 
     // Rendering
     renderScene(&app->scene, app->shaderProgram);
+
+
+    /* --- User Interface --- */
+
+    glDepthFunc(GL_LEQUAL);
+    glDisable(GL_CULL_FACE);
+
+    glUseProgram(app->shaderProgramUI);
+    glBindVertexArray(app->lightVAO);
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, app->scene.skybox.id);
+    glUniform1i(glGetUniformLocation(app->shaderProgramUI, "skybox"), 0);
+
+    glUniformMatrix4fv(glGetUniformLocation(app->shaderProgramUI, "view"), 1, GL_FALSE, (float*)view);
+    glUniformMatrix4fv(glGetUniformLocation(app->shaderProgramUI, "projection"), 1, GL_FALSE, (float*)projection);
+
+    // Simple quad for now
+    glDrawArrays(GL_TRIANGLES, 0, 36);
+
+    glEnable(GL_CULL_FACE);
+    glDepthFunc(GL_LESS);
 
     // Swap buffers
     SDL_GL_SwapWindow(app->window);
