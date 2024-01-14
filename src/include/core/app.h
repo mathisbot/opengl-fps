@@ -55,8 +55,7 @@ typedef struct {
     bool pause;
 
     // OpenGL
-    GLuint lightVAO;  // Light sources
-    GLuint uiVAO;  // UI
+    GLuint cubeVAO;  // Light sources
 
     GLuint VBO;  // Vertices
     GLuint uiVBO;  // Vertices for UI
@@ -64,9 +63,10 @@ typedef struct {
     GLuint depthMapFBO;  // Depth map framebuffer
 
     GLuint shaderProgram;  // Shader program for scene objects
-    GLuint shaderProgramUI;  // Shader program for UI
+    GLuint shaderProgramSkybox;  // Shader program for UI
     GLuint shaderProgramLight;  // Shader program for light
     GLuint shaderProgramDepth;  // Shader program for depth map
+    GLuint shaderProgramUI;  // Shader program for UI
 
     // Properties
     double dt;

@@ -11,6 +11,8 @@
 typedef struct {
     Model *models;
     unsigned int modelCount;
+    Model *uiModels;
+    unsigned int uiModelCount;
 
     Cubemap skybox;
 

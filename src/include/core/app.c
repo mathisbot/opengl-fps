@@ -65,13 +65,13 @@ static void appCleanUp(Application* app)
 
     if (app->depthMapFBO) {glDeleteFramebuffers(1, &app->depthMapFBO); app->depthMapFBO = 0;}
 
-    if (app->lightVAO) {glDeleteVertexArrays(1, &app->lightVAO); app->lightVAO = 0;}
-    if (app->uiVAO) {glDeleteVertexArrays(1, &app->uiVAO); app->uiVAO = 0;}
+    if (app->cubeVAO) {glDeleteVertexArrays(1, &app->cubeVAO); app->cubeVAO = 0;}
 
     if (app->shaderProgram) {glDeleteProgram(app->shaderProgram); app->shaderProgram = 0;}
-    if (app->shaderProgramUI) {glDeleteProgram(app->shaderProgramUI); app->shaderProgramUI = 0;}
+    if (app->shaderProgramSkybox) {glDeleteProgram(app->shaderProgramSkybox); app->shaderProgramSkybox = 0;}
     if (app->shaderProgramLight) {glDeleteProgram(app->shaderProgramLight); app->shaderProgramLight = 0;}
     if (app->shaderProgramDepth) {glDeleteProgram(app->shaderProgramDepth); app->shaderProgramDepth = 0;}
+    if (app->shaderProgramUI) {glDeleteProgram(app->shaderProgramUI); app->shaderProgramUI = 0;}
 
     // Freeing other components
     for (uint8_t i=0; i<sizeof(app->pointLights)/sizeof(PointLight); i++) destroyPointLight(&app->pointLights[i]);
@@ -100,12 +100,16 @@ static void appInitScene(Application *app)
     if (initPointLight(&app->pointLights[2], (vec3){-4.0f, 2.0f, -12.0f}, (vec3){0.0f, 1.0f, 0.0f})<0) appCleanUpAndExit(app, EXIT_FAILURE, "Error creating point light");
     if (initPointLight(&app->pointLights[3], (vec3){3.3f, 4.0f, -1.5f}, (vec3){0.0f, 0.0f, 1.0f})<0) appCleanUpAndExit(app, EXIT_FAILURE, "Error creating point light");
 
-    // Load models
-    app->scene.modelCount = 2;
+    // Load scene objects models
+    app->scene.modelCount = 1;
     app->scene.models = malloc(sizeof(Model) * app->scene.modelCount);
     if (loadModel(&app->scene.models[0], "guitar/backpack.obj", (vec3){3.0, 1.0, 3.0}, (vec3){1.0, 1.0, 1.0}, false) < 0) appCleanUpAndExit(app, EXIT_FAILURE, "Error loading guitar model");
-    if (loadModel(&app->scene.models[1], "shotgun/shotgun.obj", (vec3){2.0, 1.5, 2.0}, (vec3){2.0, 2.0, 2.0}, true) < 0) appCleanUpAndExit(app, EXIT_FAILURE, "Error loading shotgun model");
     // if (loadModel(&app->scene.models[2], "medievalhouse/house.obj", (vec3){15.0, 0.0, 15.0}, (vec3){2.0, 2.0, 2.0}, true) < 0) appCleanUpAndExit(app, EXIT_FAILURE, "Error loading house model");
+    
+    // Load UI models (e.g. shotgun)
+    app->scene.uiModelCount = 1;
+    app->scene.uiModels = malloc(sizeof(Model) * app->scene.uiModelCount);
+    if (loadModel(&app->scene.uiModels[0], "shotgun/shotgun.obj", (vec3){0.0, 0.0, 0.0}, (vec3){1.0, 1.0, 1.0}, true) < 0) appCleanUpAndExit(app, EXIT_FAILURE, "Error loading shotgun model");
 
     // Load skybox
     if (loadSkybox(&app->scene, "skybox/") < 0) appCleanUpAndExit(app, EXIT_FAILURE, "Error loading skybox\n");
@@ -158,32 +162,13 @@ static void appInitScene(Application *app)
     // Bind data to buffers
 
     // Light
-    glBindVertexArray(app->lightVAO);
+    glBindVertexArray(app->cubeVAO);
 
     glBindBuffer(GL_ARRAY_BUFFER, app->VBO);
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
-
-    // UI
-    float uiVertices[] = {
-        -1.0f, -1.0f, 0.0f,  // Bottom left
-         1.0f,  1.0f, 0.0f,  // Top right
-        -1.0f,  1.0f, 0.0f,  // Top left
-        -1.0f, -1.0f, 0.0f,  // Bottom left
-         1.0f, -1.0f, 0.0f,  // Bottom right
-         1.0f,  1.0f, 0.0f,  // Top right
-    };
-
-    glBindVertexArray(app->uiVAO);
-
-    glBindBuffer(GL_ARRAY_BUFFER, app->uiVBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(uiVertices), uiVertices, GL_STATIC_DRAW);
-    
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
-    glEnableVertexAttribArray(0);
-
 
     // Unbinding buffers
     glBindVertexArray(0);
@@ -196,16 +181,20 @@ static void appFirstPass(Application *app)
     // Projection matrix only needs to be calculated once
     glm_perspective(glm_rad(FOV), (float)app->windowWidth / (float)app->windowHeight, ZNEAR, ZFAR, projection);
 
+    // UI shader
+    glUseProgram(app->shaderProgramUI);
+    glUniformMatrix4fv(glGetUniformLocation(app->shaderProgramUI, "projection"), 1, GL_FALSE, (float*)projection);
+
     // Light shader
     glUseProgram(app->shaderProgramLight);
     glUniformMatrix4fv(glGetUniformLocation(app->shaderProgramLight, "projection"), 1, GL_FALSE, (float*)projection);
     glUniform2ui(glGetUniformLocation(app->shaderProgramLight, "windowSize"), app->windowWidth, app->windowHeight);
     glUniform1f(glGetUniformLocation(app->shaderProgramLight, "pointerRadius"), 2.0f);
 
-    // UI shader
-    glUseProgram(app->shaderProgramUI);
-    glUniform2ui(glGetUniformLocation(app->shaderProgramUI, "windowSize"), app->windowWidth, app->windowHeight);
-    glUniform1f(glGetUniformLocation(app->shaderProgramUI, "pointerRadius"), 2.0f);
+    // Skybox shader
+    glUseProgram(app->shaderProgramSkybox);
+    glUniform2ui(glGetUniformLocation(app->shaderProgramSkybox, "windowSize"), app->windowWidth, app->windowHeight);
+    glUniform1f(glGetUniformLocation(app->shaderProgramSkybox, "pointerRadius"), 2.0f);
 
     // Object shader
     glUseProgram(app->shaderProgram);
@@ -338,19 +327,20 @@ static void appInit(Application* app)
 
     glGenFramebuffers(1, &app->depthMapFBO);
     
-    glGenVertexArrays(1, &app->lightVAO);
-    glGenVertexArrays(1, &app->uiVAO);
+    glGenVertexArrays(1, &app->cubeVAO);
 
     // OpenGL Shader creation
-    Shader vertexShader, vertexShaderUI, vertexShaderDepth, geometryShaderDepth, fragmentShader, fragmentShaderUI, fragmentShaderLight, fragmentShaderDepth;
+    Shader vertexShader, vertexShaderSkybox, vertexShaderDepth, vertexShaderUI, geometryShaderDepth, fragmentShader, fragmentShaderSkybox, fragmentShaderLight, fragmentShaderDepth, fragmentShaderUI;
     if (loadShader(&vertexShader, "vertex.vert", GL_VERTEX_SHADER) < 0) appCleanUpAndExit(app, EXIT_FAILURE, "Error creating vertex shader");
-    if (loadShader(&vertexShaderUI, "ui.vert", GL_VERTEX_SHADER) < 0) appCleanUpAndExit(app, EXIT_FAILURE, "Error creating vertex shader for UI");
+    if (loadShader(&vertexShaderSkybox, "skybox.vert", GL_VERTEX_SHADER) < 0) appCleanUpAndExit(app, EXIT_FAILURE, "Error creating vertex shader for Skybox");
     if (loadShader(&vertexShaderDepth, "depth.vert", GL_VERTEX_SHADER) < 0) appCleanUpAndExit(app, EXIT_FAILURE, "Error creating vertex shader for depth map");
+    if (loadShader(&vertexShaderUI, "ui.vert", GL_VERTEX_SHADER) < 0) appCleanUpAndExit(app, EXIT_FAILURE, "Error creating vertex shader for UI");
     if (loadShader(&geometryShaderDepth, "depth.geom", GL_GEOMETRY_SHADER) < 0) appCleanUpAndExit(app, EXIT_FAILURE, "Error creating geometry shader for depth map");
     if (loadShader(&fragmentShader, "fragment.frag", GL_FRAGMENT_SHADER) < 0) appCleanUpAndExit(app, EXIT_FAILURE, "Error creating fragment shader");
-    if (loadShader(&fragmentShaderUI, "ui.frag", GL_FRAGMENT_SHADER) < 0) appCleanUpAndExit(app, EXIT_FAILURE, "Error creating fragment shader for UI");
+    if (loadShader(&fragmentShaderSkybox, "skybox.frag", GL_FRAGMENT_SHADER) < 0) appCleanUpAndExit(app, EXIT_FAILURE, "Error creating fragment shader for Skybox");
     if (loadShader(&fragmentShaderLight, "light.frag", GL_FRAGMENT_SHADER) < 0) appCleanUpAndExit(app, EXIT_FAILURE, "Error creating fragment shader for light");
     if (loadShader(&fragmentShaderDepth, "depth.frag", GL_FRAGMENT_SHADER) < 0) appCleanUpAndExit(app, EXIT_FAILURE, "Error creating fragment shader for depth map");
+    if (loadShader(&fragmentShaderUI, "ui.frag", GL_FRAGMENT_SHADER) < 0) appCleanUpAndExit(app, EXIT_FAILURE, "Error creating fragment shader for UI");
 
     // If program crashes here, there's a memory leak (shaders are not freed)
     // This is done on purpose as they are only used for the next few lines
@@ -358,17 +348,20 @@ static void appInit(Application* app)
     // Shader programs
     if (initShaderProgram(&app->shaderProgram, 2, vertexShader, fragmentShader) < 0) appCleanUpAndExit(app, EXIT_FAILURE, "Error creating shader program");
     if (initShaderProgram(&app->shaderProgramLight, 2, vertexShader, fragmentShaderLight) < 0) appCleanUpAndExit(app, EXIT_FAILURE, "Error creating shader program for light");
-    if (initShaderProgram(&app->shaderProgramUI, 2, vertexShaderUI, fragmentShaderUI) < 0) appCleanUpAndExit(app, EXIT_FAILURE, "Error creating shader program for UI");
+    if (initShaderProgram(&app->shaderProgramSkybox, 2, vertexShaderSkybox, fragmentShaderSkybox) < 0) appCleanUpAndExit(app, EXIT_FAILURE, "Error creating shader program for UI");
     if (initShaderProgram(&app->shaderProgramDepth, 3, vertexShaderDepth, geometryShaderDepth, fragmentShaderDepth) < 0) appCleanUpAndExit(app, EXIT_FAILURE, "Error creating shader program for depth map");
-    
+    if (initShaderProgram(&app->shaderProgramUI, 2, vertexShaderUI, fragmentShaderUI) < 0) appCleanUpAndExit(app, EXIT_FAILURE, "Error creating shader program for UI");
+
     // Delete now useless shaders
     destroyShader(&vertexShader);
-    destroyShader(&vertexShaderUI);
+    destroyShader(&vertexShaderSkybox);
     destroyShader(&vertexShaderDepth);
+    destroyShader(&vertexShaderUI);
     destroyShader(&fragmentShader);
-    destroyShader(&fragmentShaderUI);
+    destroyShader(&fragmentShaderSkybox);
     destroyShader(&fragmentShaderLight);
     destroyShader(&fragmentShaderDepth);
+    destroyShader(&fragmentShaderUI);
 
 
     /* --- Load game objects --- */
@@ -492,6 +485,20 @@ static void appRender(Application* app)
     glm_lookat(app->camera.pos, app->camera.target, app->camera.up, view);
 
 
+    /* --- User Interface --- */
+
+    // Use UI shader
+    glUseProgram(app->shaderProgramUI);
+    glBindVertexArray(app->cubeVAO);
+
+    // Send to shader
+    glUniformMatrix4fv(glGetUniformLocation(app->shaderProgramUI, "view"), 1, GL_FALSE, (float*)view);
+
+    for (int i=0; i<app->scene.uiModelCount; i++)
+    {
+        drawModel(&app->scene.uiModels[i], app->shaderProgramUI);
+    }
+
     /* --- Light sources --- */
 
     // TODO: Replace cubes by models (e.g. lamps)
@@ -504,7 +511,7 @@ static void appRender(Application* app)
     glUniformMatrix4fv(glGetUniformLocation(app->shaderProgramLight, "view"), 1, GL_FALSE, (float*)view);
 
     // Rendering
-    glBindVertexArray(app->lightVAO);
+    glBindVertexArray(app->cubeVAO);
     
     for (uint8_t i=0; i<4; i++)
     {
@@ -536,21 +543,20 @@ static void appRender(Application* app)
     renderScene(&app->scene, app->shaderProgram);
 
 
-    /* --- User Interface --- */
+    /* --- SkyBox --- */
 
     glDepthFunc(GL_LEQUAL);
     glDisable(GL_CULL_FACE);
 
-    glUseProgram(app->shaderProgramUI);
-    glBindVertexArray(app->lightVAO);
+    glUseProgram(app->shaderProgramSkybox);
+    glBindVertexArray(app->cubeVAO);
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_CUBE_MAP, app->scene.skybox.id);
-    glUniform1i(glGetUniformLocation(app->shaderProgramUI, "skybox"), 0);
+    glUniform1i(glGetUniformLocation(app->shaderProgramSkybox, "skybox"), 0);
 
-    glUniformMatrix4fv(glGetUniformLocation(app->shaderProgramUI, "view"), 1, GL_FALSE, (float*)view);
-    glUniformMatrix4fv(glGetUniformLocation(app->shaderProgramUI, "projection"), 1, GL_FALSE, (float*)projection);
+    glUniformMatrix4fv(glGetUniformLocation(app->shaderProgramSkybox, "view"), 1, GL_FALSE, (float*)view);
+    glUniformMatrix4fv(glGetUniformLocation(app->shaderProgramSkybox, "projection"), 1, GL_FALSE, (float*)projection);
 
-    // Simple quad for now
     glDrawArrays(GL_TRIANGLES, 0, 36);
 
     glEnable(GL_CULL_FACE);
