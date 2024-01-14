@@ -107,6 +107,8 @@ static void appInitScene(Application *app)
     if (loadModel(&app->scene.models[1], "shotgun/shotgun.obj", (vec3){2.0, 1.5, 2.0}, (vec3){2.0, 2.0, 2.0}, true) < 0) appCleanUpAndExit(app, EXIT_FAILURE, "Error loading shotgun model");
     // if (loadModel(&app->scene.models[2], "medievalhouse/house.obj", (vec3){15.0, 0.0, 15.0}, (vec3){2.0, 2.0, 2.0}, true) < 0) appCleanUpAndExit(app, EXIT_FAILURE, "Error loading house model");
 
+    // Load skybox
+    if (loadSkybox(&app->scene, "skybox/") < 0) appCleanUpAndExit(app, EXIT_FAILURE, "Error loading skybox\n");
 
     // Vertices for a cube (Temporary lights)
     float vertices[] = {

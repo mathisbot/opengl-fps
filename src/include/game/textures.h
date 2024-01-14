@@ -28,8 +28,15 @@ typedef struct {
     int width;
     int height;
     uint8_t type;
-    char path[256];
+    char path[512];
 } Texture;
+
+typedef struct {
+    GLuint id;
+    int width;
+    int height;
+    char path[512];
+} Cubemap;
 
 
 /**
@@ -66,6 +73,43 @@ int loadTextureFullPath(Texture *tex, const char* path, int numMipmaps, bool rep
  * @param tex Texture to destroy
 */
 void destroyTexture(Texture tex);
+
+
+/**
+ * @brief Load a cubemap
+ * 
+ * @param cubemap Pointer to the cubemap
+ * @param path Path to the cubemap, must be relative to the TEXTUREPATH
+ * @param extension Extension of the cubemap
+ * @return int 0 if success, -1 if error
+ * 
+ * @note Path must be relative to the TEXTUREPATH
+*/
+int loadCubemap(Cubemap *cubemap, char* path, char* extension);
+
+/**
+ * @brief Load a cubemap
+ * 
+ * @param cubemap Pointer to the cubemap
+ * @param path Path to the cubemap, must be absolute
+ * @param extension Extension of the cubemap
+ * @return int 0 if success, -1 if error
+ * 
+ * @note Path must be absolute
+*/
+int loadCubemapFullPath(Cubemap *cubemap, char *fullpath, char* extension);
+
+/**
+ * @brief Load a cubemap
+ * 
+ * @param cubemap Pointer to the cubemap
+ * @param path Path to the cubemap, must be absolute
+ * @param numMipmaps Number of mipmaps to generate
+ * @return int 0 if success, -1 if error
+ * 
+ * @note Path must be absolute
+*/
+void destroyCubemap(Cubemap *cubemap);
 
 
 #endif

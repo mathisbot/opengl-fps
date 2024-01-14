@@ -104,4 +104,5 @@ void main()
     else FragColor = vec4(outputColor, 1.0);
 
     // FragColor = texture(material.specularMap, TexCoords);  // Debug
+    // FragColor = texture(material.normalMap, TexCoords);  // Debug
 }
