@@ -11,13 +11,12 @@ in vec3 TangentViewPos;
 in vec3 TangentFragPos;
 
 uniform vec3 viewPos;
-uniform float FarPlaneShadow;
 
+uniform float FarPlaneShadow;
 uniform uvec2 windowSize;
 uniform float pointerRadius;
 
 struct Material {
-    vec3 ambient;
     sampler2D diffuseMap;
     sampler2D specularMap;
     float shininess;
@@ -69,15 +68,16 @@ float computeShadow(vec3 lightPos, samplerCube depthCubemap, vec3 lightDir, vec3
 
 vec3 computePointLight(PointLight light, vec3 normal, vec3 viewDir, float diskRadius, vec3 tangentLightPos)
 {
-    vec3 ambient = light.ambient * texture(material.diffuseMap, TexCoords).rgb;
+    vec3 color = texture(material.diffuseMap, TexCoords).rgb;
+
+    vec3 ambient = light.ambient * color;
 
     vec3 lightDir = normalize(tangentLightPos - TangentFragPos);
     float diff = max(dot(normal, lightDir), 0.0);
-    vec3 diffuse = diff * light.diffuse * texture(material.diffuseMap, TexCoords).rgb;
+    vec3 diffuse = diff * light.diffuse * color;
 
     vec3 halfwayDir = normalize(lightDir + viewDir);
     float spec = pow(max(dot(normal, halfwayDir), 0.0), material.shininess);
-    // vec3 specular = spec * light.specular * material.specular;
     vec3 specular = spec * light.specular * vec3(texture(material.specularMap, TexCoords).r);
 
     float distance = length(light.position - FragPos);
@@ -98,8 +98,10 @@ void main()
     float diskRadius = (1.0 + (length(FragToView) / FarPlaneShadow)) / 25.0;
     for (int i = 0; i < NR_POINT_LIGHTS; i++) outputColor += computePointLight(pointLights[i], norm, viewDir, diskRadius, TangentLightPos[i]);
 
-    // Draw pointer circle
+    // Draw circle crosshair
     float distanceCenter = length(gl_FragCoord.xy-windowSize/2);
     if (distanceCenter <= pointerRadius) FragColor = vec4(1-outputColor, 1.0);
     else FragColor = vec4(outputColor, 1.0);
+
+    // FragColor = texture(material.specularMap, TexCoords);  // Debug
 }

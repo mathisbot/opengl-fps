@@ -80,7 +80,12 @@ static inline void loadMeshTexture(Model* model, unsigned int count, struct aiMa
         {
             loadTextureFullPath(&mesh->textures[*index], path, 1, 0, type);  // From textures.h
             model->texturesLoadedCount++;
-            model->texturesLoaded = (Texture*)realloc(model->texturesLoaded, model->texturesLoadedCount * sizeof(Texture));
+            // Dynamic size in O(1) (on average)
+            if (model->texturesLoadedCount > model->texturesLoadedSize)
+            {
+                model->texturesLoadedSize *= 2;
+                model->texturesLoaded = (Texture*)realloc(model->texturesLoaded, model->texturesLoadedSize * sizeof(Texture));
+            }
             model->texturesLoaded[model->texturesLoadedCount-1] = mesh->textures[*index];
         }
         *index += 1;
@@ -267,7 +272,8 @@ static int loadFileIntoModel(Model *model, char *path, bool flipUVs)
 
     model->meshCount = scene->mNumMeshes;
     model->meshes = (Mesh*)malloc(model->meshCount * sizeof(Mesh));
-    model->texturesLoaded = NULL;  // Will be allocated via realloc for dynamic size
+    model->texturesLoadedSize = 3;
+    model->texturesLoaded = (Texture*)malloc(model->texturesLoadedSize * sizeof(Texture));  // Will be allocated via realloc for dynamic size
     model->texturesLoadedCount = 0;
     unsigned int index = 0;
 

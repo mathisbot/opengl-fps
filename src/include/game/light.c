@@ -46,7 +46,7 @@ int initPointLight(PointLight *light, vec3 position, vec3 color)
 }
 
 
-void renderPointLightsShadowMap(const Scene *scene, GLuint shaderProgramDepth, GLuint VAO, GLuint depthMapFBO, PointLight *pointLights)
+void renderPointLightsShadowMap(const Scene *scene, GLuint shaderProgramDepth, GLuint depthMapFBO, PointLight *pointLights)
 {
     glViewport(0, 0, SHADOWMAP_RES, SHADOWMAP_RES);
     glUseProgram(shaderProgramDepth);
@@ -74,7 +74,7 @@ void renderPointLightsShadowMap(const Scene *scene, GLuint shaderProgramDepth, G
         glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
         glClear(GL_DEPTH_BUFFER_BIT);
 
-        renderScene(scene, shaderProgramDepth, VAO);
+        renderScene(scene, shaderProgramDepth);
     }
 }
 

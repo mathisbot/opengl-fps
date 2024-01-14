@@ -17,6 +17,6 @@ typedef struct {
 } Scene;
 
 
-void renderScene(const Scene *scene, GLuint programShader, GLuint VAO);
+void renderScene(const Scene *scene, GLuint programShader);
 
 void destroyScene(Scene *scene);

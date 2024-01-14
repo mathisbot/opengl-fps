@@ -21,10 +21,6 @@
 /* --- TODO --- */
 
 /*
-- Better model import
-    -> model.textureLoaded dynamic size needs to be O(1)
-        -> rellaoc to 2*size when full
-        -> Keep track of the last index !!!
 - Stencil test for UI ?
 - Find other ways to load sounds (WAV is too big)
     -> OGG ?

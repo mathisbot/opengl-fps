@@ -120,10 +120,8 @@ void rotateCamera(Camera *camera, int dx, int dy)
     // thus keeping precision in the float
     yaw += fmod(dx * camera->sensitivity, 360.0f);
     pitch -= dy * camera->sensitivity;
-    // 89 degrees is the limit for pitch
     // This prevents the camera from flipping over
-    if (pitch > 89) pitch = 89;
-    else if (pitch < -89) pitch = -89;
+    pitch = glm_clamp(pitch, -89.0f, 89.0f);
 
     // Update target
     addTarget[0] = cosf(glm_rad(yaw)) * cosf(glm_rad(pitch));

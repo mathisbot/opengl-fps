@@ -263,7 +263,6 @@ This roadmap helps organizing development and may be subject to change.
 <a name="known-issues"></a>
 
 Various problems and bugs may arise during development. If no obvious solution is found, they are listed here. If you come across another bug not listed, please report it using the Issues tab.
-- Light is temporarily ugly, it will be repaired very soon.
 
 <p align="right">(<a href="#readme-top">Up</a>)</p>
 

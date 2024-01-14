@@ -15,8 +15,8 @@
 
 #define GRAVITY 20.0f
 #define JUMPSPEED 7.5f
-#define SPEED 7.5f
-#define SPRINTBOOST 1.75f
+#define SPEED 4.5f
+#define SPRINTBOOST 2.0f
 #define SENSITIVITY 0.07f
 #define TERMINALVELOCITY 50.0f
 

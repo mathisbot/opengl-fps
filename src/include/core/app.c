@@ -1,6 +1,12 @@
 #include "app.h"
 
 
+// Global variables
+// Doesn't change more than one time during execution
+static mat4 projection = GLM_MAT4_IDENTITY_INIT;  // Projection matrix
+
+
+// SDL Initialization flags
 static bool SDLInitialized = 0;
 static bool mixerInitalized = 0;
 
@@ -12,52 +18,33 @@ static void debugCallback(GLenum source, GLenum type, GLuint id, GLenum severity
     fprintf(stderr, "---------------\nDebug message (%d): %s\n", id, message);
     switch (source)
     {
-        case GL_DEBUG_SOURCE_API:
-            fprintf(stderr, "Source: API");
-        case GL_DEBUG_SOURCE_WINDOW_SYSTEM:
-            fprintf(stderr, "Source: Window System"); break;
-        case GL_DEBUG_SOURCE_SHADER_COMPILER:
-            fprintf(stderr, "Source: Shader Compiler"); break;
-        case GL_DEBUG_SOURCE_THIRD_PARTY:
-            fprintf(stderr, "Source: Third Party"); break;
-        case GL_DEBUG_SOURCE_APPLICATION:
-            fprintf(stderr, "Source: Application"); break;
-        case GL_DEBUG_SOURCE_OTHER:
-            fprintf(stderr, "Source: Other"); break;
+        case GL_DEBUG_SOURCE_API: fprintf(stderr, "Source: API"); break;
+        case GL_DEBUG_SOURCE_WINDOW_SYSTEM: fprintf(stderr, "Source: Window System"); break;
+        case GL_DEBUG_SOURCE_SHADER_COMPILER: fprintf(stderr, "Source: Shader Compiler"); break;
+        case GL_DEBUG_SOURCE_THIRD_PARTY: fprintf(stderr, "Source: Third Party"); break;
+        case GL_DEBUG_SOURCE_APPLICATION: fprintf(stderr, "Source: Application"); break;
+        case GL_DEBUG_SOURCE_OTHER: fprintf(stderr, "Source: Other"); break;
     }
     fprintf(stderr, "\n");
     switch (type)
     {
-        case GL_DEBUG_TYPE_ERROR:
-        fprintf(stderr, "Type: Error"); break;
-        case GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR:
-        fprintf(stderr, "Type: Deprecated Behaviour"); break;
-        case GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR:
-        fprintf(stderr, "Type: Undefined Behaviour"); break;
-        case GL_DEBUG_TYPE_PORTABILITY:
-        fprintf(stderr, "Type: Portability"); break;
-        case GL_DEBUG_TYPE_PERFORMANCE:
-        fprintf(stderr, "Type: Performance"); break;
-        case GL_DEBUG_TYPE_MARKER:
-       fprintf(stderr, "Type: Marker"); break;
-        case GL_DEBUG_TYPE_PUSH_GROUP:
-        fprintf(stderr, "Type: Push Group"); break;
-        case GL_DEBUG_TYPE_POP_GROUP:
-        fprintf(stderr, "Type: Pop Group"); break;
-        case GL_DEBUG_TYPE_OTHER:
-        fprintf(stderr, "Type: Other"); break;
+        case GL_DEBUG_TYPE_ERROR: fprintf(stderr, "Type: Error"); break;
+        case GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR: fprintf(stderr, "Type: Deprecated Behaviour"); break;
+        case GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR: fprintf(stderr, "Type: Undefined Behaviour"); break;
+        case GL_DEBUG_TYPE_PORTABILITY: fprintf(stderr, "Type: Portability"); break;
+        case GL_DEBUG_TYPE_PERFORMANCE: fprintf(stderr, "Type: Performance"); break;
+        case GL_DEBUG_TYPE_MARKER: fprintf(stderr, "Type: Marker"); break;
+        case GL_DEBUG_TYPE_PUSH_GROUP: fprintf(stderr, "Type: Push Group"); break;
+        case GL_DEBUG_TYPE_POP_GROUP: fprintf(stderr, "Type: Pop Group"); break;
+        case GL_DEBUG_TYPE_OTHER: fprintf(stderr, "Type: Other"); break;
     }
     fprintf(stderr, "\n");
     switch (severity)
     {
-        case GL_DEBUG_SEVERITY_HIGH:
-        fprintf(stderr, "Severity: high"); break;
-        case GL_DEBUG_SEVERITY_MEDIUM:
-        fprintf(stderr, "Severity: medium"); break;
-        case GL_DEBUG_SEVERITY_LOW:
-        fprintf(stderr, "Severity: low"); break;
-        case GL_DEBUG_SEVERITY_NOTIFICATION:
-        fprintf(stderr, "Severity: notification"); break;
+        case GL_DEBUG_SEVERITY_HIGH: fprintf(stderr, "Severity: high"); break;
+        case GL_DEBUG_SEVERITY_MEDIUM: fprintf(stderr, "Severity: medium"); break;
+        case GL_DEBUG_SEVERITY_LOW: fprintf(stderr, "Severity: low"); break;
+        case GL_DEBUG_SEVERITY_NOTIFICATION: fprintf(stderr, "Severity: notification"); break;
     }
     fprintf(stderr, "\n\n");
 }
@@ -75,8 +62,6 @@ static void appCleanUp(Application* app)
     // OpenGL
     if (app->VBO) {glDeleteBuffers(1, &app->VBO); app->VBO = 0;}
     if (app->uiVBO) {glDeleteBuffers(1, &app->uiVBO); app->uiVBO = 0;}
-    if (app->EBO) {glDeleteBuffers(1, &app->EBO); app->EBO = 0;}
-    if (app->VAO) {glDeleteVertexArrays(1, &app->VAO); app->VAO = 0;}
 
     if (app->depthMapFBO) {glDeleteFramebuffers(1, &app->depthMapFBO); app->depthMapFBO = 0;}
 
@@ -109,39 +94,11 @@ static void appCleanUpAndExit(Application* app, bool exitCode, const char* log, 
 
 static void appInitScene(Application *app)
 {
-    //Temporary
-
-    // Cubes positions
-    float cubePositions[10][3] =
-    {
-        { 0.0f,  0.0f,  0.0f},
-        { 2.0f,  5.0f, -9.0f},
-        { 2.4f,  0.4f, -3.5f},
-        {-1.7f,  3.0f, -7.5f},
-        { 1.5f,  2.0f, -2.5f},
-        { 1.5f,  0.2f, -1.5f},
-        {-1.3f,  1.0f, -1.5f},
-        { 0.0f,  1.0f,  5.0f},
-        {-0.5f,  2.0f,  7.5f},
-        { 1.0f,  0.5f,  7.5f},
-    };
-    memcpy(app->scene.cubePositions, cubePositions, sizeof(cubePositions));
-
-    // Load textures
-    Texture brickwall;
-    loadTexture(&brickwall, "brickwall/diffuse.bmp", 4, TEXTURE_REPEAT, TEXTURE_DIFFUSE);
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, brickwall.id);
-    glUseProgram(app->shaderProgram);
-    glUniform1i(glGetUniformLocation(app->shaderProgram, "material.diffuseMap"), 0);
-    glUseProgram(0);
-    glActiveTexture(GL_TEXTURE1);
-
     // Point lights
-    if (initPointLight(&app->pointLights[0], (vec3){0.0f, 2.0f, 2.0f}, (vec3){0.9f, 0.9f, 0.9f})<0) appCleanUpAndExit(app, EXIT_FAILURE, "Error creating point light");
-    if (initPointLight(&app->pointLights[1], (vec3){2.3f, 3.3f, -4.0f}, (vec3){0.8f, 0.1f, 0.1f})<0) appCleanUpAndExit(app, EXIT_FAILURE, "Error creating point light");
-    if (initPointLight(&app->pointLights[2], (vec3){-4.0f, 2.0f, -12.0f}, (vec3){0.0f, 0.85f, 0.15f})<0) appCleanUpAndExit(app, EXIT_FAILURE, "Error creating point light");
-    if (initPointLight(&app->pointLights[3], (vec3){3.3f, 4.0f, -1.5f}, (vec3){0.1f, 0.0f, 0.95f})<0) appCleanUpAndExit(app, EXIT_FAILURE, "Error creating point light");
+    if (initPointLight(&app->pointLights[0], (vec3){0.0f, 2.0f, 2.0f}, (vec3){1.0f, 1.0f, 1.0f})<0) appCleanUpAndExit(app, EXIT_FAILURE, "Error creating point light");
+    if (initPointLight(&app->pointLights[1], (vec3){2.3f, 3.3f, -4.0f}, (vec3){1.0f, 0.0f, 0.0f})<0) appCleanUpAndExit(app, EXIT_FAILURE, "Error creating point light");
+    if (initPointLight(&app->pointLights[2], (vec3){-4.0f, 2.0f, -12.0f}, (vec3){0.0f, 1.0f, 0.0f})<0) appCleanUpAndExit(app, EXIT_FAILURE, "Error creating point light");
+    if (initPointLight(&app->pointLights[3], (vec3){3.3f, 4.0f, -1.5f}, (vec3){0.0f, 0.0f, 1.0f})<0) appCleanUpAndExit(app, EXIT_FAILURE, "Error creating point light");
 
     // Load models
     app->scene.modelCount = 2;
@@ -150,85 +107,62 @@ static void appInitScene(Application *app)
     if (loadModel(&app->scene.models[1], "shotgun/shotgun.obj", (vec3){2.0, 1.5, 2.0}, (vec3){2.0, 2.0, 2.0}, true) < 0) appCleanUpAndExit(app, EXIT_FAILURE, "Error loading shotgun model");
     // if (loadModel(&app->scene.models[2], "medievalhouse/house.obj", (vec3){15.0, 0.0, 15.0}, (vec3){2.0, 2.0, 2.0}, true) < 0) appCleanUpAndExit(app, EXIT_FAILURE, "Error loading house model");
 
-    // Vertices for a cube
+
+    // Vertices for a cube (Temporary lights)
     float vertices[] = {
-        -0.5f, -0.5f, -0.5f,  0.0f, 0.0f, 0.0f,  0.0f, -1.0f,
-        0.5f,  0.5f, -0.5f,  1.0f, 1.0f, 0.0f,  0.0f, -1.0f,
-        0.5f, -0.5f, -0.5f,  1.0f, 0.0f, 0.0f,  0.0f, -1.0f, 
-        0.5f,  0.5f, -0.5f,  1.0f, 1.0f, 0.0f,  0.0f, -1.0f,
-        -0.5f, -0.5f, -0.5f,  0.0f, 0.0f, 0.0f,  0.0f, -1.0f,
-        -0.5f,  0.5f, -0.5f,  0.0f, 1.0f, 0.0f,  0.0f, -1.0f,
+        -0.5f, -0.5f, -0.5f,
+         0.5f,  0.5f, -0.5f,
+         0.5f, -0.5f, -0.5f,
+         0.5f,  0.5f, -0.5f,
+        -0.5f, -0.5f, -0.5f,
+        -0.5f,  0.5f, -0.5f,
 
-        -0.5f, -0.5f,  0.5f,  0.0f, 0.0f, 0.0f,  0.0f, 1.0f,
-        0.5f, -0.5f,  0.5f,  1.0f, 0.0f, 0.0f,  0.0f, 1.0f,
-        0.5f,  0.5f,  0.5f,  1.0f, 1.0f, 0.0f,  0.0f, 1.0f,
-        0.5f,  0.5f,  0.5f,  1.0f, 1.0f, 0.0f,  0.0f, 1.0f,
-        -0.5f,  0.5f,  0.5f,  0.0f, 1.0f, 0.0f,  0.0f, 1.0f,
-        -0.5f, -0.5f,  0.5f,  0.0f, 0.0f, 0.0f,  0.0f, 1.0f,
+        -0.5f, -0.5f,  0.5f,
+         0.5f, -0.5f,  0.5f,
+         0.5f,  0.5f,  0.5f,
+         0.5f,  0.5f,  0.5f,
+        -0.5f,  0.5f,  0.5f,
+        -0.5f, -0.5f,  0.5f,
 
-        -0.5f,  0.5f,  0.5f,  1.0f, 0.0f, -1.0f,  0.0f,  0.0f,
-        -0.5f,  0.5f, -0.5f,  1.0f, 1.0f, -1.0f,  0.0f,  0.0f,
-        -0.5f, -0.5f, -0.5f,  0.0f, 1.0f, -1.0f,  0.0f,  0.0f,
-        -0.5f, -0.5f, -0.5f,  0.0f, 1.0f, -1.0f,  0.0f,  0.0f,
-        -0.5f, -0.5f,  0.5f,  0.0f, 0.0f, -1.0f,  0.0f,  0.0f,
-        -0.5f,  0.5f,  0.5f,  1.0f, 0.0f, -1.0f,  0.0f,  0.0f,
+        -0.5f,  0.5f,  0.5f,
+        -0.5f,  0.5f, -0.5f,
+        -0.5f, -0.5f, -0.5f,
+        -0.5f, -0.5f, -0.5f,
+        -0.5f, -0.5f,  0.5f,
+        -0.5f,  0.5f,  0.5f,
 
-        0.5f,  0.5f,  0.5f,  1.0f, 0.0f, 1.0f,  0.0f,  0.0f,
-        0.5f, -0.5f, -0.5f,  0.0f, 1.0f, 1.0f,  0.0f,  0.0f,
-        0.5f,  0.5f, -0.5f,  1.0f, 1.0f, 1.0f,  0.0f,  0.0f,
-        0.5f, -0.5f, -0.5f,  0.0f, 1.0f, 1.0f,  0.0f,  0.0f,
-        0.5f,  0.5f,  0.5f,  1.0f, 0.0f, 1.0f,  0.0f,  0.0f,
-        0.5f, -0.5f,  0.5f,  0.0f, 0.0f, 1.0f,  0.0f,  0.0f,
+         0.5f,  0.5f,  0.5f,
+         0.5f, -0.5f, -0.5f,
+         0.5f,  0.5f, -0.5f,
+         0.5f, -0.5f, -0.5f,
+         0.5f,  0.5f,  0.5f,
+         0.5f, -0.5f,  0.5f,
 
-        -0.5f, -0.5f, -0.5f,  0.0f, 1.0f, 0.0f, -1.0f,  0.0f,
-        0.5f, -0.5f, -0.5f,  1.0f, 1.0f, 0.0f, -1.0f,  0.0f,
-        0.5f, -0.5f,  0.5f,  1.0f, 0.0f, 0.0f, -1.0f,  0.0f,
-        0.5f, -0.5f,  0.5f,  1.0f, 0.0f, 0.0f, -1.0f,  0.0f,
-        -0.5f, -0.5f,  0.5f,  0.0f, 0.0f, 0.0f, -1.0f,  0.0f,
-        -0.5f, -0.5f, -0.5f,  0.0f, 1.0f, 0.0f, -1.0f,  0.0f,
+        -0.5f, -0.5f, -0.5f,
+         0.5f, -0.5f, -0.5f,
+         0.5f, -0.5f,  0.5f,
+         0.5f, -0.5f,  0.5f,
+        -0.5f, -0.5f,  0.5f,
+        -0.5f, -0.5f, -0.5f,
 
-        -0.5f,  0.5f, -0.5f,  0.0f, 1.0f, 0.0f,  1.0f,  0.0f,
-        0.5f,  0.5f,  0.5f,  1.0f, 0.0f, 0.0f,  1.0f,  0.0f,
-        0.5f,  0.5f, -0.5f,  1.0f, 1.0f, 0.0f,  1.0f,  0.0f,
-        0.5f,  0.5f,  0.5f,  1.0f, 0.0f, 0.0f,  1.0f,  0.0f,
-        -0.5f,  0.5f, -0.5f,  0.0f, 1.0f, 0.0f,  1.0f,  0.0f,
-        -0.5f,  0.5f,  0.5f,  0.0f, 0.0f, 0.0f,  1.0f,  0.0f
-    };
-    unsigned int indices[] = {
-        0, 1, 2, // first triangle
-        1, 0, 6  // second triangle
+        -0.5f,  0.5f, -0.5f,
+         0.5f,  0.5f,  0.5f,
+         0.5f,  0.5f, -0.5f,
+         0.5f,  0.5f,  0.5f,
+        -0.5f,  0.5f, -0.5f,
+        -0.5f,  0.5f,  0.5f
     };
 
     // Bind data to buffers
-
-    // Cubes
-    glBindVertexArray(app->VAO);
-
-    // Give data to buffers
-    glBindBuffer(GL_ARRAY_BUFFER, app->VBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-    
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, app->EBO);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
-
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
-    glEnableVertexAttribArray(1);
-    glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(5 * sizeof(float)));
-    glEnableVertexAttribArray(2);
-
 
     // Light
     glBindVertexArray(app->lightVAO);
 
     glBindBuffer(GL_ARRAY_BUFFER, app->VBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, app->EBO);
-
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
-
 
     // UI
     float uiVertices[] = {
@@ -253,6 +187,54 @@ static void appInitScene(Application *app)
     glBindVertexArray(0);
 
     app->scene.loaded = 1;
+}
+
+static void appFirstPass(Application *app)
+{
+    // Projection matrix only needs to be calculated once
+    glm_perspective(glm_rad(FOV), (float)app->windowWidth / (float)app->windowHeight, ZNEAR, ZFAR, projection);
+
+    // Light shader
+    glUseProgram(app->shaderProgramLight);
+    glUniformMatrix4fv(glGetUniformLocation(app->shaderProgramLight, "projection"), 1, GL_FALSE, (float*)projection);
+    glUniform2ui(glGetUniformLocation(app->shaderProgramLight, "windowSize"), app->windowWidth, app->windowHeight);
+    glUniform1f(glGetUniformLocation(app->shaderProgramLight, "pointerRadius"), 2.0f);
+
+    // UI shader
+    glUseProgram(app->shaderProgramUI);
+    glUniform2ui(glGetUniformLocation(app->shaderProgramUI, "windowSize"), app->windowWidth, app->windowHeight);
+    glUniform1f(glGetUniformLocation(app->shaderProgramUI, "pointerRadius"), 2.0f);
+
+    // Object shader
+    glUseProgram(app->shaderProgram);
+    glUniformMatrix4fv(glGetUniformLocation(app->shaderProgram, "projection"), 1, GL_FALSE, (float*)projection);
+    glUniform2ui(glGetUniformLocation(app->shaderProgram, "windowSize"), app->windowWidth, app->windowHeight);
+    glUniform1f(glGetUniformLocation(app->shaderProgram, "pointerRadius"), 2.0f);
+    glUniform1f(glGetUniformLocation(app->shaderProgram, "FarPlaneShadow"), SHADOWMAP_ZFAR);
+    static const int textureStart = 1;  // Save texture unit 0 just in case
+    char locate[32];
+    for (uint8_t i=0; i<4; i++)
+    {
+        sprintf(locate, "pointLights[%d].position", i);
+        glUniform3f(glGetUniformLocation(app->shaderProgram, locate), app->pointLights[i].position[0], app->pointLights[i].position[1], app->pointLights[i].position[2]);
+        sprintf(locate, "pointLights[%d].ambient", i);
+        glUniform3f(glGetUniformLocation(app->shaderProgram, locate), 0.03f, 0.03f, 0.03f);
+        sprintf(locate, "pointLights[%d].diffuse", i);
+        glUniform3f(glGetUniformLocation(app->shaderProgram, locate), 0.4f, 0.4f, 0.4f);
+        sprintf(locate, "pointLights[%d].specular", i);
+        glUniform3f(glGetUniformLocation(app->shaderProgram, locate), 1.0f, 1.0f, 1.0f);
+        sprintf(locate, "pointLights[%d].linear", i);
+        glUniform1f(glGetUniformLocation(app->shaderProgram, locate), 0.09f);
+        sprintf(locate, "pointLights[%d].quadratic", i);
+        glUniform1f(glGetUniformLocation(app->shaderProgram, locate), 0.032f);
+        sprintf(locate, "pointLights[%d].color", i);
+        glUniform3f(glGetUniformLocation(app->shaderProgram, locate), app->pointLights[i].color[0], app->pointLights[i].color[1], app->pointLights[i].color[2]);
+        sprintf(locate, "pointLights[%d].depthCubemap", i);
+        glActiveTexture(GL_TEXTURE0+i+textureStart);
+        glBindTexture(GL_TEXTURE_CUBE_MAP, app->pointLights[i].depthCubemap);
+        glUniform1i(glGetUniformLocation(app->shaderProgram, locate), i+textureStart);
+    }
+    glUniform1f(glGetUniformLocation(app->shaderProgram, "material.shininess"), 64.0f);
 }
 
 static void appInit(Application* app)
@@ -321,19 +303,18 @@ static void appInit(Application* app)
     GLint flags; glGetIntegerv(GL_CONTEXT_FLAGS, &flags);
     if (flags & GL_CONTEXT_FLAG_DEBUG_BIT)
     {
-        printf("[GL Debug Output enabled]\n");
+        LOG_DEBUG("[GL Debug Output enabled]\n");
         glEnable(GL_DEBUG_OUTPUT);
         glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
         glDebugMessageCallback(debugCallback, NULL);
         glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, NULL, GL_TRUE);
-    
     }
-    else fprintf(stderr, "[GL Debug Output failed to activate]");
-    printf("> OpenGL version : %s\n", glGetString(GL_VERSION));
-    printf("> OpenGL vendor : %s\n", glGetString(GL_VENDOR));
-    printf("> OpenGL renderer : %s\n", glGetString(GL_RENDERER));
-    printf("> OpenGL shading language version : %s\n", glGetString(GL_SHADING_LANGUAGE_VERSION));
-    printf("> Vertex shader max attribribute count : %d\n", GL_MAX_VERTEX_ATTRIBS);
+    else LOG_ERROR("[GL Debug Output failed to activate]");
+    LOG_DEBUG("> OpenGL version : %s\n", glGetString(GL_VERSION));
+    LOG_DEBUG("> OpenGL vendor : %s\n", glGetString(GL_VENDOR));
+    LOG_DEBUG("> OpenGL renderer : %s\n", glGetString(GL_RENDERER));
+    LOG_DEBUG("> OpenGL shading language version : %s\n", glGetString(GL_SHADING_LANGUAGE_VERSION));
+    LOG_DEBUG("> Vertex shader max attribribute count : %d\n", GL_MAX_VERTEX_ATTRIBS);
     #endif
 
     if (VSYNC) {if (SDL_GL_SetSwapInterval(-1) == -1) SDL_GL_SetSwapInterval(1);}
@@ -353,11 +334,9 @@ static void appInit(Application* app)
     // OpenGL Buffer creation
     glGenBuffers(1, &app->VBO);
     glGenBuffers(1, &app->uiVBO);
-    glGenBuffers(1, &app->EBO);
 
     glGenFramebuffers(1, &app->depthMapFBO);
     
-    glGenVertexArrays(1, &app->VAO);
     glGenVertexArrays(1, &app->lightVAO);
     glGenVertexArrays(1, &app->uiVAO);
 
@@ -408,6 +387,9 @@ static void appInit(Application* app)
 
     // Scene
     appInitScene(app);
+
+    // First render pass
+    appFirstPass(app);
 }
 
 
@@ -482,10 +464,9 @@ static bool appUpdate(Application* app)
     appHandleEvents(app);
 
     if (!app->pause)
-     {
-        // Game logic
-        // TODO
-     }
+    {
+        // TODO: Game logic
+    }
 
     return 0;
 }
@@ -493,16 +474,14 @@ static bool appUpdate(Application* app)
 
 static void appRender(Application* app)
 {
-    static bool firstTime = 1;  // Do not perform some operations every frame
-
-
     /* --- RENDER ON DEPTH MAP --- */
 
-    renderPointLightsShadowMap(&app->scene, app->shaderProgramDepth, app->lightVAO, app->depthMapFBO, app->pointLights);
+    renderPointLightsShadowMap(&app->scene, app->shaderProgramDepth, app->depthMapFBO, app->pointLights);
 
 
     /* --- RENDER ON SCREEN --- */
 
+    // Clear screen
     glViewport(0, 0, app->windowWidth, app->windowHeight);
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -511,46 +490,27 @@ static void appRender(Application* app)
     static mat4 view = GLM_MAT4_IDENTITY_INIT;
     glm_lookat(app->camera.pos, app->camera.target, app->camera.up, view);
 
-    // Projection matrix
-    static mat4 projection = GLM_MAT4_IDENTITY_INIT;
-    if (firstTime) glm_perspective(glm_rad(FOV), (float)app->windowWidth / (float)app->windowHeight, ZNEAR, ZFAR, projection);
-
-
-    // Order : UI, Light, Objects
-
 
     /* --- User Interface --- */
 
+    // TODO: Optimize UI rendering
     glUseProgram(app->shaderProgramUI);
     glBindVertexArray(app->uiVAO);
 
-    // Simple overlay
+    // Simple quad for now
     glDrawArrays(GL_TRIANGLES, 0, 6);
-
-    if (firstTime)
-    {
-        glUniform2ui(glGetUniformLocation(app->shaderProgramUI, "windowSize"), app->windowWidth, app->windowHeight);
-        glUniform1f(glGetUniformLocation(app->shaderProgramUI, "pointerRadius"), 2.0f);
-    }
 
 
     /* --- Light sources --- */
 
-    // These are cubes that use a different shader so they are not affected by lighting and are always visible
+    // TODO: Replace cubes by models (e.g. lamps)
+    // Currently,there are cubes that use a different shader so they are not affected by lighting and are always visible
 
     // Use light shader
     glUseProgram(app->shaderProgramLight);
 
     // Send to shader
     glUniformMatrix4fv(glGetUniformLocation(app->shaderProgramLight, "view"), 1, GL_FALSE, (float*)view);
-    if (firstTime) glUniformMatrix4fv(glGetUniformLocation(app->shaderProgramLight, "projection"), 1, GL_FALSE, (float*)projection);
-    
-    // Used to draw pointer
-    if (firstTime)
-    {
-        glUniform2ui(glGetUniformLocation(app->shaderProgramLight, "windowSize"), app->windowWidth, app->windowHeight);
-        glUniform1f(glGetUniformLocation(app->shaderProgramLight, "pointerRadius"), 2.0f);
-    }
 
     // Rendering
     glBindVertexArray(app->lightVAO);
@@ -578,65 +538,14 @@ static void appRender(Application* app)
     glUseProgram(app->shaderProgram);
 
     // Send to shader
-    // Matrices are unchanged from light rendering
     glUniformMatrix4fv(glGetUniformLocation(app->shaderProgram, "view"), 1, GL_FALSE, (float*)view);
-    glUniformMatrix4fv(glGetUniformLocation(app->shaderProgram, "projection"), 1, GL_FALSE, (float*)projection);
-
     glUniform3f(glGetUniformLocation(app->shaderProgram, "viewPos"), app->camera.pos[0], app->camera.pos[1], app->camera.pos[2]);
-    if (firstTime)
-    {
-        glUniform1f(glGetUniformLocation(app->shaderProgram, "FarPlaneShadow"), SHADOWMAP_ZFAR);
-
-        static const int textureStart = 1;  // 0 is reserved for face texture
-        char locate[32];
-        for (uint8_t i=0; i<4; i++)
-        {
-            sprintf(locate, "pointLights[%d].position", i);
-            glUniform3f(glGetUniformLocation(app->shaderProgram, locate), app->pointLights[i].position[0], app->pointLights[i].position[1], app->pointLights[i].position[2]);
-            sprintf(locate, "pointLights[%d].ambiant", i);
-            glUniform3f(glGetUniformLocation(app->shaderProgram, locate), 0.2f, 0.2f, 0.2f);
-            sprintf(locate, "pointLights[%d].diffuse", i);
-            glUniform3f(glGetUniformLocation(app->shaderProgram, locate), 0.5f, 0.5f, 0.5f);
-            sprintf(locate, "pointLights[%d].specular", i);
-            glUniform3f(glGetUniformLocation(app->shaderProgram, locate), 1.0f, 1.0f, 1.0f);
-            sprintf(locate, "pointLights[%d].linear", i);
-            glUniform1f(glGetUniformLocation(app->shaderProgram, locate), 0.01f);
-            sprintf(locate, "pointLights[%d].quadratic", i);
-            glUniform1f(glGetUniformLocation(app->shaderProgram, locate), 0.02f);
-            sprintf(locate, "pointLights[%d].color", i);
-            glUniform3f(glGetUniformLocation(app->shaderProgram, locate), app->pointLights[i].color[0], app->pointLights[i].color[1], app->pointLights[i].color[2]);
-            sprintf(locate, "pointLights[%d].depthCubemap", i);
-            glActiveTexture(GL_TEXTURE0+i+textureStart);
-            glBindTexture(GL_TEXTURE_CUBE_MAP, app->pointLights[i].depthCubemap);
-            glUniform1i(glGetUniformLocation(app->shaderProgram, locate), i+textureStart);
-        }
-
-        glUniform2ui(glGetUniformLocation(app->shaderProgram, "windowSize"), app->windowWidth, app->windowHeight);
-        glUniform1f(glGetUniformLocation(app->shaderProgram, "pointerRadius"), 2.0f);
-
-        glUniform3f(glGetUniformLocation(app->shaderProgram, "material.ambient"), 1.0f, 0.5f, 0.31f);
-        glUniform3f(glGetUniformLocation(app->shaderProgram, "material.diffuse"), 1.0f, 0.5f, 0.31f);
-        glUniform3f(glGetUniformLocation(app->shaderProgram, "material.specular"), 0.5f, 0.5f, 0.5f);
-        glUniform1f(glGetUniformLocation(app->shaderProgram, "material.shininess"), 64.0f);
-    }
 
     // Rendering
-    glBindVertexArray(app->VAO);
-    
-    renderScene(&app->scene, app->shaderProgram, app->VAO);
-
-
-    /* --- Unbind everything --- */
-
-    glBindVertexArray(0);
-    glUseProgram(0);
+    renderScene(&app->scene, app->shaderProgram);
 
     // Swap buffers
     SDL_GL_SwapWindow(app->window);
-
-
-    // First time is over
-    if (firstTime) firstTime = 0;
 }
 
 

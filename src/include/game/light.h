@@ -98,7 +98,7 @@ void pointLightGetProjMatrices(PointLight *pointLight, mat4 *lightProjection, ma
  * 
  * @note Viewport is modified, and VAO and shader program are binded to 0 after the function call
 */
-void renderPointLightsShadowMap(const Scene *scene, GLuint shaderProgramDepth, GLuint VAO, GLuint depthMapFBO, PointLight *pointLights);
+void renderPointLightsShadowMap(const Scene *scene, GLuint shaderProgramDepth, GLuint depthMapFBO, PointLight *pointLights);
 
 /**
  * @brief Destroy a depth map

@@ -17,7 +17,6 @@
 
 
 #define MODELPATH "assets/models/"
-#define MAXVERTICES 10000000
 
 
 /**
@@ -70,6 +69,7 @@ typedef struct {
     char dir[64];
     Texture *texturesLoaded;
     unsigned int texturesLoadedCount;
+    unsigned int texturesLoadedSize;
 } Model;
 
 

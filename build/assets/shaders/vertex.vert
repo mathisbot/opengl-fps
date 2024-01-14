@@ -35,10 +35,17 @@ void main()
     TexCoords = aTexCoords;
     FragPos = vec3(model * vec4(aPos, 1.0));
     gl_Position = projection * view * vec4(FragPos, 1.0);
-    vec3 T = normalize(vec3(model * vec4(aTangent,   0.0)));
-    vec3 B = normalize(vec3(model * vec4(aBitangent, 0.0)));
-    vec3 N = normalize(vec3(model * vec4(aNormal,    0.0)));
+
+    // Expensive, should be done only once per model
+    mat3 normalMatrix = transpose(inverse(mat3(model)));
+
+    vec3 N = normalize(normalMatrix * aNormal);
+    vec3 T = normalize(normalMatrix * aTangent);
+    T = normalize(T - dot(T, N) * N);
+    vec3 B = cross(N, T);
+
     mat3 TBN = transpose(mat3(T, B, N));
+
     for(int i = 0; i < NR_POINT_LIGHTS; ++i)
     {
         TangentLightPos[i] = TBN * pointLights[i].position;

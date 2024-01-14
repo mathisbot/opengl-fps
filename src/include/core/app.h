@@ -57,11 +57,9 @@ typedef struct {
     // OpenGL
     GLuint lightVAO;  // Light sources
     GLuint uiVAO;  // UI
-    GLuint VAO;  // Scene Objects
 
     GLuint VBO;  // Vertices
     GLuint uiVBO;  // Vertices for UI
-    GLuint EBO;  // Indices
 
     GLuint depthMapFBO;  // Depth map framebuffer
 
