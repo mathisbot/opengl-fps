@@ -35,7 +35,7 @@ int initMixer(int numchans)
         return -1;
     }
     Mix_AllocateChannels(numchans);
-    LOG_INFO("Initialized audio\n");
+    LOG_DEBUG("Initialized audio\n");
 
     return 0;
 }

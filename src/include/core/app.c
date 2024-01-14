@@ -329,7 +329,6 @@ static void appInit(Application* app)
     // Load SDL Mixer
     if (initMixer(AUDIO_NUMCHANS) < 0) appCleanUpAndExit(app, EXIT_FAILURE, "Error initialising Mixer : %s", Mix_GetError());
     mixerInitalized = 1;
-    LOG_TRACE("Mixer initialized\n");
 
     // OpenGL Buffer creation
     glGenBuffers(1, &app->VBO);
