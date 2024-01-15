@@ -13,6 +13,8 @@ void destroyScene(Scene *scene)
     for (unsigned int i=0; i<scene->modelCount; i++)
         freeModel(&scene->models[i]);
     destroySkybox(scene);
+    for (unsigned int i=0; i<scene->soundCount; i++)
+        destroySound(scene->sounds[i]);
     free(scene->models);
 }
 

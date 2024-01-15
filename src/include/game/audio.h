@@ -17,7 +17,7 @@
 #define AUDIO_CHUNKSIZE 2048  // Buffer size
 #define AUDIO_NUMCHANS 16  // Number of channels
 
-#define AUDIOPATH "assets/audio/"
+#define AUDIOPATH "assets/sounds/"
 
 
 /**
@@ -39,6 +39,9 @@ typedef struct {
  * @param filename The name of the file to load
  * @param volume The volume of the sound
  * @return int 0 on success, -1 on failure
+ * 
+ * @note The file must be a WAV file
+ * @note Set volume to -1 to use default volume
 */
 int loadSound(Sound *sound, char* filename, int volume);
 

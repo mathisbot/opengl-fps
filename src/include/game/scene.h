@@ -4,6 +4,7 @@
 #include <cglm/cglm.h>
 
 
+#include "game/audio.h"
 #include "game/model.h"
 #include "game/textures.h"
 
@@ -15,6 +16,9 @@ typedef struct {
     unsigned int uiModelCount;
 
     Cubemap skybox;
+
+    Sound *sounds;
+    unsigned int soundCount;
 
     bool loaded;
 } Scene;

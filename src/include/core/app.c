@@ -114,6 +114,11 @@ static void appInitScene(Application *app)
     // Load skybox
     if (loadSkybox(&app->scene, "skybox/") < 0) appCleanUpAndExit(app, EXIT_FAILURE, "Error loading skybox\n");
 
+    // Load sounds
+    app->scene.soundCount = 1;
+    app->scene.sounds = malloc(sizeof(Sound) * app->scene.soundCount);
+    if (loadSound(&app->scene.sounds[0], "shotgun.wav", -1) < 0) appCleanUpAndExit(app, EXIT_FAILURE, "Error loading shotgun sound\n");
+
     // Vertices for a cube (Temporary lights)
     float vertices[] = {
         -0.5f, -0.5f, -0.5f,
@@ -424,8 +429,10 @@ static void appHandleEvents(Application* app)
                 // Shoot
                 case SDL_MOUSEBUTTONDOWN:
                     if (e.button.button == SDL_BUTTON_LEFT && !app->pause)
-                        // TODO : Shoot
+                    {
+                        playSound(app->scene.sounds[0], 0);
                         printf("Shoot !\n");
+                    }
                     break;
                 default:
                     break;
@@ -491,6 +498,7 @@ static void appRender(Application* app)
     // Send to shader
     glUniformMatrix4fv(glGetUniformLocation(app->shaderProgramUI, "view"), 1, GL_FALSE, (float*)view);
 
+    // TODO: Move UI to a Player struct ?
     for (int i=0; i<app->scene.uiModelCount; i++)
     {
         drawModel(&app->scene.uiModels[i], app->shaderProgramUI);
