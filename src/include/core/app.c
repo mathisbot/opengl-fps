@@ -442,16 +442,13 @@ static bool appUpdate(Application* app)
 {
     static Uint64 lastFrameTime = 0;
     static Uint64 currentFrameTime;
-    static Uint64 deltaTimeMS;
 
     // Time
-    currentFrameTime = SDL_GetTicks64();
-    deltaTimeMS = currentFrameTime - lastFrameTime;
-    if (deltaTimeMS <2) {SDL_Delay(2-deltaTimeMS); return 1;}  // Skip frame if too early
-    app->dt = deltaTimeMS / 1000.0f;
+    currentFrameTime = SDL_GetPerformanceCounter();
+    app->dt = (currentFrameTime - lastFrameTime) / (double)SDL_GetPerformanceFrequency();
     lastFrameTime = currentFrameTime;
     #if PRINT_FPS
-    LOG_INFO("FPS : %lf\n", 1.0 / app->dt)
+    LOG_INFO("FPS : %lf\n", 1.0 / app->dt);
     #endif
 
     // Events
