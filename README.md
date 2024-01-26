@@ -63,7 +63,7 @@ The primitive rules imposed here shouldn't affect the quality of the game, which
 
 #### Context
 
-In order to display elements on the screen, modern computer architecture requires a polite request to the graphics drivers. This is usually done via standardized languages called specifications. The best-known are DirectX, Vulkan and OpenGL. Even though Vulkan is the most recent, the most optimized and the most adapted to current technologies, it requires a great deal of time and energy to operate. OpenGL is much easier to learn and use, making it suitable for a development team consisting of one person developing in their spare time. Please note that OpenGL still allowd for a sufficient level of optimisation.
+In order to display elements on the screen, modern computer architecture requires a polite request to the graphics drivers. This is usually done via standardized languages called specifications. The best-known are DirectX, Vulkan and OpenGL. Even though Vulkan is the most recent, the most optimized and the most adapted to current technologies, it requires a great deal of time and energy to operate. OpenGL is much easier to learn and use, making it suitable for a development team consisting of one person developing in their spare time. Please note that OpenGL still allows for a sufficient level of optimisation.
 
 > OpenGL® is the most widely adopted 2D and 3D graphics API in the industry, bringing thousands of applications to a wide variety of computer platforms. It is window-system and operating-system independent as well as network-transparent. OpenGL enables developers of software for PC, workstation, and supercomputing hardware to create high-performance, visually compelling graphics software application
 
@@ -107,7 +107,7 @@ Assimp stands for Asset Importer Library. It's a library that makes it extremely
 cglm stands for OpenGL Mathematics (glm) for C. It is a highly optimized 2D/3D math library. It offers a wide range of functions that make it quick and easy to use mathematics in an OpenGL/Vulkan context. The library takes advantage of SIMD operations when supported by the processor (SSE and SSE2 are supported by all modern x86 processors anyway).
 
 GLEW stands for OpenGL Extension Wrangler. It is an extension that loads OpenGL function headers :
-as stated before, OpenGL's implementation is the responsibility of the card manufacturer. GLEW takes care of retrieving and normalizing function names.
+as stated before, OpenGL's implementation is the responsibility of the card manufacturer. GLEW takes care of retrieving and normalizing function headers.
 
 > GLEW provides efficient run-time mechanisms for determining which OpenGL extensions are supported on the target platform. OpenGL core and extension functionality is exposed in a single header file.
 

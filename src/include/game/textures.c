@@ -81,7 +81,7 @@ void destroyTexture(Texture tex)
 int loadCubemap(Cubemap *cubemap, char* path, char* extension)
 {
     char new_path[512];
-    sprintf(new_path, "%s%s", TEXTUREPATH, path);
+    snprintf(new_path, 511, "%s%s", TEXTUREPATH, path);
     return loadCubemapFullPath(cubemap, new_path, extension);
 }
 
@@ -101,13 +101,14 @@ int loadCubemapFullPath(Cubemap *cubemap, char *fullpath, char* extension)
     {
         char *CUBEMAP_SIDES[6] = {"right", "left", "top", "bottom", "front", "back"};
         char path[512];
-        sprintf(path, "%s%s.%s", fullpath, CUBEMAP_SIDES[i], extension);
+        snprintf(path, 511, "%s%s.%s", fullpath, CUBEMAP_SIDES[i], extension);
         SDL_Surface* surface = SDL_LoadBMP(path);
         if (!surface)
         {
             LOG_ERROR("Error loading cubemap %s : %s\n", path, SDL_GetError());
             return -1;
         }
+        // TODO: glTexStorage2D
         glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_SRGB, surface->w, surface->h, 0, GL_BGR, GL_UNSIGNED_BYTE, surface->pixels);
         SDL_FreeSurface(surface);
 

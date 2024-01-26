@@ -196,7 +196,7 @@ void drawMesh(Mesh *mesh, unsigned int programShader)
     for (unsigned int i=0; i<maxLoop; i++)
     {
         glActiveTexture(GL_TEXTURE0 + i+textureStart);
-        char number[3];
+        char number[3];  // May be useful later
         char name[52];
         char longName[64];
         if (mesh->textures[i].type == TEXTURE_DIFFUSE)
@@ -292,7 +292,7 @@ static int loadFileIntoModel(Model *model, char *path, bool flipUVs)
 int loadModel(Model *model, char *filename, vec3 position, vec3 scale, bool flipUVs)
 {
     char path[128];
-    sprintf(path, "%s%s", MODELPATH, filename);
+    snprintf(path, 127, "%s%s", MODELPATH, filename);
 
     return loadModelFullPath(model, path, position, scale, flipUVs);
 }
@@ -302,12 +302,8 @@ int loadModelFullPath(Model *model, char *path, vec3 position, vec3 scale, bool 
     getDirectory(path, model->dir);
     loadFileIntoModel(model, path, flipUVs);
 
-    model->position[0] = position[0];
-    model->position[1] = position[1];
-    model->position[2] = position[2];
-    model->scale[0] = scale[0];
-    model->scale[1] = scale[1];
-    model->scale[2] = scale[2];
+    glm_vec3_copy(position, model->position);
+    glm_vec3_copy(scale, model->scale);
 
     return 0;
 }

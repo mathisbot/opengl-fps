@@ -43,7 +43,7 @@ int loadShader(Shader *shader, const char *sourcePath, GLenum type)
     char path[256];
     char infolog[512];
 
-    sprintf(path, "%s%s", SHADERPATH, sourcePath);
+    snprintf(path, 255, "%s%s", SHADERPATH, sourcePath);
 
     shader->type = type;
     shader->id = glCreateShader(type);
@@ -55,7 +55,7 @@ int loadShader(Shader *shader, const char *sourcePath, GLenum type)
 
     // Check for errors during compilation
     glGetShaderiv(shader->id, GL_COMPILE_STATUS, &success);
-    if (!success)
+    if (success != GL_TRUE)
     {
         glGetShaderInfoLog(shader->id, 512, NULL, infolog);
         LOG_ERROR("Failed to compile shader %s: %s\n", path, infolog);
@@ -81,7 +81,7 @@ int initShaderProgram(GLuint *prog, uint8_t shaderCount, ...)
 
     *prog = glCreateProgram();
     Shader *shader = NULL;
-    for (uint8_t i = 0; i < shaderCount; i++) {
+    for (int i = 0; i < shaderCount; i++) {
         shader = va_arg(args, Shader*);
         glAttachShader(*prog, shader->id);
     }
