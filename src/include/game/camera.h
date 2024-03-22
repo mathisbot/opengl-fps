@@ -10,6 +10,8 @@
 #include <SDL2/SDL.h>
 #include <cglm/cglm.h>
 
+#include "collision.h"
+
 
 #define EYE_Y 1.8f
 
@@ -122,7 +124,7 @@ void rotateCamera(Camera *camera, int dx, int dy);
 
 
 /**
- * @brief Update the camera
+ * @brief Update the camera parameters (gravity, jumping, etc.) : normalise vectors
  * 
  * @param camera Pointer to the camera to update
  * 

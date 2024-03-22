@@ -13,7 +13,9 @@
 
 // Change this to change the log level
 // ERROR and FATAL are always enabled
+#ifndef LOGS_LEVEL
 #define LOGS_LEVEL TRACE_LOGS
+#endif
 
 
 int fprintf_log(FILE *stream, char* file, int line, int level, const char *format, ...);

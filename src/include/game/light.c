@@ -26,7 +26,7 @@ inline void bindDepthCubemapToFBO(GLuint depthMapFBO, GLuint depthCubemap)
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
-void destroyDepthCubemap(GLuint depthCubemap)
+inline void destroyDepthCubemap(GLuint depthCubemap)
 {
     glDeleteTextures(1, &depthCubemap);
 }
@@ -53,7 +53,7 @@ void renderPointLightsShadowMap(const Scene *scene, GLuint shaderProgramDepth, G
 
     glUniform1f(glGetUniformLocation(shaderProgramDepth, "farPlane"), SHADOWMAP_ZFAR);
 
-    // We don't want to compute tan each tick
+    // We don't want to compute projection matrix each tick
     static bool firstTime = true;
     static mat4 lightProjection = {0};
     if (firstTime) {glm_perspective(glm_rad(90.0f), 1.0f, SHADOWMAP_ZNEAR, SHADOWMAP_ZFAR, lightProjection); firstTime=false;}
@@ -96,15 +96,11 @@ void pointLightGetProjMatrices(PointLight *pointLight, mat4 *lightProjection, ma
     glm_vec3_add(pointLight->position, (vec3){0.0f, 0.0f, -1.0f}, lightTargets[5]);
     glm_lookat(pointLight->position, lightTargets[5], (vec3){0.0f, -1.0f, 0.0f}, lightView[5]);
 
-    glm_mat4_mul(*lightProjection, lightView[0], (*dest)[0]);
-    glm_mat4_mul(*lightProjection, lightView[1], (*dest)[1]);
-    glm_mat4_mul(*lightProjection, lightView[2], (*dest)[2]);
-    glm_mat4_mul(*lightProjection, lightView[3], (*dest)[3]);
-    glm_mat4_mul(*lightProjection, lightView[4], (*dest)[4]);
-    glm_mat4_mul(*lightProjection, lightView[5], (*dest)[5]);
+    for (int i=0; i<6; i++)
+        glm_mat4_mul(*lightProjection, lightView[i], (*dest)[i]);
 }
 
-void destroyPointLight(PointLight *light)
+inline void destroyPointLight(PointLight *light)
 {
     destroyDepthCubemap(light->depthCubemap);
 }

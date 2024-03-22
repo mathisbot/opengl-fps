@@ -49,9 +49,6 @@ int main(int argc, char *argv[])
     (void)argc;
     (void)argv;
 
-
-    /* --- Initialise Components --- */
-
     Application app = {0};
     appRun(&app);
 

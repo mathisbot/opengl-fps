@@ -258,7 +258,10 @@ static void processNode(Model *model, const struct aiNode *node, const struct ai
 
 static int loadFileIntoModel(Model *model, char *path, bool flipUVs)
 {
+    #if DEBUG
     Uint64 importStart = SDL_GetTicks64();
+    #endif
+
     enum aiPostProcessSteps steps = aiProcess_OptimizeGraph | aiProcessPreset_TargetRealtime_MaxQuality;
     if (flipUVs) steps |= aiProcess_FlipUVs;
     const struct aiScene *scene = aiImportFile(path, steps);
@@ -283,27 +286,31 @@ static int loadFileIntoModel(Model *model, char *path, bool flipUVs)
 
     aiReleaseImport(scene);
 
+    #if DEBUG
     Uint64 importEnd = SDL_GetTicks64();
     LOG_DEBUG("Imported model %s in %llu ms\n", path, importEnd-importStart);
+    #endif
 
     return 0;
 }
 
-int loadModel(Model *model, char *filename, vec3 position, vec3 scale, bool flipUVs)
+int loadModel(Model *model, char *filename, vec3 position, vec3 scale, vec3 rotation_vector, float rotation_angle, bool flipUVs)
 {
     char path[128];
     snprintf(path, 127, "%s%s", MODELPATH, filename);
 
-    return loadModelFullPath(model, path, position, scale, flipUVs);
+    return loadModelFullPath(model, path, position, scale, rotation_vector, rotation_angle, flipUVs);
 }
 
-int loadModelFullPath(Model *model, char *path, vec3 position, vec3 scale, bool flipUVs)
+int loadModelFullPath(Model *model, char *path, vec3 position, vec3 scale, vec3 rotation_vector, float rotation_angle, bool flipUVs)
 {
     getDirectory(path, model->dir);
     loadFileIntoModel(model, path, flipUVs);
 
     glm_vec3_copy(position, model->position);
     glm_vec3_copy(scale, model->scale);
+    glm_vec3_copy(rotation_vector, model->rotation_vector);
+    model->rotation_angle = rotation_angle;
 
     return 0;
 }
@@ -314,8 +321,7 @@ void drawModel(Model *model, unsigned int programShader)
     glm_mat4_identity(modelMat);
     glm_translate(modelMat, model->position);
     glm_scale(modelMat, model->scale);
-    // TODO: Change this
-    glm_rotate(modelMat, glm_rad(-90.0f), (vec3){0.0f, 1.0f, 0.0f});
+    glm_rotate(modelMat, model->rotation_angle, model->rotation_vector);
     glUniformMatrix4fv(glGetUniformLocation(programShader, "model"), 1, GL_FALSE, (float*)modelMat);
 
     for (unsigned int i=0; i<model->meshCount; i++) drawMesh(&model->meshes[i], programShader);

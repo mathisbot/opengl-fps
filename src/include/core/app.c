@@ -12,6 +12,7 @@ static bool mixerInitalized = 0;
 
 
 #if DEBUG
+// Debug callback for OpenGL
 static void debugCallback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar *message, const void *userParam)
 {
     if(id == 131169 || id == 131185 || id == 131218 || id == 131204) return;
@@ -103,13 +104,13 @@ static void appInitScene(Application *app)
     // Load scene objects models
     app->scene.modelCount = 1;
     app->scene.models = malloc(sizeof(Model) * app->scene.modelCount);
-    if (loadModel(&app->scene.models[0], "guitar/backpack.obj", (vec3){3.0, 1.0, 3.0}, (vec3){1.0, 1.0, 1.0}, false) < 0) appCleanUpAndExit(app, EXIT_FAILURE, "Error loading guitar model");
+    if (loadModel(&app->scene.models[0], "guitar/backpack.obj", (vec3){3.0, 1.0, 3.0}, (vec3){1.0, 1.0, 1.0}, (vec3){0.0, 1.0, 0.0}, glm_rad(90.0f), false) < 0) appCleanUpAndExit(app, EXIT_FAILURE, "Error loading guitar model");
     // if (loadModel(&app->scene.models[2], "medievalhouse/house.obj", (vec3){15.0, 0.0, 15.0}, (vec3){2.0, 2.0, 2.0}, true) < 0) appCleanUpAndExit(app, EXIT_FAILURE, "Error loading house model");
     
     // Load UI models (e.g. shotgun)
     app->scene.uiModelCount = 1;
     app->scene.uiModels = malloc(sizeof(Model) * app->scene.uiModelCount);
-    if (loadModel(&app->scene.uiModels[0], "shotgun/shotgun.obj", (vec3){0.0, 0.0, 0.0}, (vec3){1.0, 1.0, 1.0}, true) < 0) appCleanUpAndExit(app, EXIT_FAILURE, "Error loading shotgun model");
+    if (loadModel(&app->scene.uiModels[0], "shotgun/shotgun.obj", (vec3){0.0, 0.0, 0.0}, (vec3){1.0, 1.0, 1.0}, (vec3){0.0, 1.0, 0.0}, glm_rad(90.0f), true) < 0) appCleanUpAndExit(app, EXIT_FAILURE, "Error loading shotgun model");
 
     // Load skybox
     if (loadSkybox(&app->scene, "skybox/") < 0) appCleanUpAndExit(app, EXIT_FAILURE, "Error loading skybox\n");

@@ -64,6 +64,8 @@ typedef struct {
 typedef struct {
     vec3 position;
     vec3 scale;
+    vec3 rotation_vector;
+    float rotation_angle;
     unsigned int meshCount;
     Mesh *meshes;
     char dir[64];
@@ -97,12 +99,14 @@ void freeMesh(Mesh *mesh);
  * @param filename The name of the file to load
  * @param position Position of the model
  * @param scale Scale of the model
+ * @param rotation_vector Vector of the rotation
+ * @param rotation_angle Angle of the rotation
  * @param flipUVs Whether to flip the UVs or not
  * @return 0 on success, -1 on failure
  * 
  * @note The filename must be relative to the MODELPATH
 */
-int loadModel(Model *model, char *filename, vec3 position, vec3 scale, bool flipUVs);
+int loadModel(Model *model, char *filename, vec3 position, vec3 scale, vec3 rotation_vector, float rotation_angle, bool flipUVs);
 
 /**
  * @brief Load a model from a file
@@ -111,12 +115,14 @@ int loadModel(Model *model, char *filename, vec3 position, vec3 scale, bool flip
  * @param filename The name of the file to load
  * @param position Position of the model
  * @param scale Scale of the model
+ * @param rotation_vector Vector of the rotation
+ * @param rotation_angle Angle of the rotation
  * @param flipUVs Whether to flip the UVs or not
  * @return 0 on success, -1 on failure
  * 
  * @note The filename must be absolute
 */
-int loadModelFullPath(Model *model, char *filename, vec3 position, vec3 scale, bool flipUVs);
+int loadModelFullPath(Model *model, char *path, vec3 position, vec3 scale, vec3 rotation_vector, float rotation_angle, bool flipUVs);
 
 /**
  * @brief Draw a model
