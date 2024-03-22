@@ -32,6 +32,7 @@
       <a href="#usage">Usage</a>
       <ul>
         <li><a href="#gameplay">Gameplay</a></li>
+        <li><a href="#screenshots">Screenshots</a></li>
         <li><a href="#bindings">Bindings</a></li>
       </ul>
     </li>
@@ -197,6 +198,18 @@ In its current state, the game only allows you to move freely in a placeholder l
 
 <p align="right">(<a href="#readme-top">Up</a>)</p>
 
+### Screenshots
+<a name="screenshots"></a>
+
+<p align="right">(<a href="#readme-top">Up</a>)</p>
+<div align="center">
+    <img src="build/assets/images/screenshot1.webp" alt="Logo">
+
+  <h4 align="center">Placeholder level</h3> <p>Lights, Shadows, Reflections, Skybox, and WIP shotgun</p>
+
+  </p>
+</div>
+
 ### Bindings
 <a name="bindings"></a>
 
@@ -245,17 +258,15 @@ This roadmap helps organizing development and may be subject to change.
 
 - [X] Opening a window
 - [X] First Person Camera
-- [X] Import models
+- [X] 3D models
+- [X] Lights
+- [X] Shadows
+- [X] Audio
 - [ ] Gun
-- [ ] Level rendering
-- [ ] Audio
 - [ ] Collisions
 - [ ] Health packs and ammo
 - [ ] Enemies
-- [ ] MVP
-- [ ] Better lights
 - [ ] Level editor
-- [ ] New functionalities
 
 <p align="right">(<a href="#readme-top">Up</a>)</p>
 
