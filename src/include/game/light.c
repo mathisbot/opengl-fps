@@ -17,7 +17,7 @@ int createDepthCubemap(GLuint *depthCubemap, unsigned int resolution)
     return 0;
 }
 
-void bindDepthCubemapToFBO(GLuint depthMapFBO, GLuint depthCubemap)
+inline void bindDepthCubemapToFBO(GLuint depthMapFBO, GLuint depthCubemap)
 {
     glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
     glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, depthCubemap, 0);
