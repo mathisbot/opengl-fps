@@ -1,0 +1,8 @@
+forward=H
+backward=B
+left=V
+right=N
+sprint=G
+jump=SPACE
+use=U
+reload=I

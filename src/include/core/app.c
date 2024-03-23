@@ -373,17 +373,7 @@ static void appInit(Application* app)
     /* --- Load game objects --- */
 
     // Camera
-    Bindings bindings = {
-        SDL_SCANCODE_H,  // Forward
-        SDL_SCANCODE_B,  // Backward
-        SDL_SCANCODE_V,  // Left
-        SDL_SCANCODE_N,  // Right
-        SDL_SCANCODE_G,  // Sprint
-        SDL_SCANCODE_SPACE,  // Jump
-        SDL_SCANCODE_U,  // Use
-        SDL_SCANCODE_I  // Reload
-    };
-    initCamera(&app->camera, (vec3){-2.0f, EYE_Y, 2.0f}, (vec3){-1.0f, EYE_Y, 2.0f}, &bindings);
+    initCamera(&app->camera, (vec3){-2.0f, EYE_Y, 2.0f}, (vec3){-1.0f, EYE_Y, 2.0f}, "assets/settings/bindings.stg");
 
     // Scene
     appInitScene(app);

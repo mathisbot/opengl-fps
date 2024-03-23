@@ -130,9 +130,7 @@ Game files are no longer hosted on Github, due to the sheer size of the assets. 
 
 Please note that, for now, game files are only compatible with 64-bit Windows systems (probably only for AMD CPUs). Pre-compiled versions of the game will be available in the future for Linux and macOS.
 
-For the moment, no interface or menu has been implemented, so that there's no way to change key bindings from within the game.
-
-Current bindings are detailed in <a href="#usage">Usage</a>.
+More information in <a href="#usage">Usage</a>.
 
 #### Edit code
 
@@ -213,17 +211,10 @@ In its current state, the game only allows you to move freely in a placeholder l
 ### Bindings
 <a name="bindings"></a>
 
-It is currently not possible to change default bindings without modifying `src/main.c` and recompiling the whole code.
-In the future, the player should be able to modify its bindings in-game.
+You can change your bindings in `assets/settings/bindings.stg`.
 
-By default, the bindings are :
-- H - Forward
-- B - Reverse
-- V - Left
-- N - Right
-- Space - Jump
+Some bindings cannot be changed :
 - Left click - Shoot (Not fully implemented)
-
 - Esc - Pause the game
 - F1 - Close the game
 

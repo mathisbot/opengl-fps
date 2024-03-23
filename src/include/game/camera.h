@@ -5,12 +5,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <string.h>
 #include <math.h>
 
 #include <SDL2/SDL.h>
 #include <cglm/cglm.h>
 
 #include "collision.h"
+#include "logs.h"
 
 
 #define EYE_Y 1.8f
@@ -87,12 +89,12 @@ typedef struct {
  * @param camera Pointer to the camera to initialize
  * @param pos Position of the camera
  * @param target Target of the camera
- * @param bindings Bindings of the camera
+ * @param bindings Path to the bindings file
  * @return int 0 on success, -1 on failure
  * 
  * @note Bindings are copied
 */
-int initCamera(Camera *camera, vec3 pos, vec3 target, Bindings *bindings);
+int initCamera(Camera *camera, vec3 pos, vec3 target, const char *bindings);
 
 /**
  * @brief Translate the camera

@@ -4,7 +4,7 @@
 // Assuming up is {0.0f, 1.0f, 0.0f}
 
 
-static void bindingsCopy(Bindings *dst, Bindings *src)
+static void bindingsCopy(Bindings *dst, const Bindings *src)
 {
     dst->forward = src->forward;
     dst->backward = src->backward;
@@ -16,7 +16,66 @@ static void bindingsCopy(Bindings *dst, Bindings *src)
     dst->reload = src->reload;
 }
 
-int initCamera(Camera *camera, vec3 pos, vec3 target, Bindings *bindings)
+static const Bindings DEFAULT_BINDINGS = {
+    SDL_SCANCODE_Z,
+    SDL_SCANCODE_S,
+    SDL_SCANCODE_Q,
+    SDL_SCANCODE_D,
+    SDL_SCANCODE_LSHIFT,
+    SDL_SCANCODE_SPACE,
+    SDL_SCANCODE_E,
+    SDL_SCANCODE_R
+};
+
+static int importBindings(const char *path, Bindings *dest) {
+    FILE *file = fopen(path, "r");
+    if (file == NULL) {
+        LOG_ERROR("Erreur : Impossible d'ouvrir le fichier %s\n", path);
+        return -1;
+    }
+
+    char line[100];
+    while (fgets(line, sizeof(line), file)) {
+        char *key = strtok(line, "=");
+        char *value = strtok(NULL, "=");
+
+        if (value != NULL && value[strlen(value) - 1] == '\n') value[strlen(value) - 1] = '\0';
+
+        if (SDL_GetScancodeFromName(value) == SDL_SCANCODE_UNKNOWN) {
+            LOG_ERROR("Invalid scancode in %s : %s\n", path, value);
+            fclose(file);
+            return -1;
+        }
+
+        if (strcmp(key, "forward") == 0) {
+            dest->forward = SDL_GetScancodeFromName(value);
+        } else if (strcmp(key, "backward") == 0) {
+            dest->backward = SDL_GetScancodeFromName(value);
+        } else if (strcmp(key, "left") == 0) {
+            dest->left = SDL_GetScancodeFromName(value);
+        } else if (strcmp(key, "right") == 0) {
+            dest->right = SDL_GetScancodeFromName(value);
+        } else if (strcmp(key, "sprint") == 0) {
+            dest->sprint = SDL_GetScancodeFromName(value);
+        } else if (strcmp(key, "jump") == 0) {
+            dest->jump = SDL_GetScancodeFromName(value);
+        } else if (strcmp(key, "use") == 0) {
+            dest->use = SDL_GetScancodeFromName(value);
+        } else if (strcmp(key, "reload") == 0) {
+            dest->reload = SDL_GetScancodeFromName(value);
+        }
+        else {
+            LOG_ERROR("Invalid bindings in %s : %s\n", path, key);
+            fclose(file);
+            return -1;
+        }
+    }
+
+    fclose(file);
+    return 0;
+}
+
+int initCamera(Camera *camera, vec3 pos, vec3 target, const char *bindings)
 {
     glm_vec3_copy(pos, camera->pos);
     glm_vec3_copy(target, camera->target);
@@ -32,7 +91,12 @@ int initCamera(Camera *camera, vec3 pos, vec3 target, Bindings *bindings)
     camera->onGround = 1;
     camera->jumpSpeed = JUMPSPEED;
     glm_vec3_copy(GLM_VEC3_ZERO, camera->upVelocity);
-    bindingsCopy(&camera->bindings, bindings);
+    if (importBindings(bindings, &camera->bindings))
+    {
+        LOG_ERROR("Could not import custom bindings, using default bindings.\n");
+        bindingsCopy(&camera->bindings, &DEFAULT_BINDINGS);
+        return -1;
+    }
     return 0;
 }
 
